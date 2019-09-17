@@ -1,0 +1,249 @@
+System roomexploration
+   
+mqttBroker "localhost" : 1883
+
+Dispatch execOneStep : execOneStep
+Dispatch stepFail : stepFail(DURATION)
+Dispatch stepOk : stepOk
+Dispatch modelChangeAction : modelChangeAction(DEST, ACTION)
+Dispatch tableFound : tableFound
+Dispatch explore : explore
+Dispatch edgeExplorationComplete : edgeExplorationComplete
+Dispatch start : start
+Dispatch isObstacle : isObstacle
+Dispatch notObstacle : notObstacle
+Dispatch obstacle : obstacle
+Dispatch terminated : terminated
+
+Event sonarRobot : sonarRobot(DISTANCE)
+Event obstacleDetected : obstacleDetected
+Event obstacleExploration : obstacleExploration
+Event map : map(MAPSTRING, MAPNAME)
+
+Context ctxRoomExpl ip[host="localhost" port=8086] -mqtt
+Context ctxResourceModel ip[host="192.168.43.100" port=8080] -mqtt
+
+ExternalQActor mind context ctxResourceModel
+ExternalQActor butlerresourcemodel context ctxResourceModel 
+
+QActor roomexploration context ctxRoomExpl{
+	["var RotationCount = 0;
+	  var FORWARDTIME = 770;
+	  var FORWARDTIME2 = 900;
+	  var DimX = 0
+	  var DimY = 0
+	  var EdgeCounterX = 0
+	  var EdgeCounterY = 0
+	  var XRobot = 0
+	  var YRobot = 0
+	  var XRobotFT = 0
+	  var YRobotFT = 0
+      var ContX = 0
+	  var ContY = 0
+	  var Obstaclelr = 0
+	  var Obstacleup = 0
+	  var Direction = \"\"
+	  var mapName = \"mappa\"
+	  var OBSTACLE = false
+	  var explCompleted = false
+	  var CurMove = \"\""]
+	State s0 initial{
+		println("###roomExploration started")
+		solve(consult("sysRules.pl"))
+		solve(consult("moves.pl"))
+		run itunibo.planner.plannerUtil.initAI()
+		run itunibo.planner.moveUtils.showCurrentRobotState()
+		delay 3000
+		
+	}Goto doExploration
+	
+	State doExploration{
+		forward mind -m isObstacle : isObstacle
+		
+		run itunibo.planner.moveUtils.testFunction(myself)
+		
+	}Transition t0 whenMsg obstacle -> wallFound
+				   whenMsg notObstacle -> moveAhead
+				   
+	State wallFound{
+		println("###MURO TROVATO")
+		run itunibo.planner.plannerUtil.wallFound()
+		run itunibo.planner.moveUtils.rotateLeft(myself)
+		["RotationCount ++"]
+		println("###Rotation Count = $RotationCount")
+		run itunibo.planner.moveUtils.showCurrentRobotState()
+	}Goto endBoundary if "(RotationCount >= 4) " else doExploration
+	
+	State moveAhead{
+		run itunibo.planner.moveUtils.moveAhead(myself, FORWARDTIME)
+		//run itunibo.planner.moveUtils.showCurrentRobotState()
+	}Goto doExploration
+	
+	State endBoundary{
+		println("###BoundaryExplored")
+		["DimX = itunibo.planner.moveUtils.getMapDimX( ) 
+          DimY = itunibo.planner.moveUtils.getMapDimY( )
+		  println(\"DimX : $DimX\")
+		  println(\"DimY : $DimY\")"]
+		  run itunibo.planner.moveUtils.saveMap(myself, mapName)
+	}Goto exploreRoom
+	
+	State exploreRoom{
+		["XRobot = itunibo.planner.moveUtils.getPosX(myself)
+		  YRobot = itunibo.planner.moveUtils.getPosY(myself)
+		  println(\"Xrobot : $XRobot\")
+		  println(\"Yrobot : $YRobot\")"]
+		  
+		  
+		  ["DimX = itunibo.planner.moveUtils.getMapDimX( ) 
+          DimY = itunibo.planner.moveUtils.getMapDimY( )
+		  println(\"DimX : $DimX\")
+		  println(\"DimY : $DimY\")"]
+		  
+		if"((XRobot == DimX - 2) && (YRobot == DimY -2)) || ((XRobot == 0) && (YRobot == DimY -2))"{
+			println("###IN FINE")
+			//ho esplorato tutta la stanza e non c'era il tavolo
+			forward roomexploration -m terminated : terminated
+		}else{
+			if "(XRobot == 0) && (YRobot == 0)" {
+				println("###IN 00")
+				run itunibo.planner.moveUtils.moveAhead(myself, FORWARDTIME2)
+				//run itunibo.planner.moveUtils.showCurrentRobotState()
+				//delay 1000
+				run itunibo.planner.moveUtils.rotateLeft2(myself)
+			}else{
+				if "(XRobot == 0) && (YRobot > 0)"{
+					["ContY = 0"]
+					println("###IN 0>")
+					run itunibo.planner.moveUtils.rotateLeft(myself)
+					run itunibo.planner.moveUtils.moveAhead(myself, FORWARDTIME2)
+					//run itunibo.planner.moveUtils.showCurrentRobotState()
+					run itunibo.planner.moveUtils.rotateLeft(myself)
+				}else{
+					if "(XRobot == DimX - 2) && (YRobot > 0)"{
+						["ContY = 0"]
+						println("###-2>")
+						run itunibo.planner.moveUtils.rotateRight(myself)
+						run itunibo.planner.moveUtils.moveAhead(myself, FORWARDTIME2)
+						//run itunibo.planner.moveUtils.showCurrentRobotState()
+						run itunibo.planner.moveUtils.rotateRight(myself)
+					}
+				}
+			}
+			forward mind -m isObstacle : isObsacle
+			//run itunibo.planner.moveUtils.testFunction2(myself)
+			run itunibo.planner.moveUtils.testFunctionRightDir(myself)
+			//run itunibo.planner.moveUtils.testFunction3(myself)
+		}  
+		  
+	}Transition t0 whenMsg terminated -> explorationDone
+				   whenMsg obstacle -> tableFound
+			       whenMsg notObstacle -> moveAhead2
+			       
+	State tableFound{
+		["Direction = itunibo.planner.moveUtils.getDirection(myself)"]
+		run itunibo.planner.moveUtils.showCurrentRobotState()
+		["XRobotFT = itunibo.planner.plannerUtil.getPosX()
+		  YRobotFT = itunibo.planner.plannerUtil.getPosY()"]
+	}Goto leftDir if "Direction.equals(\"leftDir\")" else rightDir
+	
+	State moveAhead2{
+		run itunibo.planner.moveUtils.moveAhead(myself, FORWARDTIME)
+		//run itunibo.planner.moveUtils.showCurrentRobotState()
+	}Goto exploreRoom
+	
+	State rightDir{
+		run itunibo.planner.moveUtils.setObstacleOnCurrentDirection(myself)
+		run itunibo.planner.moveUtils.rotateRight2(myself)
+		run itunibo.planner.moveUtils.moveAhead(myself, FORWARDTIME2)
+		//run itunibo.planner.moveUtils.showCurrentRobotState()
+		run itunibo.planner.moveUtils.rotateLeft(myself)
+		forward mind -m isObstacle : isObstacle
+		//run itunibo.planner.moveUtils.testFunction3(myself)
+		run itunibo.planner.moveUtils.testFunctionRightDir(myself)
+	}Transition t0 whenMsg obstacle -> rightDir
+			       whenMsg notObstacle -> underTableRd
+	
+	State leftDir{
+			run itunibo.planner.moveUtils.setObstacleOnCurrentDirection(myself)
+			run itunibo.planner.moveUtils.rotateLeft2(myself)
+			run itunibo.planner.moveUtils.moveAhead(myself, FORWARDTIME2)
+			//run itunibo.planner.moveUtils.showCurrentRobotState()
+			run itunibo.planner.moveUtils.rotateRight(myself)
+			forward mind -m isObstacle : isObstacle
+			//run itunibo.planner.moveUtils.testFunction4(myself)
+	}Transition t0 whenMsg obstacle -> leftDir
+			       whenMsg notObstacle -> underTableLd
+			       
+	
+	State underTableLd{
+		["XRobot = itunibo.planner.plannerUtil.getPosX()
+		  YRobot = itunibo.planner.plannerUtil.getPosY()"]
+		  
+		if "(XRobot == XRobotFT) && (YRobot == YRobotFT) "{
+			println("###FINITO")
+			forward roomexploration -m terminated : terminated
+		}else{
+			run itunibo.planner.moveUtils.moveAhead(myself, FORWARDTIME2)
+			//run itunibo.planner.moveUtils.showCurrentRobotState()
+			run itunibo.planner.moveUtils.rotateRight2(myself)
+			forward mind -m isObstacle : isObstacle
+			//run itunibo.planner.moveUtils.testFunction4(myself)
+		}
+	}Transition t0 whenMsg terminated -> explorationDone
+			       whenMsg obstacle -> continueExplLD
+			       whenMsg notObstacle -> underTableLd
+			
+	State underTableRd{
+		["XRobot = itunibo.planner.plannerUtil.getPosX()
+		  YRobot = itunibo.planner.plannerUtil.getPosY()"]
+		 
+		  if "(XRobot == XRobotFT) && (YRobot == YRobotFT) "{
+			println("###FINITO")
+			forward roomexploration -m terminated : terminated
+		}else{
+			 run itunibo.planner.moveUtils.moveAhead(myself, FORWARDTIME2)
+			  //run itunibo.planner.moveUtils.showCurrentRobotState()
+			  run itunibo.planner.moveUtils.rotateLeft2(myself)
+		  
+			forward mind -m isObstacle : isObstacle
+			//run itunibo.planner.moveUtils.testFunction3(myself)
+			run itunibo.planner.moveUtils.testFunctionRightDir(myself)
+		}
+	}Transition t0 whenMsg terminated -> explorationDone
+			       whenMsg obstacle -> continueExplRD
+			       whenMsg notObstacle -> underTableRd
+			               
+	State continueExplRD{
+		run itunibo.planner.moveUtils.setObstacleOnCurrentDirection(myself)
+		run itunibo.planner.moveUtils.rotateRight(myself)
+	}Goto underTableRd
+	
+	State continueExplLD{
+		run itunibo.planner.moveUtils.setObstacleOnCurrentDirection(myself)
+		run itunibo.planner.moveUtils.rotateLeft(myself)
+	}Goto underTableLd
+	
+	State explorationDone{
+		println("###EXPLORATION DONE###")
+		//run itunibo.planner.moveUtils.saveMap(myself, mapName)
+		run itunibo.planner.moveUtils.setGoal(myself, "0","0")
+		run itunibo.planner.moveUtils.doPlan(myself)
+	}Goto executeMove
+	
+	State executeMove{
+		solve(retract(move(M)))
+		ifSolved {["CurMove = getCurSol(\"M\").toString()"]} else {["CurMove=\"nomove\""]}
+		ifSolved {run itunibo.planner.moveUtils.execMove(myself, CurMove, FORWARDTIME)}
+	}Goto executeMove if "(CurMove != \"nomove\")"else inRH
+	
+	State inRH{
+		println("###BUTLER IN RH ")
+		run itunibo.planner.moveUtils.saveMap(myself, mapName)
+		["var mapString = itunibo.planner.plannerUtil.getMapOneLine2()
+		  println(mapString)"]
+		["emit(\"map\", \"map($mapString,$mapName)\" )"]
+	}Goto finish
+	
+	State finish{}
+}
