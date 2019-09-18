@@ -15,7 +15,6 @@ class Butlerresourcemodel ( name: String, scope: CoroutineScope ) : ActorBasicFs
 	}
 		
 	override fun getBody() : (ActorBasicFsm.() -> Unit){
-		var mapCreated = false
 		return { //this:ActionBasciFsm
 				state("s0") { //this:State
 					action { //it:State
@@ -28,39 +27,35 @@ class Butlerresourcemodel ( name: String, scope: CoroutineScope ) : ActorBasicFs
 				state("waitModelChange") { //this:State
 					action { //it:State
 					}
-					 transition(edgeName="t00",targetState="handleModelChange",cond=whenDispatch("modelChangeTask"))
-					transition(edgeName="t01",targetState="handleModelChange",cond=whenDispatch("modelChangeAction"))
-					transition(edgeName="t02",targetState="handleModelChange",cond=whenDispatch("modelChangePos"))
-					transition(edgeName="t03",targetState="createMap",cond=whenEventGuarded("map",{(mapCreated == false)}))
+					 transition(edgeName="t00",targetState="handleModelChangeTask",cond=whenDispatch("modelChangeTask"))
+					transition(edgeName="t01",targetState="handleModelChangeAction",cond=whenDispatch("modelChangeAction"))
+					transition(edgeName="t02",targetState="handleModelChangePos",cond=whenDispatch("modelChangePos"))
 				}	 
-				state("handleModelChange") { //this:State
+				state("handleModelChangeTask") { //this:State
 					action { //it:State
 						if( checkMsgContent( Term.createTerm("modelChangeTask(DEST,TASK,IDCIBO,QUANTITY)"), Term.createTerm("modelChangeTask(robot,TASK,IDCIBO,QUANTITY)"), 
 						                        currentMsg.msgContent()) ) { //set msgArgList
 								println("$name in ${currentState.stateName} | $currentMsg")
 								itunibo.robot.resourceModelSupport.updateModelTask(myself ,payloadArg(1), payloadArg(2), payloadArg(3) )
-						}
-						if( checkMsgContent( Term.createTerm("modelChangeAction(DEST,ACTION)"), Term.createTerm("modelChangeAction(robot,ACTION)"), 
-						                        currentMsg.msgContent()) ) { //set msgArgList
-								itunibo.robot.resourceModelSupport.updateModelAction(myself ,payloadArg(1) )
-						}
-						if( checkMsgContent( Term.createTerm("modelChangePos(DEST,POSITION)"), Term.createTerm("modelChangePos(robot,POS)"), 
-						                        currentMsg.msgContent()) ) { //set msgArgList
-								itunibo.robot.resourceModelSupport.updateModelPosition(myself ,payloadArg(1) )
+								println("DOPO")
 						}
 					}
 					 transition( edgeName="goto",targetState="waitModelChange", cond=doswitch() )
 				}	 
-				state("createMap") { //this:State
+				state("handleModelChangeAction") { //this:State
 					action { //it:State
-						mapCreated = true
-						println("###IN CREATE MAP  butlerresourcemodel")
-						if( checkMsgContent( Term.createTerm("map(MAPSTRING,MAPNAME)"), Term.createTerm("map(MAPSTRING,MAPNAME)"), 
+						if( checkMsgContent( Term.createTerm("modelChangeAction(DEST,ACTION)"), Term.createTerm("modelChangeAction(robot,ACTION)"), 
 						                        currentMsg.msgContent()) ) { //set msgArgList
-								println("$name in ${currentState.stateName} | $currentMsg")
-								itunibo.planner.plannerUtil.saveMap( payloadArg(0), payloadArg(1)  )
-								itunibo.planner.moveUtils.loadRoomMap(myself ,payloadArg(1) )
-								emit("mapSetted", "mapSetted" ) 
+								itunibo.robot.resourceModelSupport.updateModelAction(myself ,payloadArg(1) )
+						}
+					}
+					 transition( edgeName="goto",targetState="waitModelChange", cond=doswitch() )
+				}	 
+				state("handleModelChangePos") { //this:State
+					action { //it:State
+						if( checkMsgContent( Term.createTerm("modelChangePos(DEST,X,Y)"), Term.createTerm("modelChangePos(robot,X,Y)"), 
+						                        currentMsg.msgContent()) ) { //set msgArgList
+								itunibo.robot.resourceModelSupport.updateModelPosition(myself ,payloadArg(1), payloadArg(2) )
 						}
 					}
 					 transition( edgeName="goto",targetState="waitModelChange", cond=doswitch() )

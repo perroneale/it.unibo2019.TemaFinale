@@ -16,6 +16,7 @@ class Planningroute ( name: String, scope: CoroutineScope ) : ActorBasicFsm( nam
 		
 	override fun getBody() : (ActorBasicFsm.() -> Unit){
 		var set = false
+			  var mapEmpty = true
 		return { //this:ActionBasciFsm
 				state("s0") { //this:State
 					action { //it:State
@@ -25,37 +26,57 @@ class Planningroute ( name: String, scope: CoroutineScope ) : ActorBasicFsm( nam
 						solve("consult('nearTable.pl')","") //set resVar	
 						itunibo.planner.plannerUtil.initAI(  )
 					}
+					 transition( edgeName="goto",targetState="loadMap", cond=doswitch() )
+				}	 
+				state("loadMap") { //this:State
+					action { //it:State
+						solve("map(X)","") //set resVar	
+						if(currentSolution.isSuccess()) { itunibo.planner.moveUtils.loadRoomMap(myself ,getCurSol("X").toString() )
+						itunibo.planner.moveUtils.addTable(myself)
+						println("map")
+									  println(itunibo.planner.plannerUtil.getMap())
+						 }
+						else
+						{ println("!!!---Error map name not setted---!!!")
+						 }
+						 mapEmpty = itunibo.planner.moveUtils.mapIsEmpty()
+					}
+					 transition( edgeName="goto",targetState="waitCmd", cond=doswitchGuarded({(mapEmpty == false)}) )
+					transition( edgeName="goto",targetState="doExploration", cond=doswitchGuarded({! (mapEmpty == false)}) )
+				}	 
+				state("doExploration") { //this:State
+					action { //it:State
+					}
+					 transition( edgeName="goto",targetState="waitCmd", cond=doswitch() )
+				}	 
+				state("createMap") { //this:State
+					action { //it:State
+						println("###IN CREATE MAP  butlerresourcemodel")
+						if( checkMsgContent( Term.createTerm("map(MAPSTRING,MAPNAME)"), Term.createTerm("map(MAPSTRING,MAPNAME)"), 
+						                        currentMsg.msgContent()) ) { //set msgArgList
+								println("$name in ${currentState.stateName} | $currentMsg")
+								itunibo.planner.plannerUtil.saveMap( payloadArg(0), payloadArg(1)  )
+								itunibo.planner.moveUtils.loadRoomMap(myself ,payloadArg(1) )
+								itunibo.planner.moveUtils.addTable(myself)
+								println("map")
+											  println(itunibo.planner.plannerUtil.getMap())
+											  set = true
+						}
+					}
 					 transition( edgeName="goto",targetState="waitCmd", cond=doswitch() )
 				}	 
 				state("waitCmd") { //this:State
 					action { //it:State
 					}
-					 transition(edgeName="t021",targetState="addTable",cond=whenEventGuarded("mapSetted",{(set == false)}))
-					transition(edgeName="t022",targetState="planningRoute",cond=whenDispatch("calculateRoute"))
-					transition(edgeName="t023",targetState="updating",cond=whenDispatch("updatePos"))
-				}	 
-				state("addTable") { //this:State
-					action { //it:State
-						if( checkMsgContent( Term.createTerm("mapSetted"), Term.createTerm("mapSetted"), 
-						                        currentMsg.msgContent()) ) { //set msgArgList
-								println("$name in ${currentState.stateName} | $currentMsg")
-								println("###IN ADD TABLE  planningroute")
-								itunibo.planner.moveUtils.addTable(myself)
-								println("map")
-											  println(itunibo.planner.plannerUtil.getMap())
-											  set = true
-								forward("modelChangeTask", "modelChangeTask(robot,preparing,0,0)" ,"butlerresourcemodel" ) 
-						}
-					}
-					 transition( edgeName="goto",targetState="waitCmd", cond=doswitch() )
+					 transition(edgeName="t020",targetState="createMap",cond=whenEventGuarded("map",{(set == false)}))
+					transition(edgeName="t021",targetState="planningRoute",cond=whenDispatch("calculateRoute"))
+					transition(edgeName="t022",targetState="updating",cond=whenEvent("modelChangedPosition"))
 				}	 
 				state("updating") { //this:State
 					action { //it:State
-						if( checkMsgContent( Term.createTerm("updatePos(X,Y)"), Term.createTerm("updatePos(X,Y)"), 
+						if( checkMsgContent( Term.createTerm("modelChangedPosition(X,Y)"), Term.createTerm("modelChangedPosition(X,Y)"), 
 						                        currentMsg.msgContent()) ) { //set msgArgList
 								println("updating")
-								println(payloadArg(0))
-								println(payloadArg(1))
 								solve("replaceRule(curPos(_,_),curPos(${payloadArg(0)},${payloadArg(1)}))","") //set resVar	
 								solve("curPos(A,B)","") //set resVar	
 								println(getCurSol("A").toString())

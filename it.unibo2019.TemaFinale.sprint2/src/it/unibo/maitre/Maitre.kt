@@ -20,27 +20,25 @@ class Maitre ( name: String, scope: CoroutineScope ) : ActorBasicFsm( name, scop
 					action { //it:State
 						println("###Maitre STARTED")
 					}
+					 transition( edgeName="goto",targetState="sendingP", cond=doswitch() )
 				}	 
 				state("sendingP") { //this:State
 					action { //it:State
 						delay(2000) 
 						println("----Maitre send prepare message")
-						forward("prepare", "prepare" ,"butler" ) 
+						forward("modelChangeTask", "modelChangeTask(robot,preparing,0,0)" ,"butlerresourcemodel" ) 
 					}
-					 transition( edgeName="goto",targetState="waitingPAck", cond=doswitch() )
-				}	 
-				state("waitingPAck") { //this:State
-					action { //it:State
-						if( checkMsgContent( Term.createTerm("completedTask()"), Term.createTerm("completedTask(T)"), 
-						                        currentMsg.msgContent()) ) { //set msgArgList
-								println("Butler finito ${payloadArg(0)} task")
-						}
-					}
+					 transition(edgeName="t032",targetState="sendingAC",cond=whenDispatch("completedTask"))
 				}	 
 				state("sendingAC") { //this:State
 					action { //it:State
-						forward("addFood", "addFood(2,2)" ,"butler" ) 
-						forward("add", "add" ,"maitre" ) 
+						if( checkMsgContent( Term.createTerm("completedTask(TASK)"), Term.createTerm("completedTask(T)"), 
+						                        currentMsg.msgContent()) ) { //set msgArgList
+								println("Butler finito ${payloadArg(0)} task")
+						}
+						delay(2000) 
+						forward("modelChangeTask", "modelChangeTask(robot,cleaning,0,0)" ,"butlerresourcemodel" ) 
+						forward("cl", "cl" ,"maitre" ) 
 					}
 					 transition(edgeName="t033",targetState="waitingAfAck",cond=whenDispatch("add"))
 					transition(edgeName="t034",targetState="waitingClAck",cond=whenDispatch("cl"))
@@ -54,10 +52,17 @@ class Maitre ( name: String, scope: CoroutineScope ) : ActorBasicFsm( name, scop
 				}	 
 				state("waitingClAck") { //this:State
 					action { //it:State
-						println("$name in ${currentState.stateName} | $currentMsg")
 					}
-					 transition(edgeName="t037",targetState="sendingP",cond=whenDispatch("completedTask"))
+					 transition(edgeName="t037",targetState="finish",cond=whenDispatch("completedTask"))
 					transition(edgeName="t038",targetState="updateFC",cond=whenDispatch("currentFood"))
+				}	 
+				state("finish") { //this:State
+					action { //it:State
+						if( checkMsgContent( Term.createTerm("completedTask(TASK)"), Term.createTerm("completedTask(T)"), 
+						                        currentMsg.msgContent()) ) { //set msgArgList
+								println("Butler finito ${payloadArg(0)} task")
+						}
+					}
 				}	 
 				state("updateFP") { //this:State
 					action { //it:State

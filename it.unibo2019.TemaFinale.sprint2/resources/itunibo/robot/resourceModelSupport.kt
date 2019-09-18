@@ -9,6 +9,7 @@ object resourceModelSupport{
 	
 	//aggiorno il modello quando viene eseguito uno specifico task
 	fun updateModelTask(actor: ActorBasic, content: String, id : String="", q : String=""){
+		println(content)
 		actor.solve( "cmd(robot, task($content))" );
 		actor.solve("currentTask(robot, task(TASK))");
 		val currentTask = actor.getCurSol("TASK");
@@ -39,11 +40,15 @@ object resourceModelSupport{
 	}
 	
 	//aggiorno il modello quando viene modificata la current position
-	fun updateModelPosition(actor: ActorBasic, content: String){
-		actor.solve("updatePosition($content)");
-		actor.solve("currentPosition(robot, position(X))");
+	fun updateModelPosition(actor: ActorBasic, x: String, y : String){
+		actor.solve("updatePosition(robot, $x, $y)");
+		actor.solve("currentPosition(robot, X, Y)");
 		val currentPosition = actor.getCurSol("X");
-		println("###CurrentPosition : $currentPosition")
+		val yval = actor.getCurSol("Y")
+		println("###CurrentPosition : $currentPosition, $yval")
+		actor.scope.launch{
+			actor.emit("modelChangedPosition","modelChangedPosition($currentPosition, $yval)")
+		}
 		
 	}
 }

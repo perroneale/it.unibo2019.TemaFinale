@@ -8,10 +8,10 @@ model( sensor,   sonarRobot, state(unknown) ).   %% initial state
 
 %%TASK CHE IL ROBOT STA COMPIENDO TRA PREPARE, CLEAR, ADDFOOD,	 INRH
 
-currentTask(robot, task(preparing)). %%initial task
+currentTask(robot, task(waiting)). %%initial task
 
 %%SAVE CURRENT POSITION
-currentPosition(robot, position(rh)).
+currentPosition(robot, 0, 0).
 
 %%CIBO E QUANTITA' RICHIESTE NELL'ADD FOOD, DI DEFAULT SARANNO A 0 SE VIENE RICEVUTO UN ALTRO TASK
 food(0,0).
@@ -31,15 +31,9 @@ cmd(robot, task(cleaning)) :- changeTask(robot, cleaning).
 cmd(robot, task(adding)) :- changeTask(robot, adding).
 cmd(robot, task(waiting)) :- changeTask(robot, waiting).
 
-updatePosition(fridge) :- updateCurrentPosition(robot, fridge).
-updatePosition(pantry) :- updateCurrentPosition(robot, pantry).
-updatePosition(dishwasher) :- updateCurrentPosition(robot, dishwasher).
-updatePosition(table) :- updateCurrentPosition(robot, table).
-updatePosition(rh) :- updateCurrentPosition(robot, rh).
+updatePosition(robot, X, Y) :- replaceRule( currentPosition(NAME, _, _ ), currentPosition(NAME, X, Y)). 
 
-changeTask(NAME, VALUE) :- replaceRule( currentTask(NAME, _ ), currentTask(NAME, task(VALUE))).
-
-updateCurrentPosition(NAME, VALUE) :- replaceRule( currentPosition(NAME, _), currentPosition(NAME, position(VALUE))). 
+changeTask(NAME, VALUE) :- replaceRule( currentTask(NAME, task(_) ), currentTask(NAME, task(VALUE))).
 
 updateFood(ID, QUANTITY) :- replaceRule( food( _ , _ ), food(ID, QUANTITY)).
 

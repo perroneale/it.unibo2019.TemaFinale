@@ -50,7 +50,6 @@ class Roomexploration ( name: String, scope: CoroutineScope ) : ActorBasicFsm( n
 				state("doExploration") { //this:State
 					action { //it:State
 						forward("isObstacle", "isObstacle" ,"mind" ) 
-						itunibo.planner.moveUtils.testFunction(myself)
 					}
 					 transition(edgeName="t00",targetState="wallFound",cond=whenDispatch("obstacle"))
 					transition(edgeName="t01",targetState="moveAhead",cond=whenDispatch("notObstacle"))
@@ -119,7 +118,6 @@ class Roomexploration ( name: String, scope: CoroutineScope ) : ActorBasicFsm( n
 						    }
 						   }
 						 forward("isObstacle", "isObsacle" ,"mind" ) 
-						 itunibo.planner.moveUtils.testFunctionRightDir(myself)
 						  }
 					}
 					 transition(edgeName="t02",targetState="explorationDone",cond=whenDispatch("terminated"))
@@ -149,7 +147,6 @@ class Roomexploration ( name: String, scope: CoroutineScope ) : ActorBasicFsm( n
 						itunibo.planner.moveUtils.moveAhead(myself ,FORWARDTIME2 )
 						itunibo.planner.moveUtils.rotateLeft(myself)
 						forward("isObstacle", "isObstacle" ,"mind" ) 
-						itunibo.planner.moveUtils.testFunctionRightDir(myself)
 					}
 					 transition(edgeName="t05",targetState="rightDir",cond=whenDispatch("obstacle"))
 					transition(edgeName="t06",targetState="underTableRd",cond=whenDispatch("notObstacle"))
@@ -193,7 +190,6 @@ class Roomexploration ( name: String, scope: CoroutineScope ) : ActorBasicFsm( n
 						 { itunibo.planner.moveUtils.moveAhead(myself ,FORWARDTIME2 )
 						 itunibo.planner.moveUtils.rotateLeft2(myself)
 						 forward("isObstacle", "isObstacle" ,"mind" ) 
-						 itunibo.planner.moveUtils.testFunctionRightDir(myself)
 						  }
 					}
 					 transition(edgeName="t012",targetState="explorationDone",cond=whenDispatch("terminated"))
@@ -217,6 +213,9 @@ class Roomexploration ( name: String, scope: CoroutineScope ) : ActorBasicFsm( n
 				state("explorationDone") { //this:State
 					action { //it:State
 						println("###EXPLORATION DONE###")
+						itunibo.planner.moveUtils.saveMap(myself ,mapName )
+						var mapString = itunibo.planner.plannerUtil.getMap()
+						emit("map", "map(mapString,mapName)" ) 
 						itunibo.planner.moveUtils.setGoal(myself ,"0", "0" )
 						itunibo.planner.moveUtils.doPlan(myself)
 					}
@@ -239,15 +238,6 @@ class Roomexploration ( name: String, scope: CoroutineScope ) : ActorBasicFsm( n
 				state("inRH") { //this:State
 					action { //it:State
 						println("###BUTLER IN RH ")
-						itunibo.planner.moveUtils.saveMap(myself ,mapName )
-						var mapString = itunibo.planner.plannerUtil.getMapOneLine2()
-								  println(mapString)
-						emit("map", "map($mapString,$mapName)" )
-					}
-					 transition( edgeName="goto",targetState="finish", cond=doswitch() )
-				}	 
-				state("finish") { //this:State
-					action { //it:State
 					}
 				}	 
 			}

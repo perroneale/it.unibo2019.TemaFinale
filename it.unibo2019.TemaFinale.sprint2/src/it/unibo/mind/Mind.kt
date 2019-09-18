@@ -27,9 +27,9 @@ class Mind ( name: String, scope: CoroutineScope ) : ActorBasicFsm( name, scope)
 				state("waitCmd") { //this:State
 					action { //it:State
 					}
-					 transition(edgeName="t04",targetState="handleAction",cond=whenEvent("modelChangedAction"))
-					transition(edgeName="t05",targetState="handleSonar",cond=whenEvent("sonarRobot"))
-					transition(edgeName="t06",targetState="reply",cond=whenDispatch("isObstacle"))
+					 transition(edgeName="t03",targetState="handleAction",cond=whenEvent("modelChangedAction"))
+					transition(edgeName="t04",targetState="handleSonar",cond=whenEvent("sonarRobot"))
+					transition(edgeName="t05",targetState="reply",cond=whenDispatch("isObstacle"))
 				}	 
 				state("reply") { //this:State
 					action { //it:State
