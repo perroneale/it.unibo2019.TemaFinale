@@ -5,4 +5,9 @@ near(0, 0, rh).
 %%near table da aggiungere
 
 
-getPosition(X, Y, Pos) :- near(X, Y, Pos).
+
+getPosition(X, Y, Pos) :- near(X, Y, Pos),!.
+getPosition(X, Y, Pos) :- nearTable(X, Y, Pos).
+
+addTable([X]) :- assert(X),!.
+addTable([H|T]) :- assert(H), addTable(T).

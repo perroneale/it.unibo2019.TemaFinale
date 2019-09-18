@@ -23,15 +23,26 @@ class Butlermind ( name: String, scope: CoroutineScope ) : ActorBasicFsm( name, 
 				state("s0") { //this:State
 					action { //it:State
 						solve("consult('sysRules.pl')","") //set resVar	
+						solve("consult('butlerMindKB.pl')","") //set resVar	
 						println("ButlerMind STARTED")
 					}
-					 transition( edgeName="goto",targetState="waitCmd1", cond=doswitch() )
+					 transition(edgeName="t07",targetState="updateKB",cond=whenDispatch("updateKBbm"))
 				}	 
 				state("waitCmd1") { //this:State
 					action { //it:State
 						forward("modelChangeTask", "modelChangeTask(robot,waiting,0,0)" ,"butlerresourcemodel" ) 
 					}
-					 transition(edgeName="t06",targetState="preparing",cond=whenEvent("modelChangedpreparing"))
+					 transition(edgeName="t08",targetState="preparing",cond=whenEvent("modelChangedpreparing"))
+				}	 
+				state("updateKB") { //this:State
+					action { //it:State
+						println("###BUTLERMIND")
+						if( checkMsgContent( Term.createTerm("updateKBbm(LIST)"), Term.createTerm("updateKBbm(LIST)"), 
+						                        currentMsg.msgContent()) ) { //set msgArgList
+								solve("addTable(${payloadArg(0)})","") //set resVar	
+						}
+					}
+					 transition( edgeName="goto",targetState="waitCmd1", cond=doswitch() )
 				}	 
 				state("preparing") { //this:State
 					action { //it:State
@@ -40,7 +51,7 @@ class Butlermind ( name: String, scope: CoroutineScope ) : ActorBasicFsm( name, 
 						forward("calculateRoute", "calculateRoute(pantry)" ,"planningroute" ) 
 						position = "pantry"
 					}
-					 transition(edgeName="t07",targetState="actionPrepare",cond=whenDispatch("destinationReached"))
+					 transition(edgeName="t09",targetState="actionPrepare",cond=whenDispatch("destinationReached"))
 				}	 
 				state("actionPrepare") { //this:State
 					action { //it:State
@@ -49,6 +60,7 @@ class Butlermind ( name: String, scope: CoroutineScope ) : ActorBasicFsm( name, 
 						                        currentMsg.msgContent()) ) { //set msgArgList
 								solve("getPosition(${payloadArg(0)},${payloadArg(1)},POSITION)","") //set resVar	
 								position = getCurSol("POSITION").toString()
+								println(position)
 						}
 						if(position == "pantry"){ forward("calculateRoute", "calculateRoute(table)" ,"planningroute" ) 
 						 }
@@ -72,8 +84,8 @@ class Butlermind ( name: String, scope: CoroutineScope ) : ActorBasicFsm( name, 
 						   }
 						  }
 					}
-					 transition(edgeName="t08",targetState="actionPrepare",cond=whenDispatch("destinationReached"))
-					transition(edgeName="t09",targetState="waitCmd2",cond=whenDispatch("completedTask"))
+					 transition(edgeName="t010",targetState="actionPrepare",cond=whenDispatch("destinationReached"))
+					transition(edgeName="t011",targetState="waitCmd2",cond=whenDispatch("completedTask"))
 				}	 
 				state("waitCmd2") { //this:State
 					action { //it:State
@@ -81,8 +93,8 @@ class Butlermind ( name: String, scope: CoroutineScope ) : ActorBasicFsm( name, 
 								  inRh = false
 						println("###IN waitCmd2")
 					}
-					 transition(edgeName="t010",targetState="adding",cond=whenEvent("modelChangedadding"))
-					transition(edgeName="t011",targetState="cleaning",cond=whenEvent("modelChangedcleaning"))
+					 transition(edgeName="t012",targetState="adding",cond=whenEvent("modelChangedadding"))
+					transition(edgeName="t013",targetState="cleaning",cond=whenEvent("modelChangedcleaning"))
 				}	 
 				state("cleaning") { //this:State
 					action { //it:State
@@ -90,26 +102,28 @@ class Butlermind ( name: String, scope: CoroutineScope ) : ActorBasicFsm( name, 
 						forward("calculateRoute", "calculateRoute(table)" ,"planningroute" ) 
 						position = "table"
 					}
-					 transition(edgeName="t012",targetState="actionClean",cond=whenDispatch("destinationReached"))
+					 transition(edgeName="t014",targetState="actionClean",cond=whenDispatch("destinationReached"))
 				}	 
 				state("actionClean") { //this:State
 					action { //it:State
-						println("###BUTLERMIND in actionClean")
+						println("###BUTLERMIND in actionCleaning")
+						if( checkMsgContent( Term.createTerm("destinationReached(X,Y)"), Term.createTerm("destinationReached(X,Y)"), 
+						                        currentMsg.msgContent()) ) { //set msgArgList
+								solve("getPosition(${payloadArg(0)},${payloadArg(1)},POSITION)","") //set resVar	
+								position = getCurSol("POSITION").toString()
+								println(position)
+						}
 						if(position == "dishwasher"){ forward("calculateRoute", "calculateRoute(rh)" ,"planningroute" ) 
-						position = "rh"
 						 }
 						else
 						 { if(position == "table" && table == 0){ forward("calculateRoute", "calculateRoute(fridge)" ,"planningroute" ) 
-						 position = "fridge"
 						 table++
 						  }
 						 else
 						  { if(position == "fridge"){ forward("calculateRoute", "calculateRoute(table)" ,"planningroute" ) 
-						  position = "table"
 						   }
 						  else
 						   { if(position == "table" && table == 1){ forward("calculateRoute", "calculateRoute(dishwasher)" ,"planningroute" ) 
-						   position = "dishwasher"
 						   table = 0
 						    }
 						   else
@@ -121,8 +135,8 @@ class Butlermind ( name: String, scope: CoroutineScope ) : ActorBasicFsm( name, 
 						   }
 						  }
 					}
-					 transition(edgeName="t013",targetState="actionClean",cond=whenDispatch("destinationReached"))
-					transition(edgeName="t014",targetState="waitCmd1",cond=whenDispatch("completedTask"))
+					 transition(edgeName="t015",targetState="actionClean",cond=whenDispatch("destinationReached"))
+					transition(edgeName="t016",targetState="waitCmd1",cond=whenDispatch("completedTask"))
 				}	 
 				state("adding") { //this:State
 					action { //it:State
@@ -133,31 +147,33 @@ class Butlermind ( name: String, scope: CoroutineScope ) : ActorBasicFsm( name, 
 								forward("foodAvailability", "foodAvailability(${payloadArg(0)},${payloadArg(1)})" ,"fridge" ) 
 						}
 					}
-					 transition(edgeName="t015",targetState="nextStep",cond=whenDispatch("positiveResponse"))
-					transition(edgeName="t016",targetState="sendWarning",cond=whenDispatch("negativeResponse"))
+					 transition(edgeName="t017",targetState="nextStep",cond=whenDispatch("positiveResponse"))
+					transition(edgeName="t018",targetState="sendWarning",cond=whenDispatch("negativeResponse"))
 				}	 
 				state("nextStep") { //this:State
 					action { //it:State
 						forward("calculateRoute", "calculateRoute(fridge)" ,"planningroute" ) 
 					}
-					 transition(edgeName="t017",targetState="actionAdd",cond=whenDispatch("destinationReached"))
+					 transition(edgeName="t019",targetState="actionAdd",cond=whenDispatch("destinationReached"))
 				}	 
 				state("actionAdd") { //this:State
 					action { //it:State
+						println("###BUTLERMIND in actionPrepare")
 						if( checkMsgContent( Term.createTerm("destinationReached(X,Y)"), Term.createTerm("destinationReached(X,Y)"), 
 						                        currentMsg.msgContent()) ) { //set msgArgList
-								solve("getPosition(payloadArg(0),payloadArg(1),Pos)","") //set resVar	
-								var position = getCurSol("Pos").toString()
-								if(position == "table"){ forward("calculateRoute", "calculateRoute(table)" ,"planningroute" ) 
-								 }
-								if(position == "fridge"){ forward("calculateRoute", "calculateRoute(table)" ,"planningroute" ) 
-								 }
-								if(position == "rh"){ forward("completedTask", "completedTask()" ,"butlermind" ) 
-								 }
+								solve("getPosition(${payloadArg(0)},${payloadArg(1)},POSITION)","") //set resVar	
+								position = getCurSol("POSITION").toString()
+								println(position)
 						}
+						if(position == "table"){ forward("calculateRoute", "calculateRoute(table)" ,"planningroute" ) 
+						 }
+						if(position == "fridge"){ forward("calculateRoute", "calculateRoute(table)" ,"planningroute" ) 
+						 }
+						if(position == "rh"){ forward("completedTask", "completedTask()" ,"butlermind" ) 
+						 }
 					}
-					 transition(edgeName="t018",targetState="actionClean",cond=whenDispatch("destinationReached"))
-					transition(edgeName="t019",targetState="waitCmd2",cond=whenDispatch("completedTask"))
+					 transition(edgeName="t020",targetState="actionClean",cond=whenDispatch("destinationReached"))
+					transition(edgeName="t021",targetState="waitCmd2",cond=whenDispatch("completedTask"))
 				}	 
 				state("sendWarning") { //this:State
 					action { //it:State
