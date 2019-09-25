@@ -1,6 +1,6 @@
 System sprint3
-       
-mqttBroker "localhost" : 1883
+     
+mqttBroker "192.168.43.102" : 1883
 //from maitre to butler
 Dispatch prepare : prepare
 Dispatch addFood : addFood(C,Q) //C = food code, Q = quantity
@@ -104,6 +104,8 @@ Event obstacleDetected : obstacleDetected
 Event obstacleExploration : obstacleExploration
 Event map : map(MAPSTRING, MAPNAME)
 Event mapSetted : mapSetted
+Event rotatoryCounter : rotatoryCounter(COUNTER)
+
 
 Context ctxButler ip[host="localhost" port=8080] -mqtt
 Context ctxMaitre ip[host="localhost" port=8081] -mqtt
@@ -153,7 +155,8 @@ QActor butlerresourcemodel context ctxButler{
 
 QActor mind context ctxButler{
 	["var forward = false
-	  var obstacle = false"]
+	  var obstacle = false
+	  var rotatory = 0"]
 	State s0 initial{
 		println("###MIND STARTED ")
 	}Goto waitCmd
@@ -164,8 +167,25 @@ QActor mind context ctxButler{
 		 */
 	}Transition t0 whenEvent modelChangedAction -> handleAction
 				   whenEvent sonarRobot -> handleSonar
+				   whenEvent rotatoryCounter -> handleRotatory
 				   whenMsg isObstacle -> reply
 				   
+	State handleRotatory{
+		onMsg(rotatoryCounter : rotatoryCounter(COUNTER)){
+			println("*******COUNTER ${payloadArg(0)}**********")
+			["rotatory = Integer.parseInt(payloadArg(0))"]
+			if"rotatory < 0"{
+				["rotatory = -rotatory"]
+			}
+			if"rotatory >= 77"{
+				forward butler -m robotAction : robotAction(h)
+				run itunibo.test.arduinoConnection.resetCont()
+				forward butlerresourcemodel -m modelUpdateAction : modelUpdateAction(robot, h)
+			}
+		}
+	}Goto waitCmd
+	
+	
 	State reply{
 		if"obstacle"{
 			forward roomexploration -m obstacle : obstacle
@@ -179,7 +199,7 @@ QActor mind context ctxButler{
 			printCurrentMessage
 			forward butler -m robotAction : robotAction($payloadArg(1))
 			["forward = (payloadArg(1) == \"w\")"]
-			if "payloadArg(1).equals(\"a\")"{
+			/*if "payloadArg(1).equals(\"a\")"{
 				delay 160
 				forward butler -m robotAction : robotAction(h)
 				forward butlerresourcemodel -m modelUpdateAction : modelUpdateAction(robot,h)
@@ -188,7 +208,7 @@ QActor mind context ctxButler{
 				delay 180
 				forward butler -m robotAction : robotAction(h)
 				forward butlerresourcemodel -m modelUpdateAction : modelUpdateAction(robot,h)
-			}
+			}*/
 		}
 	}Goto waitCmd
 	
@@ -581,7 +601,7 @@ QActor execroute context ctxButler{
 }
    
 QActor butler context ctxButler{
-	["var noRobot = false"]
+	
 	State s0 initial{
 		solve(consult("basicRobotConfig.pl"))
 		solve(robot(R,PORT)) //R = virtual | realnano
@@ -589,16 +609,13 @@ QActor butler context ctxButler{
 		ifSolved {
 			println("###USING ROBOT : ${getCurSol(\"R\")}, port = ${getCurSol(\"PORT\")}")
 			//include l'esecuzione del sonar
-			run itunibo.robot.robotSupport.create(myself, @R, @PORT)    
+			run itunibo.robot.robotSupport.create(myself, @R, @PORT)   
+			run itunibo.test.arduinoConnection.connect(myself)
 		}else{
 			println("No Robot")
-			["noRobot = true"]
+			 
 		}
-	}Goto waitCmd if "noRobot == false" else test
-	
-	State test{
-		
-	}
+	}Goto waitCmd
 	
 	State waitCmd{
 	}Transition t0 whenMsg robotAction -> handleRobotAction
@@ -615,7 +632,7 @@ QActor butler context ctxButler{
 QActor maitre context ctxMaitre{
 	State s0 initial{
 		println("###Maitre STARTED")
-	}Goto sendingP
+	}//Goto sendingP
 	
 	State sendingP{
 		delay 2000
