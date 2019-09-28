@@ -17,6 +17,7 @@ class Mind ( name: String, scope: CoroutineScope ) : ActorBasicFsm( name, scope)
 	override fun getBody() : (ActorBasicFsm.() -> Unit){
 		var forward = false
 			  var obstacle = false
+			  var rotation = false
 			  var rotatory = 0
 		return { //this:ActionBasciFsm
 				state("s0") { //this:State
@@ -41,7 +42,7 @@ class Mind ( name: String, scope: CoroutineScope ) : ActorBasicFsm( name, scope)
 								rotatory = Integer.parseInt(payloadArg(0))
 								if(rotatory < 0){ rotatory = -rotatory
 								 }
-								if(rotatory >= 77){ forward("robotAction", "robotAction(h)" ,"butler" ) 
+								if(rotatory >= 40 && rotation ){ forward("robotAction", "robotAction(h)" ,"butler" ) 
 								itunibo.test.arduinoConnection.resetCont(  )
 								forward("modelUpdateAction", "modelUpdateAction(robot,h)" ,"butlerresourcemodel" ) 
 								 }
@@ -66,6 +67,7 @@ class Mind ( name: String, scope: CoroutineScope ) : ActorBasicFsm( name, scope)
 								println("$name in ${currentState.stateName} | $currentMsg")
 								forward("robotAction", "robotAction(${payloadArg(1)})" ,"butler" ) 
 								forward = (payloadArg(1) == "w")
+											  rotation = (payloadArg(1) == "d" || payloadArg(1) == "a")
 						}
 					}
 					 transition( edgeName="goto",targetState="waitCmd", cond=doswitch() )

@@ -1,6 +1,6 @@
 System sprint3
      
-mqttBroker "192.168.43.102" : 1883
+mqttBroker "192.168.43.139" : 1883
 //from maitre to butler
 Dispatch prepare : prepare
 Dispatch addFood : addFood(C,Q) //C = food code, Q = quantity
@@ -156,6 +156,7 @@ QActor butlerresourcemodel context ctxButler{
 QActor mind context ctxButler{
 	["var forward = false
 	  var obstacle = false
+	  var rotation = false
 	  var rotatory = 0"]
 	State s0 initial{
 		println("###MIND STARTED ")
@@ -177,7 +178,7 @@ QActor mind context ctxButler{
 			if"rotatory < 0"{
 				["rotatory = -rotatory"]
 			}
-			if"rotatory >= 77"{
+			if"rotatory >= 40 && rotation "{
 				forward butler -m robotAction : robotAction(h)
 				run itunibo.test.arduinoConnection.resetCont()
 				forward butlerresourcemodel -m modelUpdateAction : modelUpdateAction(robot, h)
@@ -198,7 +199,8 @@ QActor mind context ctxButler{
 		onMsg(modelChangedAction : modelChangedAction(robot, ACTION)){
 			printCurrentMessage
 			forward butler -m robotAction : robotAction($payloadArg(1))
-			["forward = (payloadArg(1) == \"w\")"]
+			["forward = (payloadArg(1) == \"w\")
+			  rotation = (payloadArg(1) == \"d\" || payloadArg(1) == \"a\")"]
 			/*if "payloadArg(1).equals(\"a\")"{
 				delay 160
 				forward butler -m robotAction : robotAction(h)
