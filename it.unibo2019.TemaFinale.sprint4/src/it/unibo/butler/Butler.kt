@@ -23,7 +23,6 @@ class Butler ( name: String, scope: CoroutineScope ) : ActorBasicFsm( name, scop
 						println("###Butler STARTED")
 						if(currentSolution.isSuccess()) { println("###USING ROBOT : ${getCurSol("R")}, port = ${getCurSol("PORT")}")
 						itunibo.robot.robotSupport.create(myself ,getCurSol("R").toString(), getCurSol("PORT").toString() )
-						itunibo.test.arduinoConnection.connect(myself)
 						 }
 						else
 						{ println("No Robot")
@@ -34,7 +33,7 @@ class Butler ( name: String, scope: CoroutineScope ) : ActorBasicFsm( name, scop
 				state("waitCmd") { //this:State
 					action { //it:State
 					}
-					 transition(edgeName="t034",targetState="handleRobotAction",cond=whenDispatch("robotAction"))
+					 transition(edgeName="t033",targetState="handleRobotAction",cond=whenDispatch("robotAction"))
 				}	 
 				state("handleRobotAction") { //this:State
 					action { //it:State

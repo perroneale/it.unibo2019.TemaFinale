@@ -75,9 +75,9 @@ class Planningroute ( name: String, scope: CoroutineScope ) : ActorBasicFsm( nam
 				state("waitCmd") { //this:State
 					action { //it:State
 					}
-					 transition(edgeName="t023",targetState="createMap",cond=whenEventGuarded("map",{(set == false)}))
-					transition(edgeName="t024",targetState="planningRoute",cond=whenDispatch("calculateRoute"))
-					transition(edgeName="t025",targetState="updating",cond=whenEvent("modelChangedPosition"))
+					 transition(edgeName="t022",targetState="createMap",cond=whenEventGuarded("map",{(set == false)}))
+					transition(edgeName="t023",targetState="planningRoute",cond=whenDispatch("calculateRoute"))
+					transition(edgeName="t024",targetState="updating",cond=whenEvent("modelChangedPosition"))
 				}	 
 				state("updating") { //this:State
 					action { //it:State

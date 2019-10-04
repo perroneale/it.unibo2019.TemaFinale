@@ -60,10 +60,10 @@ class fridgeContent(name : String) : CoapResource(name){
 			var foodName = list.get(0)
 			var quantity = list.get(1)
 			var find = foodAvailability(foodName, quantity)
-			if(find){
+			if(find.first){
 				exchange.respond(ResponseCode.VALID)
 			}else{
-				exchange.respond(ResponseCode.NOT_ACCEPTABLE)
+				exchange.respond(ResponseCode.NOT_ACCEPTABLE, find.second.toString())
 			}
 		}else{
 			exchange!!.respond(ResponseCode.CONTENT, getContent(), MediaTypeRegistry.TEXT_PLAIN)
@@ -87,8 +87,10 @@ class fridgeContent(name : String) : CoapResource(name){
 		var b = false
 		for(i in 0..fridgeContent.size-1){
 			if(fridgeContent.get(i).getFoodCode() == id){
-				b = true
-				fridgeContent.get(i).setQuantity(quantity)
+				if(fridgeContent.get(i).getQuantity() >= quantity){
+					b = true
+					fridgeContent.get(i).setQuantity(fridgeContent.get(i).getQuantity() - quantity)
+				}
 				break
 			}
 		}
@@ -99,7 +101,7 @@ class fridgeContent(name : String) : CoapResource(name){
 	fun getContent() : String{
 		var result = ""
 		for( i in 0..(fridgeContent.size - 1)){
-			result = result + fridgeContent.get(i).toString()
+			result = result + fridgeContent.get(i).toString()+"@"
 		}
 		//println("##### " + result)
 		return result	
@@ -126,12 +128,14 @@ class fridgeContent(name : String) : CoapResource(name){
 		return super.getChild(name)
 	}
 	
-	fun foodAvailability(foodName : String, foodQuantity : String) : Boolean{
+	fun foodAvailability(foodName : String, foodQuantity : String) : Pair<Boolean, Int>{
 		var b = false
 		var q = foodQuantity.toInt()
+		var av = 0
 		for(i in 0..fridgeContent.size-1){
 			if(fridgeContent.get(i).getName() == foodName){
 				if(fridgeContent.get(i).getQuantity() >= q){
+					av = fridgeContent.get(i).getQuantity()
 					b = true
 					fridgeContent.get(i).setQuantity(fridgeContent.get(i).getQuantity() - q)
 					changed()
@@ -139,6 +143,6 @@ class fridgeContent(name : String) : CoapResource(name){
 				break
 			}
 		}
-		return b
+		return Pair(b,av)
 	}
 }

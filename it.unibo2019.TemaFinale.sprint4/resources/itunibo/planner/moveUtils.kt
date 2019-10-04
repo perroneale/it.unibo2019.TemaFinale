@@ -162,6 +162,7 @@ object moveUtils{
 		actor.forward("modelChangeAction", "modelChangeAction(robot,s)", "butlerresourcemodel")
 		delay(150)
 		actor.forward("modelChangeAction", "modelChangeAction(robot,h)", "butlerresourcemodel")
+		actor.forward("nextMove", "nextMove","execroute")
 	}
 	
 	suspend fun rotateRight2(actor : ActorBasic, pauseTime : Int = PauseTime){
@@ -189,6 +190,7 @@ object moveUtils{
 		actor.forward("modelChangeAction", "modelChangeAction(robot,s)", "butlerresourcemodel")
 		delay(360)
 		actor.forward("modelChangeAction", "modelChangeAction(robot,h)", "butlerresourcemodel")
+		actor.forward("nextMove", "nextMove","execroute")
 	}
 	
 	suspend fun rotateLeft2(actor : ActorBasic, pauseTime : Int = PauseTime){
@@ -217,6 +219,7 @@ object moveUtils{
 		doPlannedMove(actor, "w" )	//update map	
 		delay( pauseTime.toLong() )
 		showCurrentRobotState()
+		actor.forward("nextMove", "nextMove", "execroute")
 	} 
 	suspend fun attemptTomoveAhead(actor:ActorBasic,stepTime:Int, dest:String ="onestep"){
  		//println("moveUtils attemptTomoveAhead stepTime=$stepTime")

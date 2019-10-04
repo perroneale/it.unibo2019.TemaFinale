@@ -94,9 +94,9 @@ Dispatch putDishesDish   : putDishes(ND, NB, NP)
 Dispatch getDishesDish   : getDishes(ND, NB, NP)   
 //from resourcemodelbutler
 Event modelChangedTask : modelChangedTask(TASK)
-Event modelChangedpreparing : modelChangedpreparing(DEST, TASK)
-Event modelChangedadding : modelChangedadding(DEST, TASK)
-Event modelChangedcleaning : modelChangedcleaning(DEST, TASK)
+Event modelChangedpreparing : modelChangedpreparing(DEST, TASK, C, Q)
+Event modelChangedadding : modelChangedadding(DEST, TASK, C, Q)
+Event modelChangedcleaning : modelChangedcleaning(DEST, TASK, C, Q)
 Event modelChangedAction : modelChangedAction(DEST, ACTION) //ACTION = w,a,s,d,h
 Event modelChangedPosition : modelChangedPosition(X, Y)
 Event sonarRobot : sonarRobot(DISTANCE)
@@ -156,6 +156,7 @@ QActor butlerresourcemodel context ctxButler{
 QActor mind context ctxButler{
 	["var forward = false
 	  var obstacle = false
+	  var rotation = false
 	  var rotatory = 0"]
 	State s0 initial{
 		println("###MIND STARTED ")
@@ -167,7 +168,7 @@ QActor mind context ctxButler{
 		 */
 	}Transition t0 whenEvent modelChangedAction -> handleAction
 				   whenEvent sonarRobot -> handleSonar
-				   whenEvent rotatoryCounter -> handleRotatory
+				   //whenEvent rotatoryCounter -> handleRotatory
 				   whenMsg isObstacle -> reply
 				   
 	State handleRotatory{
@@ -177,9 +178,9 @@ QActor mind context ctxButler{
 			if"rotatory < 0"{
 				["rotatory = -rotatory"]
 			}
-			if"rotatory >= 77"{
+			if"rotatory >= 58 && rotation "{
 				forward butler -m robotAction : robotAction(h)
-				run itunibo.test.arduinoConnection.resetCont()
+				//run itunibo.test.arduinoConnection.resetCont()
 				forward butlerresourcemodel -m modelUpdateAction : modelUpdateAction(robot, h)
 			}
 		}
@@ -198,8 +199,9 @@ QActor mind context ctxButler{
 		onMsg(modelChangedAction : modelChangedAction(robot, ACTION)){
 			printCurrentMessage
 			forward butler -m robotAction : robotAction($payloadArg(1))
-			["forward = (payloadArg(1) == \"w\")"]
-			/*if "payloadArg(1).equals(\"a\")"{
+			["forward = (payloadArg(1) == \"w\")
+			  rotation = ((payloadArg(1) == \"d\") || (payloadArg(1) == \"a\"))"]
+			if "payloadArg(1).equals(\"a\")"{
 				delay 160
 				forward butler -m robotAction : robotAction(h)
 				forward butlerresourcemodel -m modelUpdateAction : modelUpdateAction(robot,h)
@@ -208,7 +210,7 @@ QActor mind context ctxButler{
 				delay 180
 				forward butler -m robotAction : robotAction(h)
 				forward butlerresourcemodel -m modelUpdateAction : modelUpdateAction(robot,h)
-			}*/
+			}
 		}
 	}Goto waitCmd
 	
@@ -239,7 +241,8 @@ QActor butlermind context ctxButler{
 	  var position = \"rh\"
 	  var Dishes = \"\"
 	  var Posate = \"\"
-	  var Bicchieri = \"\""]
+	  var Bicchieri = \"\"
+	  var FoodString =\"\""]
 	  
 	State s0 initial{
 		solve(consult("sysRules.pl"))
@@ -252,6 +255,9 @@ QActor butlermind context ctxButler{
 		["Dishes = getCurSol(\"Y\").toString()"]
 		solve(bicchieri(Z))
 		["Dishes = getCurSol(\"Z\").toString()"]
+		solve(getFood(L))
+		["FoodString = getCurSol(\"L\").toString()"]
+		run itunibo.robot.foodRequire.setContent(FoodString)
 	}Transition t0 whenMsg updateKBbm -> updateKB
 	
 	State updateKB{
@@ -296,6 +302,9 @@ QActor butlermind context ctxButler{
 			}else{
 				if"position == \"fridge\""{
 					//prenod il cibo dal frigo
+					["var FoodCont = itunibo.robot.foodRequire.getFood()"]
+					run itunibo.coap.client.butlerMindClient.requireAllFood(FoodCont)
+					delay 2000
 					forward planningroute -m calculateRoute : calculateRoute(table)
 					//["position = \"table\""]
 				}else{
@@ -324,6 +333,7 @@ QActor butlermind context ctxButler{
 	State waitCmd2{
 		["Task = \"\"
 		  inRh = false"]
+		["position = \"rh\""]
 		  println("###IN waitCmd2")
 		//aggiorno il modello perchè il robot è in attesa di un messaggio
 		//forward butlerresourcemodel -m modelChangeTask : modelChangeTask(robot, waiting, 0, 0)
@@ -375,19 +385,16 @@ QActor butlermind context ctxButler{
 			}
 			
 		}
-		
-		
 	}Transition t0 whenMsg destinationReached -> actionClean
 				   whenMsg completedTask -> waitCmd1
 	
 	
 	State adding{
-		["Task = \"adding\"
-		  inRh = false"]
-		onMsg(addFood : addFood(C,Q)){
+		["Task = \"adding\""]
+		onMsg(modelChangedadding : modelChangedadding(robot, adding, C,Q)){
 			//forward fridge -m foodAvailability : foodAvailability($payloadArg(0),$payloadArg(1))
 			//invio richiesta di disponibilità al server coap
-			
+			["var result = itunibo.coap.client.butlerMindClient.requireFood(payloadArg(2),payloadArg(3),myself)"]
 		}
 	}Transition t0 whenMsg positiveResponse -> nextStep
 				   whenMsg negativeResponse -> sendWarning
@@ -397,7 +404,7 @@ QActor butlermind context ctxButler{
 	}Transition t0 whenMsg destinationReached -> actionAdd
 	
 	State actionAdd{
-		println("###BUTLERMIND in actionPrepare")
+		println("###BUTLERMIND in actionAdd")
 		onMsg(destinationReached : destinationReached(X,Y)){
 			solve(getPosition($payloadArg(0),$payloadArg(1), POSITION))
 			["position = getCurSol(\"POSITION\").toString()"]
@@ -405,16 +412,20 @@ QActor butlermind context ctxButler{
 		}
 		if"position == \"table\""{
 			//prendo il cibo dal tavolo
-			forward planningroute -m calculateRoute : calculateRoute(table)
+			forward planningroute -m calculateRoute : calculateRoute(rh)
+		}else{
+			if"position == \"fridge\""{
+				//poso il cibo nel frigo
+				forward planningroute -m calculateRoute : calculateRoute(table)
+			}else{
+				if"position == \"rh\""{
+					forward butlermind -m completedTask : completedTask()
+				}
+			}
+			
 		}
-		if"position == \"fridge\""{
-			//poso il cibo nel frigo
-			forward planningroute -m calculateRoute : calculateRoute(table)
-		}
-		if"position == \"rh\""{
-			forward butlermind -m completedTask : completedTask()
-		}
-	}Transition t0 whenMsg destinationReached -> actionClean
+		
+	}Transition t0 whenMsg destinationReached -> actionAdd
 				   whenMsg completedTask -> waitCmd2
 	
 	State sendWarning{
@@ -423,7 +434,7 @@ QActor butlermind context ctxButler{
 		}
 	}Goto waitCmd2
 
-}
+}  
 
 QActor planningroute context ctxButler {
 	["var set = false
@@ -553,6 +564,10 @@ QActor execroute context ctxButler{
 	
 	State execRoute{
 		println("###EXECROUTE STATE EXEC ROUTE")
+		solve(findall(move(M),move(M),L))
+		println("°°°°°°°°°°°°°°°°°°°°°°°°°")
+		println(@L)
+		println("°°°°°°°°°°°°°°°°°°°°°°°°°")
 		solve(retract(move(M)) ) //consume a move
 		ifSolved {
 			["Curmove = getCurSol(\"M\").toString()"]
@@ -560,14 +575,16 @@ QActor execroute context ctxButler{
 			["Curmove=\"nomove\" "]
 		}
 		if "(Curmove != \"nomove\")"{
-			["startTimer()"]
+			//["startTimer()"]
 			run itunibo.planner.moveUtils.execMove(myself, Curmove)
-			forward execroute -m nextMove : nextMove
+			//delay 1000
+			//forward execroute -m nextMove : nextMove
 		}else{
 			//comunico a planningRoute la posizione del butler
 			
 			forward execroute -m check : check
 		}
+		delay 2000
 		["X = itunibo.planner.moveUtils.getPosX(myself).toString()
 		  Y = itunibo.planner.moveUtils.getPosY(myself).toString()"]
 		forward butlerresourcemodel -m modelChangePos : modelChangePos(robot, $X,$Y)
@@ -575,7 +592,7 @@ QActor execroute context ctxButler{
 				   whenMsg nextMove -> execRoute
 				   whenMsg check -> execRouteCompleted
 				   whenEvent obstacleDetected -> handleObstacle
-	
+	  
 	State execRouteCompleted{
 		forward butlermind -m destinationReached : destinationReached($X,$Y)
 	}Goto waitCmd
@@ -612,10 +629,10 @@ QActor butler context ctxButler{
 			println("###USING ROBOT : ${getCurSol(\"R\")}, port = ${getCurSol(\"PORT\")}")
 			//include l'esecuzione del sonar
 			run itunibo.robot.robotSupport.create(myself, @R, @PORT)   
-			run itunibo.test.arduinoConnection.connect(myself)
+			//run itunibo.test.arduinoConnection.connect(myself)
 		}else{
 			println("No Robot")
-			 
+			
 		}
 	}Goto waitCmd
 	

@@ -12,6 +12,7 @@ object arduinoConnection{
 		val serialConn = JSSCSerialComm()
 	    conn = serialConn.connect("/dev/ttyACM0")
 		println("arduino connected to conn= $conn")
+		resetCont()
 		rotatoryEncoder("rotatory", actor, conn)
 	}
 	

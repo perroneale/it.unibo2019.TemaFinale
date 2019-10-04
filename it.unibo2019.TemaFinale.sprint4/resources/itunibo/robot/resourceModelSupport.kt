@@ -23,7 +23,7 @@ object resourceModelSupport{
 		}
 		//emetto un evento per butlermind
 		actor.scope.launch{
-			actor.emit("modelChanged$content", "modelChanged$content(robot, $content)");
+			actor.emit("modelChanged$content", "modelChanged$content(robot, $content, $id, $q)");
 		}
 	}
 	
@@ -36,6 +36,10 @@ object resourceModelSupport{
 		//emetto un evento per la mind
 		actor.scope.launch{
 			actor.emit("modelChangedAction", "modelChangedAction(robot, $content)");
+			/*if(content == "h"){
+				itunibo.test.arduinoConnection.resetCont()
+				itunibo.test.arduinoConnection.resetCont()
+			}*/
 		}
 	}
 	
@@ -56,6 +60,12 @@ object resourceModelSupport{
 		actor.solve("model(actuator, robot, state(S))");
 		val currentAction = actor.getCurSol("S");
 		println("###CurrentAction : $currentAction");
+		/*if(action == "h"){
+			itunibo.test.arduinoConnection.resetCont()
+			itunibo.test.arduinoConnection.resetCont()
+		}*/
+				
+		
 	}
 }
 

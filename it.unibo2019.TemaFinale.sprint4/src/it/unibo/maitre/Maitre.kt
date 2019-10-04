@@ -29,7 +29,7 @@ class Maitre ( name: String, scope: CoroutineScope ) : ActorBasicFsm( name, scop
 						println("----Maitre send prepare message")
 						forward("modelChangeTask", "modelChangeTask(robot,preparing,0,0)" ,"butlerresourcemodel" ) 
 					}
-					 transition(edgeName="t035",targetState="sendingAC",cond=whenDispatch("completedTask"))
+					 transition(edgeName="t034",targetState="sendingAC",cond=whenDispatch("completedTask"))
 				}	 
 				state("sendingAC") { //this:State
 					action { //it:State
@@ -41,21 +41,21 @@ class Maitre ( name: String, scope: CoroutineScope ) : ActorBasicFsm( name, scop
 						forward("modelChangeTask", "modelChangeTask(robot,cleaning,0,0)" ,"butlerresourcemodel" ) 
 						forward("cl", "cl" ,"maitre" ) 
 					}
-					 transition(edgeName="t036",targetState="waitingAfAck",cond=whenDispatch("add"))
-					transition(edgeName="t037",targetState="waitingClAck",cond=whenDispatch("cl"))
+					 transition(edgeName="t035",targetState="waitingAfAck",cond=whenDispatch("add"))
+					transition(edgeName="t036",targetState="waitingClAck",cond=whenDispatch("cl"))
 				}	 
 				state("waitingAfAck") { //this:State
 					action { //it:State
 						println("$name in ${currentState.stateName} | $currentMsg")
 					}
-					 transition(edgeName="t038",targetState="sendingAC",cond=whenDispatch("completedTask"))
-					transition(edgeName="t039",targetState="updateFA",cond=whenDispatch("currentFood"))
+					 transition(edgeName="t037",targetState="sendingAC",cond=whenDispatch("completedTask"))
+					transition(edgeName="t038",targetState="updateFA",cond=whenDispatch("currentFood"))
 				}	 
 				state("waitingClAck") { //this:State
 					action { //it:State
 					}
-					 transition(edgeName="t040",targetState="finish",cond=whenDispatch("completedTask"))
-					transition(edgeName="t041",targetState="updateFC",cond=whenDispatch("currentFood"))
+					 transition(edgeName="t039",targetState="finish",cond=whenDispatch("completedTask"))
+					transition(edgeName="t040",targetState="updateFC",cond=whenDispatch("currentFood"))
 				}	 
 				state("finish") { //this:State
 					action { //it:State
