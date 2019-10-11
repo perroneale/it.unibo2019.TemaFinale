@@ -19,19 +19,30 @@ class Mind ( name: String, scope: CoroutineScope ) : ActorBasicFsm( name, scope)
 			  var obstacle = false
 			  var rotation = false
 			  var rotatory = 0
+			  var NumRot = 0
+			  var TimeVirtual = 0L
 		return { //this:ActionBasciFsm
 				state("s0") { //this:State
 					action { //it:State
 						println("###MIND STARTED ")
+						solve("consult('config.pl')","") //set resVar	
+						solve("rotation(X)","") //set resVar	
+						if(currentSolution.isSuccess()) { NumRot = Integer.parseInt(getCurSol("X").toString())
+						 }
+						solve("timeVirtual(TV)","") //set resVar	
+						if(currentSolution.isSuccess()) { TimeVirtual = getCurSol("TV").toString().toLong()
+						println("$TimeVirtual")
+						 }
 					}
 					 transition( edgeName="goto",targetState="waitCmd", cond=doswitch() )
 				}	 
 				state("waitCmd") { //this:State
 					action { //it:State
 					}
-					 transition(edgeName="t04",targetState="handleAction",cond=whenEvent("modelChangedAction"))
+					 transition(edgeName="t04",targetState="handleAction",cond=whenDispatch("modelChangedAction"))
 					transition(edgeName="t05",targetState="handleSonar",cond=whenEvent("sonarRobot"))
-					transition(edgeName="t06",targetState="reply",cond=whenDispatch("isObstacle"))
+					transition(edgeName="t06",targetState="handleRotatory",cond=whenEvent("rotatoryCounter"))
+					transition(edgeName="t07",targetState="reply",cond=whenDispatch("isObstacle"))
 				}	 
 				state("handleRotatory") { //this:State
 					action { //it:State
@@ -39,9 +50,10 @@ class Mind ( name: String, scope: CoroutineScope ) : ActorBasicFsm( name, scope)
 						                        currentMsg.msgContent()) ) { //set msgArgList
 								println("*******COUNTER ${payloadArg(0)}**********")
 								rotatory = Integer.parseInt(payloadArg(0))
-								if(rotatory < 0){ rotatory = -rotatory
+								if((rotatory < 0)){ rotatory = -rotatory
 								 }
-								if(rotatory >= 58 && rotation ){ forward("robotAction", "robotAction(h)" ,"butler" ) 
+								if((rotation && rotatory >= NumRot )){ println("&&&&&&STOP FOR ROTATORY ENCODER")
+								forward("robotAction", "robotAction(h)" ,"butler" ) 
 								forward("modelUpdateAction", "modelUpdateAction(robot,h)" ,"butlerresourcemodel" ) 
 								 }
 						}
@@ -66,15 +78,16 @@ class Mind ( name: String, scope: CoroutineScope ) : ActorBasicFsm( name, scope)
 								forward("robotAction", "robotAction(${payloadArg(1)})" ,"butler" ) 
 								forward = (payloadArg(1) == "w")
 											  rotation = ((payloadArg(1) == "d") || (payloadArg(1) == "a"))
-								if(payloadArg(1).equals("a")){ delay(160) 
-								forward("robotAction", "robotAction(h)" ,"butler" ) 
-								forward("modelUpdateAction", "modelUpdateAction(robot,h)" ,"butlerresourcemodel" ) 
-								 }
-								if(payloadArg(1).equals("d")){ delay(180) 
-								forward("robotAction", "robotAction(h)" ,"butler" ) 
-								forward("modelUpdateAction", "modelUpdateAction(robot,h)" ,"butlerresourcemodel" ) 
-								 }
+								println("$rotation")
 						}
+					}
+					 transition( edgeName="goto",targetState="waitCmd", cond=doswitch() )
+				}	 
+				state("sendStop") { //this:State
+					action { //it:State
+						println("SEND STOP")
+						forward("robotAction", "robotAction(h)" ,"butler" ) 
+						forward("modelUpdateAction", "modelUpdateAction(robot,h)" ,"butlerresourcemodel" ) 
 					}
 					 transition( edgeName="goto",targetState="waitCmd", cond=doswitch() )
 				}	 

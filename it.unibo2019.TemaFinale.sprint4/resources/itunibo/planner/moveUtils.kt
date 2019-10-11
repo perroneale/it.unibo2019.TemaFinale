@@ -66,7 +66,7 @@ object moveUtils{
  	fun getPosX(actor : ActorBasic)    	  : Int{ setPosition(actor); return curPos.first  } 
 	fun getPosY(actor : ActorBasic)    	  : Int{ setPosition(actor); return curPos.second }
 	fun getDirection(actor : ActorBasic)  : String{ setPosition(actor);return direction.toString() }
-	fun mapIsEmpty() : Boolean{return (getMapDimX( )==0 &&  getMapDimY( )==0 ) }
+	fun mapIsEmpty() : Boolean{return ((getMapDimX( )==0 &&  getMapDimY( )==0 ) || (getMapDimX( )==1 &&  getMapDimY( )==1 ) )}
 	
 	
 	fun showCurrentRobotState(){
@@ -160,9 +160,11 @@ object moveUtils{
 		delay( pauseTime.toLong() )
 		showCurrentRobotState()
 		actor.forward("modelChangeAction", "modelChangeAction(robot,s)", "butlerresourcemodel")
-		delay(150)
 		actor.forward("modelChangeAction", "modelChangeAction(robot,h)", "butlerresourcemodel")
-		actor.forward("nextMove", "nextMove","execroute")
+		actor.scope.launch{
+			actor.autoMsg("nextMove", "nextMove")
+			println("같같SEND NEXT MOVE")
+		}
 	}
 	
 	suspend fun rotateRight2(actor : ActorBasic, pauseTime : Int = PauseTime){
@@ -188,9 +190,11 @@ object moveUtils{
 		delay( pauseTime.toLong() )
 		showCurrentRobotState()
 		actor.forward("modelChangeAction", "modelChangeAction(robot,s)", "butlerresourcemodel")
-		delay(360)
 		actor.forward("modelChangeAction", "modelChangeAction(robot,h)", "butlerresourcemodel")
-		actor.forward("nextMove", "nextMove","execroute")
+		actor.scope.launch{
+			actor.autoMsg("nextMove", "nextMove")
+			println("같같SEND NEXT MOVE")
+		}
 	}
 	
 	suspend fun rotateLeft2(actor : ActorBasic, pauseTime : Int = PauseTime){
@@ -217,9 +221,13 @@ object moveUtils{
 		delay( stepTime.toLong() )
 		actor.forward("modelChangeAction", "modelChangeAction(robot,h)", dest)
 		doPlannedMove(actor, "w" )	//update map	
-		delay( pauseTime.toLong() )
 		showCurrentRobotState()
-		actor.forward("nextMove", "nextMove", "execroute")
+		delay( pauseTime.toLong() )
+		/*actor.scope.launch{
+			actor.autoMsg("nextMove", "nextMove")
+			println("같같SEND NEXT MOVE")
+		}*/
+		
 	} 
 	suspend fun attemptTomoveAhead(actor:ActorBasic,stepTime:Int, dest:String ="onestep"){
  		//println("moveUtils attemptTomoveAhead stepTime=$stepTime")
@@ -309,7 +317,7 @@ object moveUtils{
 	}
 	
 	
-	suspend fun execMove(actor:ActorBasic,move:String, stepTime : Int = ForwardTime, pauseTime:Int=PauseTime){
+	suspend fun execMove(actor:ActorBasic,move:String, stepTime : Int, pauseTime:Int=PauseTime){
 		when( move ){
 			"a" -> rotateLeft(actor, pauseTime)
 			"d" -> rotateRight(actor, pauseTime)

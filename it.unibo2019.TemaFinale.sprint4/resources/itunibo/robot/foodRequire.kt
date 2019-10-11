@@ -24,4 +24,13 @@ object foodRequire{
 		return foodReq
 	}
 	
+	fun getFoodId(name:String) : Int{
+		for(i in 0..foodReq.size -1){
+			if(foodReq.get(i).getName() == name){
+				return foodReq.get(i).getFoodCode()
+			}
+		}
+		return -1
+	}
+	
 }

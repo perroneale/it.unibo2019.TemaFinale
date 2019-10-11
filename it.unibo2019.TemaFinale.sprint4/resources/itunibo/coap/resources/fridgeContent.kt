@@ -19,7 +19,7 @@ class fridgeContent(name : String) : CoapResource(name){
 	
 	companion object {
 		lateinit var resourceCoap : fridgeContent
-		var content = ""
+		//var content = ""
 		
 		
 		//avvio il server
@@ -137,7 +137,7 @@ class fridgeContent(name : String) : CoapResource(name){
 				if(fridgeContent.get(i).getQuantity() >= q){
 					av = fridgeContent.get(i).getQuantity()
 					b = true
-					fridgeContent.get(i).setQuantity(fridgeContent.get(i).getQuantity() - q)
+					//fridgeContent.get(i).setQuantity(fridgeContent.get(i).getQuantity() - q)
 					changed()
 				}
 				break

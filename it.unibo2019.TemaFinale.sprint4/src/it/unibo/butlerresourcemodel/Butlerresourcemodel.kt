@@ -54,6 +54,7 @@ class Butlerresourcemodel ( name: String, scope: CoroutineScope ) : ActorBasicFs
 					action { //it:State
 						if( checkMsgContent( Term.createTerm("modelChangeAction(DEST,ACTION)"), Term.createTerm("modelChangeAction(robot,ACTION)"), 
 						                        currentMsg.msgContent()) ) { //set msgArgList
+								println("Butlerresourcemodel in handleAction")
 								itunibo.robot.resourceModelSupport.updateModelAction(myself ,payloadArg(1) )
 						}
 					}

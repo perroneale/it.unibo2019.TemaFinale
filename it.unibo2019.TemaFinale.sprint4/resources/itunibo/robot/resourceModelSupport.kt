@@ -35,7 +35,8 @@ object resourceModelSupport{
 		println("###CurrentAction : $currentAction");
 		//emetto un evento per la mind
 		actor.scope.launch{
-			actor.emit("modelChangedAction", "modelChangedAction(robot, $content)");
+			actor.forward("modelChangedAction", "modelChangedAction(robot, $content)", "mind")
+			//actor.emit("modelChangedAction", "modelChangedAction(robot, $content)");
 			/*if(content == "h"){
 				itunibo.test.arduinoConnection.resetCont()
 				itunibo.test.arduinoConnection.resetCont()

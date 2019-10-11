@@ -17,6 +17,7 @@ class Planningroute ( name: String, scope: CoroutineScope ) : ActorBasicFsm( nam
 	override fun getBody() : (ActorBasicFsm.() -> Unit){
 		var set = false
 			  var mapEmpty = true
+			  var Robot = ""
 		return { //this:ActionBasciFsm
 				state("s0") { //this:State
 					action { //it:State
@@ -24,6 +25,14 @@ class Planningroute ( name: String, scope: CoroutineScope ) : ActorBasicFsm( nam
 						solve("consult('sysRules.pl')","") //set resVar	
 						solve("consult('planningRouteKB.pl')","") //set resVar	
 						solve("consult('nearTable.pl')","") //set resVar	
+						solve("consult('basicRobotConfig.pl')","") //set resVar	
+						solve("robot(R,PORT)","") //set resVar	
+						println("###Butler STARTED")
+						if(currentSolution.isSuccess()) { Robot = getCurSol("R").toString()
+						 }
+						else
+						{ println("No Robot")
+						 }
 						itunibo.planner.plannerUtil.initAI(  )
 					}
 					 transition( edgeName="goto",targetState="loadMap", cond=doswitch() )
@@ -32,26 +41,36 @@ class Planningroute ( name: String, scope: CoroutineScope ) : ActorBasicFsm( nam
 					action { //it:State
 						solve("map(X)","") //set resVar	
 						if(currentSolution.isSuccess()) { itunibo.planner.moveUtils.loadRoomMap(myself ,getCurSol("X").toString() )
-						itunibo.planner.moveUtils.addTable(myself)
+						 mapEmpty = itunibo.planner.moveUtils.mapIsEmpty()
+						println("****mapx =" + itunibo.planner.moveUtils.getMapDimX().toString())
+										  println("****mapy =" + itunibo.planner.moveUtils.getMapDimY().toString())
+										  println("****map is empty = "+ itunibo.planner.moveUtils.mapIsEmpty())
+						println("***mapEmpty = $mapEmpty")
+						if(!mapEmpty){ itunibo.planner.moveUtils.addTable(myself)
 						println("map")
-									  println(itunibo.planner.plannerUtil.getMap())
+										  println(itunibo.planner.plannerUtil.getMap())
 						solve("findall(nearTable(X,Y,table),nearTable(X,Y,_),L)","") //set resVar	
 						var List = getCurSol("L").toString()
 						println(List)
 						forward("updateKBbm", "updateKBbm($List)" ,"butlermind" ) 
 						 }
+						 }
 						else
 						{ println("!!!---Error map name not setted---!!!")
 						 }
-						 mapEmpty = itunibo.planner.moveUtils.mapIsEmpty()
 					}
-					 transition( edgeName="goto",targetState="waitCmd", cond=doswitchGuarded({(mapEmpty == false)}) )
-					transition( edgeName="goto",targetState="doExploration", cond=doswitchGuarded({! (mapEmpty == false)}) )
+					 transition( edgeName="goto",targetState="doExploration", cond=doswitchGuarded({(mapEmpty)}) )
+					transition( edgeName="goto",targetState="waitCmd", cond=doswitchGuarded({! (mapEmpty)}) )
 				}	 
 				state("doExploration") { //this:State
 					action { //it:State
+						if(Robot == "virtual"){ forward("startExplorationVirtual", "startExplorationVirtual" ,"roomexplorationvirtual" ) 
+						 }
+						else
+						 { forward("startExploration", "startExploration" ,"roomexploration" ) 
+						  }
 					}
-					 transition( edgeName="goto",targetState="waitCmd", cond=doswitch() )
+					 transition(edgeName="t023",targetState="createMap",cond=whenEventGuarded("map",{(set == false)}))
 				}	 
 				state("createMap") { //this:State
 					action { //it:State
@@ -75,9 +94,8 @@ class Planningroute ( name: String, scope: CoroutineScope ) : ActorBasicFsm( nam
 				state("waitCmd") { //this:State
 					action { //it:State
 					}
-					 transition(edgeName="t022",targetState="createMap",cond=whenEventGuarded("map",{(set == false)}))
-					transition(edgeName="t023",targetState="planningRoute",cond=whenDispatch("calculateRoute"))
-					transition(edgeName="t024",targetState="updating",cond=whenEvent("modelChangedPosition"))
+					 transition(edgeName="t024",targetState="planningRoute",cond=whenDispatch("calculateRoute"))
+					transition(edgeName="t025",targetState="updating",cond=whenEvent("modelChangedPosition"))
 				}	 
 				state("updating") { //this:State
 					action { //it:State

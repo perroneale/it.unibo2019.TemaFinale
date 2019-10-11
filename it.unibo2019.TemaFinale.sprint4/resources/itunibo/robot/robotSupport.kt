@@ -27,13 +27,4 @@ object robotSupport{
 		
 	}
 	
-	fun calibrate(actor: ActorBasic){
-		
-		time += 50
-		Thread.sleep(time)
-		GlobalScope.launch{
-			actor.forward("robotAction","robotAction(h)", "butler")
-		}
-	}
-	
 }

@@ -10,6 +10,7 @@ import org.eclipse.californium.core.coap.Option
 import org.eclipse.californium.core.coap.CoAP.ResponseCode
 import it.unibo.kactor.ActorBasic
 import org.eclipse.californium.core.coap.MediaTypeRegistry
+import itunibo.robot.foodRequire
 
 object butlerMindClient{
 	
@@ -26,7 +27,12 @@ object butlerMindClient{
 		}
 	}
 	
-	suspend fun requireFood(name : String, quantity : String, actor : ActorBasic){
+	fun takeOneFood(name : String, quantity : String){
+		var id = foodRequire.getFoodId(name)
+		butlerClient.put("$id, $quantity", MediaTypeRegistry.TEXT_PLAIN)
+	}
+	
+	suspend fun foodAvailability( actor : ActorBasic,name : String, quantity : String){
 			var request = Request(CoAP.Code.GET, CoAP.Type.NON)
 			var optionSet = OptionSet()
 			optionSet.addOption(Option(256, "$name,$quantity"))

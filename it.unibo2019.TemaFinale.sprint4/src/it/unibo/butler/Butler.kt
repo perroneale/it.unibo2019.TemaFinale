@@ -33,7 +33,7 @@ class Butler ( name: String, scope: CoroutineScope ) : ActorBasicFsm( name, scop
 				state("waitCmd") { //this:State
 					action { //it:State
 					}
-					 transition(edgeName="t033",targetState="handleRobotAction",cond=whenDispatch("robotAction"))
+					 transition(edgeName="t034",targetState="handleRobotAction",cond=whenDispatch("robotAction"))
 				}	 
 				state("handleRobotAction") { //this:State
 					action { //it:State

@@ -25,8 +25,8 @@ class Dishwasher ( name: String, scope: CoroutineScope ) : ActorBasicFsm( name, 
 				state("waitCmd") { //this:State
 					action { //it:State
 					}
-					 transition(edgeName="t046",targetState="getting",cond=whenDispatch("getDishesDish"))
-					transition(edgeName="t047",targetState="putting",cond=whenDispatch("putDishesDish"))
+					 transition(edgeName="t047",targetState="getting",cond=whenDispatch("getDishesDish"))
+					transition(edgeName="t048",targetState="putting",cond=whenDispatch("putDishesDish"))
 				}	 
 				state("getting") { //this:State
 					action { //it:State
