@@ -2,8 +2,11 @@ package itunibo.robot
 import it.unibo.kactor.ActorBasic
 import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.launch
+import itunibo.coap.resources.butlerRoomState
+import itunibo.appliance.Food
 
 object robotSupport{
+	lateinit var roomState : butlerRoomState
 	lateinit var robotKind : String
 	var time = 0L
 	fun create( actor: ActorBasic, robot : String, port: String ){
@@ -24,7 +27,34 @@ object robotSupport{
 			"realnano" -> { itunibo.robotRaspOnly.nanoSupport.move( cmd ) }
 			else       -> println( "robot unknown" )
 		}
-		
+	}
+	
+	fun setroomstate(brs : butlerRoomState){
+		roomState = brs
+	}
+	
+	fun  updatePantryAdd(dishes : String, posate : String, bicchieri : String){
+		roomState.updatePantryadd(dishes.toInt(), posate.toInt(), bicchieri.toInt())
+	}
+	
+	fun  updateDishwasherAdd(clutlery : ArrayList<Pair<String,Int>>){
+		roomState.updateDishwasheradd(clutlery)
+	}
+	
+	fun  updateTableAdd(dishes : String, posate : String, bicchieri : String){
+		roomState.updateTableadd(dishes.toInt(), posate.toInt(), bicchieri.toInt())
+	}
+	
+	fun  updatePantryTake(dishes : String, posate : String, bicchieri : String){
+		roomState.updatePantrytake(dishes.toInt(), posate.toInt(), bicchieri.toInt())
+	}
+	
+	fun  updateDishwasherTake(dishes : String, posate : String, bicchieri : String){
+		roomState.updateDishwashertake(dishes.toInt(), posate.toInt(), bicchieri.toInt())
+	}
+	
+	fun  updateTableTake() : ArrayList<Pair<String,Int>>{
+		return roomState.updateTabletake()
 	}
 	
 }

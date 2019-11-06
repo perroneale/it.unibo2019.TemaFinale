@@ -53,6 +53,10 @@ class Roomexploration ( name: String, scope: CoroutineScope ) : ActorBasicFsm( n
 				}	 
 				state("doExploration") { //this:State
 					action { //it:State
+						if( checkMsgContent( Term.createTerm("startExploration(StepTime)"), Term.createTerm("startExploration(StepTime)"), 
+						                        currentMsg.msgContent()) ) { //set msgArgList
+								FORWARDTIME = payloadArg(0).toString().toInt()
+						}
 						forward("isObstacle", "isObstacle" ,"mind" ) 
 						itunibo.planner.moveUtils.testFunction(myself)
 					}

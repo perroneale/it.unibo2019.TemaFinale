@@ -39,10 +39,10 @@ class Mind ( name: String, scope: CoroutineScope ) : ActorBasicFsm( name, scope)
 				state("waitCmd") { //this:State
 					action { //it:State
 					}
-					 transition(edgeName="t04",targetState="handleAction",cond=whenDispatch("modelChangedAction"))
-					transition(edgeName="t05",targetState="handleSonar",cond=whenEvent("sonarRobot"))
-					transition(edgeName="t06",targetState="handleRotatory",cond=whenEvent("rotatoryCounter"))
-					transition(edgeName="t07",targetState="reply",cond=whenDispatch("isObstacle"))
+					 transition(edgeName="t08",targetState="handleAction",cond=whenDispatch("modelChangedAction"))
+					transition(edgeName="t09",targetState="handleSonar",cond=whenEvent("sonarRobot"))
+					transition(edgeName="t010",targetState="handleRotatory",cond=whenEvent("rotatoryCounter"))
+					transition(edgeName="t011",targetState="reply",cond=whenDispatch("isObstacle"))
 				}	 
 				state("handleRotatory") { //this:State
 					action { //it:State
@@ -99,7 +99,7 @@ class Mind ( name: String, scope: CoroutineScope ) : ActorBasicFsm( name, scope)
 								if(Distance <= 10 && forward){ println("###Mind, Obstacle at $Distance")
 								forward("robotAction", "robotAction(h)" ,"butler" ) 
 								forward("modelUpdateAction", "modelUpdateAction(robot,h)" ,"butlerresourcemodel" ) 
-								emit("obstacleDetected", "obstacleDetected" ) 
+								emit("obstacleDetected", "obstacleDetected(Distance)" ) 
 								 }
 								if(Distance <= 22){ println("###MIND PER EXPLORATION OBSTACLE")
 								obstacle = true

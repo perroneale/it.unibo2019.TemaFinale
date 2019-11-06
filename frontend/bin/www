@@ -7,8 +7,8 @@
 var app = require('../app');
 var debug = require('debug')('frontend:server');
 var http = require('http');
-var coap = require('../connection/coapClient');
-var scr = require('../app_server/views/script');
+//var coap = require('../connection/coapClient');
+var scr = require('../public/javascripts/iosocketemitter');
 var io ;
 /**
  * Get port from environment and store in Express.

@@ -3,32 +3,31 @@ System roomexplvirtual
 mqttBroker "localhost" : 1883
 
 Dispatch onestep       : onestep(DURATION) 
-Dispatch startExplorationVirtual : startExplorationVirtual
+Dispatch startExplorationVirtual : startExplorationVirtual(StepTime)
 
 
 
-Dispatch execOneStep : execOneStep
+Dispatch execOneStep : execOneStep(StepTime)
 Dispatch stepFail : stepFail(DURATION)
-Dispatch stepOk : stepOk
+Dispatch stepOk : stepOk(S)
 Dispatch modelChangeAction : modelChangeAction(DEST, ACTION)
-Dispatch tableFound : tableFound
-Dispatch explore : explore
-Dispatch edgeExplorationComplete : edgeExplorationComplete
-Dispatch start : start
-Dispatch isObstacle : isObstacle
-Dispatch notObstacle : notObstacle
-Dispatch obstacle : obstacle
-Dispatch terminated : terminated
+Dispatch tableFound : tableFound(T)
+Dispatch explore : explore(E)
+Dispatch edgeExplorationComplete : edgeExplorationComplete(E)
+Dispatch start : start(S)
+Dispatch isObstacle : isObstacle(I)
+Dispatch notObstacle : notObstacle(N)
+Dispatch obstacle : obstacle(S)
+Dispatch terminated : terminated(T)
   
 
 Event sonarRobot : sonarRobot(DISTANCE)
-Event obstacleDetected : obstacleDetected
-Event obstacleExploration : obstacleExploration
+Event obstacleDetected : obstacleDetected(Distance)
 Event map : map(MAPSTRING, MAPNAME)
-Event explorationCompleted : explorationCompleted
+Event explorationCompleted : explorationCompleted(E)
 
-Context ctxRoomExplVirtual ip[host="localhost" port=8087] -mqtt
-Context ctxResourceModel ip[host="192.168.43.100" port=8080] -mqtt
+Context ctxRoomExplVirtual ip[host="localhost" port=8087] +mqtt
+Context ctxResourceModel ip[host="192.168.43.100" port=8080] +mqtt
     
 ExternalQActor mind context ctxResourceModel
 ExternalQActor butlerresourcemodel context ctxResourceModel 
@@ -102,12 +101,12 @@ QActor roomexplorationvirtual context ctxRoomExplVirtual{
 		println("###roomExploration started")
 		solve(consult("sysRules.pl"))
 		solve(consult("moves.pl"))
-		solve(consult("config.pl"))
+		/*solve(consult("config.pl"))
 		solve(timeVirtual(TV))
 		ifSolved{
 			["FORWARDTIME = getCurSol(\"TV\").toString().toInt()"]
 			println("$FORWARDTIME")
-		}
+		}*/
 		run itunibo.planner.plannerUtil.initAI()
 		run itunibo.planner.moveUtils.showCurrentRobotState()
 		
@@ -118,6 +117,9 @@ QActor roomexplorationvirtual context ctxRoomExplVirtual{
 	}Transition t0 whenMsg startExplorationVirtual -> doExploration
 	   
 	State doExploration{
+		onMsg(startExplorationVirtual : startExplorationVirtual(StepTime)){
+			["FORWARDTIME = payloadArg(0).toString().toInt()"]
+		}
 		onMsg(stepOk : stepOk){
 			run itunibo.planner.moveUtils.doPlannedMove(myself, "w")
 			run itunibo.planner.moveUtils.showCurrentRobotState()

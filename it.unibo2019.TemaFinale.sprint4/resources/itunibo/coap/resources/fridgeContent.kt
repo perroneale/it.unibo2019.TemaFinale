@@ -12,6 +12,8 @@ import itunibo.appliance.Food
 import itunibo.appliance.fridgeAppliance
 import org.eclipse.californium.core.server.resources.Resource
 import org.eclipse.californium.core.coap.OptionSet
+import org.json.JSONArray
+import org.json.JSONObject
 
 class fridgeContent(name : String) : CoapResource(name){
 
@@ -29,7 +31,7 @@ class fridgeContent(name : String) : CoapResource(name){
 			server.add(resourceCoap)
 			
 			server.start();
-			println("###CoAP server started")
+			println("###CoAP server FRIDGE started")
 			fridgeAppliance.setFridgeCoap( resourceCoap)
 		}
 		
@@ -39,10 +41,12 @@ class fridgeContent(name : String) : CoapResource(name){
 	init{
 		setObservable(true)
 		setObserveType(Type.CON)
+		getAttributes().setObservable()
 	}
 	/*la richiesta di disponibilità di un cibo viene effettuata seguendo questo sintassi:
 	 cibo,quantity*/
 	override fun handleGET(exchange: CoapExchange?) {
+		println("food content send")
 		var option = false
 	    lateinit var  payload : String
 		//invia tutto il contenuto del frigo
@@ -66,36 +70,45 @@ class fridgeContent(name : String) : CoapResource(name){
 				exchange.respond(ResponseCode.NOT_ACCEPTABLE, find.second.toString())
 			}
 		}else{
-			exchange!!.respond(ResponseCode.CONTENT, getContent(), MediaTypeRegistry.TEXT_PLAIN)
+			var json = JSONArray(fridgeContent)
+			println(json)
+			var js = JSONObject()
+			js.put("content",json)
+			exchange!!.respond(ResponseCode.CONTENT, js.toString(), MediaTypeRegistry.APPLICATION_JSON)
 		}
 	}
 	
 	override fun handlePUT(exchange: CoapExchange?) {
 		var request = exchange!!.getRequestText().replace(" ","")
 		var splitted = request.split(',')
-		var id = Integer.parseInt(splitted.get(0))
+		var name = splitted.get(0)
 		var quantity = Integer.parseInt(splitted.get(1))
-		var b = updateFood(id, quantity)
-		if(b){
-			exchange.respond(ResponseCode.CHANGED)
+		println("########$name and $quantity ")
+		var b = updateFood(name, quantity)
+		if(b.first){
+			exchange.respond(ResponseCode.CHANGED, b.second.getFoodCode().toString())
 		}else{
-			exchange.respond(ResponseCode.BAD_REQUEST)
+			exchange.respond(ResponseCode.BAD_REQUEST, "-1")
 		}
 	}
 
-	fun updateFood(id : Int, quantity : Int): Boolean{
+	fun updateFood(name : String, quantity : Int): Pair<Boolean, Food>{
 		var b = false
+		var currentFood = Food()
 		for(i in 0..fridgeContent.size-1){
-			if(fridgeContent.get(i).getFoodCode() == id){
+			if(fridgeContent.get(i).getName() == name){
 				if(fridgeContent.get(i).getQuantity() >= quantity){
 					b = true
-					fridgeContent.get(i).setQuantity(fridgeContent.get(i).getQuantity() - quantity)
+					currentFood = fridgeContent.get(i)
+					var currentQuantity = fridgeContent.get(i).getQuantity()
+					var newQuantity = currentQuantity - quantity
+					fridgeContent.get(i).setQuantity(newQuantity)
 				}
 				break
 			}
 		}
 		changed()
-		return b
+		return Pair<Boolean,Food>(b,currentFood)
 	}
 	
 	fun getContent() : String{
@@ -138,11 +151,27 @@ class fridgeContent(name : String) : CoapResource(name){
 					av = fridgeContent.get(i).getQuantity()
 					b = true
 					//fridgeContent.get(i).setQuantity(fridgeContent.get(i).getQuantity() - q)
-					changed()
+					//changed()
 				}
 				break
 			}
 		}
 		return Pair(b,av)
+	}
+	
+	/*
+	 *Riceve la lista del cibo che era presente sul tavolo ed aggiorna la lista del cibo presente nel frigo
+	 */
+	fun updateFoodClean(foodClean : ArrayList<Food>){
+		println("########UPDATEFOODCLEAN")
+		for(i in 0..foodClean.size-1){
+			for(j in 0..fridgeContent.size-1){
+				if(fridgeContent.get(j).getName() == foodClean.get(i).getName()){
+					var currentQuant = fridgeContent.get(j).getQuantity() 
+					fridgeContent.get(j).setQuantity(currentQuant + foodClean.get(i).getQuantity())
+				}
+			}
+		}
+		changed()
 	}
 }

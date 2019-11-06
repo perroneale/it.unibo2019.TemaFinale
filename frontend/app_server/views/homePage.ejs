@@ -53,9 +53,25 @@
         </td>
       </tr>
     </table>
-
     <script src="/socket.io/socket.io.js"></script>
     <script>
+
+        const http = new XMLHttpRequest();
+        const url = 'http://localhost:3000/getCont';
+        http.open('GET', url, true);
+        http.send();
+  
+        http.onreadystatechange = function(e){
+          if(http.readyState==4 && http.status==200){
+            var response = JSON.parse(http.responseText)
+            console.log(response.content);
+            var replace = response.replace(/@/g,"<br />");
+            document.getElementById('fridgecont').innerHTML = replace;
+          }
+        }
+
+
+
         var decoder = new TextDecoder("utf-8");
 
         function ab2str(buf) {
@@ -80,7 +96,8 @@
         socket.on('update', function(v){
             var string = ab2str(v);
             console.log("RECEIVED "+ string);
-            document.getElementById('fridgecont').innerHTML = string;
+            var replace = string.replace(/@/g,"<br />");
+            document.getElementById('fridgecont').innerHTML = replace;
         });
         
 
@@ -92,5 +109,9 @@
           });
         }*/
     </script>
+
+
+   
+    
   </body>
 </html>

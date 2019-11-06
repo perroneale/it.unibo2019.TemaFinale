@@ -11,15 +11,17 @@ import org.eclipse.californium.core.coap.Option
 
 fun main(){
 	
-	val client = CoapClient("coap://localhost:5683/fridgecontent")
+	val client = CoapClient("coap://localhost:5684/getmap")
+	
+	println(client.get().getResponseText())
 
 	//test richiesta specifica risorsa
-	var request = Request(CoAP.Code.GET, CoAP.Type.NON)
+	/*var request = Request(CoAP.Code.GET, CoAP.Type.NON)
 	var optionSet = OptionSet()
 	optionSet.addOption(Option(256, "pasta,5"))
 	request.setOptions(optionSet)
 	var response = client.advanced(request).getCode()
-	println("ùùùùùùRESPONSE = $response")
+	println("ùùùùùùRESPONSE = $response")*/
 	
 	//test errore nella modifica di una risorsa che non esiste
 	/*for( i in 2..3 ){

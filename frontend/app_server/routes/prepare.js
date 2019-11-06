@@ -7,7 +7,8 @@ const topic = "unibo/qak/butlerresourcemodel"
 router.post('/', function(req, res, next){
   var msg = "msg(modelChangeTask,dispatch,maitre,butlerresourcemodel,modelChangeTask(robot, preparing, niente, niente),1)"
   mqtt.publish(topic, msg);
-  res.render('index');
+  //res.end();
+  res.redirect('localhost:3000/');
 });
 
 module.exports = router;

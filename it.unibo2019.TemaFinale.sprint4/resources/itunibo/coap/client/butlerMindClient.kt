@@ -17,9 +17,10 @@ object butlerMindClient{
 	val butlerClient = CoapClient("coap://localhost:5683/fridgecontent")
 	
 	fun requireAllFood(foodList : ArrayList<Food>){
+		println("çççççççççç"+ foodList.toString())
 		for(i in 0..foodList.size -1){
 			var food = foodList.get(i)
-			var response = butlerClient.put("${food.getFoodCode()},${food.getQuantity()}", MediaTypeRegistry.TEXT_PLAIN)
+			var response = butlerClient.put("${food.getName()},${food.getQuantity()}", MediaTypeRegistry.TEXT_PLAIN)
 			if(response.getCode() == ResponseCode.CHANGED)
 				println("${food.getName()} prese ${food.getQuantity()} unità dal frigo")
 			else
@@ -27,9 +28,18 @@ object butlerMindClient{
 		}
 	}
 	
-	fun takeOneFood(name : String, quantity : String){
-		var id = foodRequire.getFoodId(name)
-		butlerClient.put("$id, $quantity", MediaTypeRegistry.TEXT_PLAIN)
+	fun takeOneFood(name : String, quantity : String):Int{
+		
+		var foodCode = -1
+		var response = butlerClient.put("$name, $quantity", MediaTypeRegistry.TEXT_PLAIN)
+		if(response.getCode() == ResponseCode.CHANGED){
+			var foodCode = response.getResponseText().toInt()
+			println("°°°°AGGIUNGO CIBO $name anf $foodCode")
+		}else{
+			var foodCode = response.getResponseText().toInt()
+			println("°°°°AGGIUNGO CIBO $name anf $foodCode")
+		}
+		return foodCode
 	}
 	
 	suspend fun foodAvailability( actor : ActorBasic,name : String, quantity : String){

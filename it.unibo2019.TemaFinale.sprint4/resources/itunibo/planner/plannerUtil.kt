@@ -422,9 +422,6 @@ object plannerUtil {
 			k++
 		 }
 	}
-	//AGGIUNTA DA ME
-	fun visited(x:Int, y:Int):Boolean{
-		return RoomMap.getRoomMap().visited(x,y)
-	}
+	
 	
 }

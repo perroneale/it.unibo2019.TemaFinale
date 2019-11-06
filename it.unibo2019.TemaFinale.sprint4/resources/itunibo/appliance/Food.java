@@ -5,6 +5,9 @@ public class Food {
 	private String name = "";
 	private int quantity = 0;
 	
+	public Food() {
+	}
+	
 	public Food(int foodCode, String name, int quantity) {
 		this.foodCode = foodCode;
 		this.name = name;

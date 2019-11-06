@@ -20,42 +20,7 @@ class Maitre ( name: String, scope: CoroutineScope ) : ActorBasicFsm( name, scop
 					action { //it:State
 						println("###Maitre STARTED")
 						delay(3000) 
-						itunibo.coap.client.maitreClient.createClient(  )
 					}
-				}	 
-				state("sendingP") { //this:State
-					action { //it:State
-						delay(2000) 
-						println("----Maitre send prepare message")
-						forward("modelChangeTask", "modelChangeTask(robot,preparing,0,0)" ,"butlerresourcemodel" ) 
-					}
-					 transition(edgeName="t035",targetState="sendingAC",cond=whenDispatch("completedTask"))
-				}	 
-				state("sendingAC") { //this:State
-					action { //it:State
-						if( checkMsgContent( Term.createTerm("completedTask(TASK)"), Term.createTerm("completedTask(T)"), 
-						                        currentMsg.msgContent()) ) { //set msgArgList
-								println("Butler finito ${payloadArg(0)} task")
-						}
-						delay(2000) 
-						forward("modelChangeTask", "modelChangeTask(robot,cleaning,0,0)" ,"butlerresourcemodel" ) 
-						forward("cl", "cl" ,"maitre" ) 
-					}
-					 transition(edgeName="t036",targetState="waitingAfAck",cond=whenDispatch("add"))
-					transition(edgeName="t037",targetState="waitingClAck",cond=whenDispatch("cl"))
-				}	 
-				state("waitingAfAck") { //this:State
-					action { //it:State
-						println("$name in ${currentState.stateName} | $currentMsg")
-					}
-					 transition(edgeName="t038",targetState="sendingAC",cond=whenDispatch("completedTask"))
-					transition(edgeName="t039",targetState="updateFA",cond=whenDispatch("currentFood"))
-				}	 
-				state("waitingClAck") { //this:State
-					action { //it:State
-					}
-					 transition(edgeName="t040",targetState="finish",cond=whenDispatch("completedTask"))
-					transition(edgeName="t041",targetState="updateFC",cond=whenDispatch("currentFood"))
 				}	 
 				state("finish") { //this:State
 					action { //it:State

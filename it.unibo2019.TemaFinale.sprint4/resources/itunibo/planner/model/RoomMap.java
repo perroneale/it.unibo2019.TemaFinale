@@ -218,17 +218,6 @@ public class RoomMap implements Serializable{
 		}
 	}
 	
-	public boolean visited(int x, int y) {
-		try {
-			Box box = roomMap.get(x).get(y);
-			if(box == null) {
-				return false;
-			}else {
-				return true;
-			}
-		}catch(NullPointerException e ) {
-			return false;
-		}
-	}
+	
 	
 }

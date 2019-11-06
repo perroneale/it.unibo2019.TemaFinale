@@ -26,8 +26,8 @@ class Pantry ( name: String, scope: CoroutineScope ) : ActorBasicFsm( name, scop
 					action { //it:State
 						println("###IN waitCmd Pantry")
 					}
-					 transition(edgeName="t045",targetState="getting",cond=whenDispatch("getDishesPantry"))
-					transition(edgeName="t046",targetState="putting",cond=whenDispatch("putDishesPantry"))
+					 transition(edgeName="t00",targetState="getting",cond=whenDispatch("getDishesPantry"))
+					transition(edgeName="t01",targetState="putting",cond=whenDispatch("putDishesPantry"))
 				}	 
 				state("getting") { //this:State
 					action { //it:State

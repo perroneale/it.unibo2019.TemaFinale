@@ -41,11 +41,6 @@ class Roomexplorationvirtual ( name: String, scope: CoroutineScope ) : ActorBasi
 						println("###roomExploration started")
 						solve("consult('sysRules.pl')","") //set resVar	
 						solve("consult('moves.pl')","") //set resVar	
-						solve("consult('config.pl')","") //set resVar	
-						solve("timeVirtual(TV)","") //set resVar	
-						if(currentSolution.isSuccess()) { FORWARDTIME = getCurSol("TV").toString().toInt()
-						println("$FORWARDTIME")
-						 }
 						itunibo.planner.plannerUtil.initAI(  )
 						itunibo.planner.moveUtils.showCurrentRobotState(  )
 					}
@@ -58,7 +53,11 @@ class Roomexplorationvirtual ( name: String, scope: CoroutineScope ) : ActorBasi
 				}	 
 				state("doExploration") { //this:State
 					action { //it:State
-						if( checkMsgContent( Term.createTerm("stepOk"), Term.createTerm("stepOk"), 
+						if( checkMsgContent( Term.createTerm("startExplorationVirtual(StepTime)"), Term.createTerm("startExplorationVirtual(StepTime)"), 
+						                        currentMsg.msgContent()) ) { //set msgArgList
+								FORWARDTIME = payloadArg(0).toString().toInt()
+						}
+						if( checkMsgContent( Term.createTerm("stepOk(S)"), Term.createTerm("stepOk"), 
 						                        currentMsg.msgContent()) ) { //set msgArgList
 								itunibo.planner.moveUtils.doPlannedMove(myself ,"w" )
 								itunibo.planner.moveUtils.showCurrentRobotState(  )
@@ -93,7 +92,7 @@ class Roomexplorationvirtual ( name: String, scope: CoroutineScope ) : ActorBasi
 				}	 
 				state("exploreRoom") { //this:State
 					action { //it:State
-						if( checkMsgContent( Term.createTerm("stepOk"), Term.createTerm("stepOk"), 
+						if( checkMsgContent( Term.createTerm("stepOk(S)"), Term.createTerm("stepOk"), 
 						                        currentMsg.msgContent()) ) { //set msgArgList
 								itunibo.planner.moveUtils.doPlannedMove(myself ,"w" )
 						}
@@ -170,7 +169,7 @@ class Roomexplorationvirtual ( name: String, scope: CoroutineScope ) : ActorBasi
 				}	 
 				state("underTableLd") { //this:State
 					action { //it:State
-						if( checkMsgContent( Term.createTerm("stepOk"), Term.createTerm("stepOk"), 
+						if( checkMsgContent( Term.createTerm("stepOk(S)"), Term.createTerm("stepOk"), 
 						                        currentMsg.msgContent()) ) { //set msgArgList
 								itunibo.planner.moveUtils.doPlannedMove(myself ,"w" )
 								itunibo.planner.moveUtils.showCurrentRobotState(  )
@@ -191,7 +190,7 @@ class Roomexplorationvirtual ( name: String, scope: CoroutineScope ) : ActorBasi
 				}	 
 				state("underTableRd") { //this:State
 					action { //it:State
-						if( checkMsgContent( Term.createTerm("stepOk"), Term.createTerm("stepOk"), 
+						if( checkMsgContent( Term.createTerm("stepOk(S)"), Term.createTerm("stepOk"), 
 						                        currentMsg.msgContent()) ) { //set msgArgList
 								itunibo.planner.moveUtils.doPlannedMove(myself ,"w" )
 								itunibo.planner.moveUtils.showCurrentRobotState(  )

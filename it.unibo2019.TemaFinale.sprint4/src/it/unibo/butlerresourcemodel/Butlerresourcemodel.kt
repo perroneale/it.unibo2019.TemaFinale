@@ -27,10 +27,10 @@ class Butlerresourcemodel ( name: String, scope: CoroutineScope ) : ActorBasicFs
 				state("waitModelChange") { //this:State
 					action { //it:State
 					}
-					 transition(edgeName="t00",targetState="handleModelChangeTask",cond=whenDispatch("modelChangeTask"))
-					transition(edgeName="t01",targetState="handleModelChangeAction",cond=whenDispatch("modelChangeAction"))
-					transition(edgeName="t02",targetState="handleModelChangePos",cond=whenDispatch("modelChangePos"))
-					transition(edgeName="t03",targetState="updateModel",cond=whenDispatch("modelUpdateAction"))
+					 transition(edgeName="t04",targetState="handleModelChangeTask",cond=whenDispatch("modelChangeTask"))
+					transition(edgeName="t05",targetState="handleModelChangeAction",cond=whenDispatch("modelChangeAction"))
+					transition(edgeName="t06",targetState="handleModelChangePos",cond=whenDispatch("modelChangePos"))
+					transition(edgeName="t07",targetState="updateModel",cond=whenDispatch("modelUpdateAction"))
 				}	 
 				state("updateModel") { //this:State
 					action { //it:State
@@ -64,6 +64,7 @@ class Butlerresourcemodel ( name: String, scope: CoroutineScope ) : ActorBasicFs
 					action { //it:State
 						if( checkMsgContent( Term.createTerm("modelChangePos(DEST,X,Y)"), Term.createTerm("modelChangePos(robot,X,Y)"), 
 						                        currentMsg.msgContent()) ) { //set msgArgList
+								println("Butlerresourcemodel in handleModelChangePos")
 								itunibo.robot.resourceModelSupport.updateModelPosition(myself ,payloadArg(1), payloadArg(2) )
 						}
 					}

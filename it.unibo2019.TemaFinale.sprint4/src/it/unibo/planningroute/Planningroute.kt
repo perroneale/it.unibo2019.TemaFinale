@@ -18,6 +18,8 @@ class Planningroute ( name: String, scope: CoroutineScope ) : ActorBasicFsm( nam
 		var set = false
 			  var mapEmpty = true
 			  var Robot = ""
+			  var StepTime = ""
+			  var guardia = true
 		return { //this:ActionBasciFsm
 				state("s0") { //this:State
 					action { //it:State
@@ -52,6 +54,8 @@ class Planningroute ( name: String, scope: CoroutineScope ) : ActorBasicFsm( nam
 						solve("findall(nearTable(X,Y,table),nearTable(X,Y,_),L)","") //set resVar	
 						var List = getCurSol("L").toString()
 						println(List)
+						var mapRes = itunibo.coap.resources.mapResource("getmap")
+										  itunibo.coap.resources.butlerRoomState.server.add(mapRes)
 						forward("updateKBbm", "updateKBbm($List)" ,"butlermind" ) 
 						 }
 						 }
@@ -64,13 +68,17 @@ class Planningroute ( name: String, scope: CoroutineScope ) : ActorBasicFsm( nam
 				}	 
 				state("doExploration") { //this:State
 					action { //it:State
-						if(Robot == "virtual"){ forward("startExplorationVirtual", "startExplorationVirtual" ,"roomexplorationvirtual" ) 
+						if(Robot == "virtual"){ solve("'timeVirtual(TIME)'","") //set resVar	
+						StepTime = getCurSol("TIME").toString()
+						forward("startExplorationVirtual", "startExplorationVirtual(StepTime)" ,"roomexplorationvirtual" ) 
 						 }
 						else
-						 { forward("startExploration", "startExploration" ,"roomexploration" ) 
+						 { solve("'timeForward(TIME)'","") //set resVar	
+						 StepTime = getCurSol("TIME").toString()
+						 forward("startExploration", "startExploration(StepTime)" ,"roomexploration" ) 
 						  }
 					}
-					 transition(edgeName="t023",targetState="createMap",cond=whenEventGuarded("map",{(set == false)}))
+					 transition(edgeName="t027",targetState="createMap",cond=whenEventGuarded("map",{(set == false)}))
 				}	 
 				state("createMap") { //this:State
 					action { //it:State
@@ -94,18 +102,17 @@ class Planningroute ( name: String, scope: CoroutineScope ) : ActorBasicFsm( nam
 				state("waitCmd") { //this:State
 					action { //it:State
 					}
-					 transition(edgeName="t024",targetState="planningRoute",cond=whenDispatch("calculateRoute"))
-					transition(edgeName="t025",targetState="updating",cond=whenEvent("modelChangedPosition"))
+					 transition(edgeName="t028",targetState="planningRoute",cond=whenDispatch("calculateRoute"))
+					transition(edgeName="t029",targetState="updating",cond=whenEvent("modelChangedPosition"))
 				}	 
 				state("updating") { //this:State
 					action { //it:State
 						if( checkMsgContent( Term.createTerm("modelChangedPosition(X,Y)"), Term.createTerm("modelChangedPosition(X,Y)"), 
 						                        currentMsg.msgContent()) ) { //set msgArgList
-								println("updating")
+								println("PlanningRoute in updating")
 								solve("replaceRule(curPos(_,_),curPos(${payloadArg(0)},${payloadArg(1)}))","") //set resVar	
-								solve("curPos(A,B)","") //set resVar	
-								println(getCurSol("A").toString())
-								println(getCurSol("B").toString())
+								solve("curPos(X,Y)","") //set resVar	
+								itunibo.robot.coapPositionModifier.updatePosition( getCurSol("X").toString(), getCurSol("Y").toString()  )
 						}
 					}
 					 transition( edgeName="goto",targetState="waitCmd", cond=doswitch() )
@@ -143,6 +150,7 @@ class Planningroute ( name: String, scope: CoroutineScope ) : ActorBasicFsm( nam
 									          println(y)
 											  dir = getCurSol("DIR").toString()
 											  println(dir)
+											  guardia = true
 								itunibo.planner.moveUtils.setGoal(myself ,x, y, dir )
 								itunibo.planner.moveUtils.doPlan( dest  )
 								forward("exec", "exec" ,"execroute" ) 

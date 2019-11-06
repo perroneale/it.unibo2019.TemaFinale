@@ -50,7 +50,7 @@ class Execroute ( name: String, scope: CoroutineScope ) : ActorBasicFsm( name, s
 				state("waitCmd") { //this:State
 					action { //it:State
 					}
-					 transition(edgeName="t026",targetState="execRoute",cond=whenDispatch("exec"))
+					 transition(edgeName="t030",targetState="execRoute",cond=whenDispatch("exec"))
 				}	 
 				state("execRoute") { //this:State
 					action { //it:State
@@ -63,23 +63,23 @@ class Execroute ( name: String, scope: CoroutineScope ) : ActorBasicFsm( name, s
 						Curmove = "nomove" 
 						println("Curmove = $Curmove")
 						 }
-						if((Curmove != "nomove")){ itunibo.planner.moveUtils.execMove(myself ,Curmove, ForwardTime )
+						if((Curmove != "nomove")){ startTimer()
+						itunibo.planner.moveUtils.execMove(myself ,Curmove, ForwardTime )
+						X = itunibo.planner.moveUtils.getPosX(myself).toString()
+								  	  Y = itunibo.planner.moveUtils.getPosY(myself).toString()
+						forward("modelChangePos", "modelChangePos(robot,$X,$Y)" ,"butlerresourcemodel" ) 
+						delay(200) 
+						forward("nextMove", "nextMove" ,"execroute" ) 
 						 }
 						else
 						 { println("*************IN ELSE22")
-						 this.scope.launch{
-						 				autoMsg("check","check")
-						 			}
+						 forward("check", "check" ,"execroute" ) 
 						  }
-						X = itunibo.planner.moveUtils.getPosX(myself).toString()
-								  Y = itunibo.planner.moveUtils.getPosY(myself).toString()
-						forward("modelChangePos", "modelChangePos(robot,$X,$Y)" ,"butlerresourcemodel" ) 
-						delay(800) 
 					}
-					 transition(edgeName="t027",targetState="execRouteCompleted",cond=whenDispatch("check"))
-					transition(edgeName="t028",targetState="execRoute",cond=whenDispatch("nextMove"))
-					transition(edgeName="t029",targetState="stopApplication",cond=whenDispatch("stop"))
-					transition(edgeName="t030",targetState="handleObstacle",cond=whenEvent("obstacleDetected"))
+					 transition(edgeName="t031",targetState="execRouteCompleted",cond=whenDispatch("check"))
+					transition(edgeName="t032",targetState="execRoute",cond=whenDispatch("nextMove"))
+					transition(edgeName="t033",targetState="stopApplication",cond=whenDispatch("stop"))
+					transition(edgeName="t034",targetState="handleObstacle",cond=whenEvent("obstacleDetected"))
 				}	 
 				state("execRouteCompleted") { //this:State
 					action { //it:State
@@ -97,8 +97,8 @@ class Execroute ( name: String, scope: CoroutineScope ) : ActorBasicFsm( name, s
 					action { //it:State
 						forward("isObstacle", "isObstacle" ,"mind" ) 
 					}
-					 transition(edgeName="t031",targetState="checkObstacle",cond=whenDispatch("obstacle"))
-					transition(edgeName="t032",targetState="completeStep",cond=whenDispatch("notObstacle"))
+					 transition(edgeName="t035",targetState="checkObstacle",cond=whenDispatch("obstacle"))
+					transition(edgeName="t036",targetState="completeStep",cond=whenDispatch("notObstacle"))
 				}	 
 				state("completeStep") { //this:State
 					action { //it:State
@@ -112,7 +112,7 @@ class Execroute ( name: String, scope: CoroutineScope ) : ActorBasicFsm( name, s
 						println("###EXECROUTE stopped")
 						forward("modelChangeAction", "modelChangeAction(robot,h)" ,"butlerresourcemodel" ) 
 					}
-					 transition(edgeName="t033",targetState="execRoute",cond=whenDispatch("reactivate"))
+					 transition(edgeName="t037",targetState="execRoute",cond=whenDispatch("reactivate"))
 				}	 
 			}
 		}

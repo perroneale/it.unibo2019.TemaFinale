@@ -50,7 +50,8 @@ object resourceModelSupport{
 		actor.solve("currentPosition(robot, X, Y)");
 		val currentPosition = actor.getCurSol("X");
 		val yval = actor.getCurSol("Y")
-		println("###CurrentPosition : $currentPosition, $yval")
+		//println("###CurrentPosition : $currentPosition, $yval")
+		//coapPositionModifier.updatePosition(actor)
 		actor.scope.launch{
 			actor.emit("modelChangedPosition","modelChangedPosition($currentPosition, $yval)")
 		}
