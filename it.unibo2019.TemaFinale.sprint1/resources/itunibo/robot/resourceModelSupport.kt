@@ -11,7 +11,7 @@ object resourceModelSupport{
 	fun updateModelTask(actor: ActorBasic, content: String, id : String="", q : String=""){
 		actor.solve( "cmd(robot, task($content))" );
 		actor.solve("currentTask(robot, task(TASK))");
-		val currentTask = actor.getCurSol("TASK");
+		val currentTask = actor.getCurSol("TASK").toString();
 		println("###CurrentTask : $currentTask");
 		if(content == "adding"){
 			actor.solve("updateFood($id, $q)");
@@ -27,6 +27,17 @@ object resourceModelSupport{
 	}
 	
 	//aggiorno il modello quando viene eseguita un'azione tra w,a,s,d,h
+	/*fun updateModelAction(actor: ActorBasic, content: String){
+		println("action "+ content)
+		actor.solve("action(robot, move($content))");
+		actor.solve("model(actuator, robot, state(S))");
+		val currentAction = actor.getCurSol("S").toString();
+		println("###CurrentAction : $currentAction");
+		actor.scope.launch{
+			actor.emit("modelChangedAction", "modelChangedAction(robot, ${content})");
+		}
+		println("event emit")
+	}*/
 	fun updateModelAction(actor: ActorBasic, content: String){
 		actor.solve("action(robot, move($content))");
 		actor.solve("model(actuator, robot, state(S))");
@@ -42,9 +53,16 @@ object resourceModelSupport{
 	fun updateModelPosition(actor: ActorBasic, content: String){
 		actor.solve("updatePosition($content)");
 		actor.solve("currentPosition(robot, position(X))");
-		val currentPosition = actor.getCurSol("X");
+		val currentPosition = actor.getCurSol("X").toString();
 		println("###CurrentPosition : $currentPosition")
 		
+	}
+	
+	fun updateModel(actor: ActorBasic, action : String){
+		actor.solve("action(robot, move($action))");
+		actor.solve("model(actuator, robot, state(S))");
+		val currentAction = actor.getCurSol("S");
+		println("###CurrentAction : $currentAction");
 	}
 }
 

@@ -169,7 +169,7 @@ class Butlermind ( name: String, scope: CoroutineScope ) : ActorBasicFsm( name, 
 						 }
 						if(position == "fridge"){ forward("calculateRoute", "calculateRoute(table)" ,"planningroute" ) 
 						 }
-						if(position == "rh"){ forward("completedTask", "completedTask()" ,"butlermind" ) 
+						if(position == "rh"){ forward("completedTask", "completedTask(adding)" ,"butlermind" ) 
 						 }
 					}
 					 transition(edgeName="t020",targetState="actionClean",cond=whenDispatch("destinationReached"))

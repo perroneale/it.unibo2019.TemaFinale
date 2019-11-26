@@ -25,14 +25,8 @@ class Pantry ( name: String, scope: CoroutineScope ) : ActorBasicFsm( name, scop
 				state("waitCmd") { //this:State
 					action { //it:State
 					}
-					 transition(edgeName="t023",targetState="retrieving",cond=whenDispatch("retrieveStateP"))
-					transition(edgeName="t024",targetState="taking",cond=whenDispatch("takeDishesP"))
-					transition(edgeName="t025",targetState="putting",cond=whenDispatch("putDishesP"))
-				}	 
-				state("retrieving") { //this:State
-					action { //it:State
-					}
-					 transition( edgeName="goto",targetState="waitCmd", cond=doswitch() )
+					 transition(edgeName="t023",targetState="taking",cond=whenDispatch("takeDishesP"))
+					transition(edgeName="t024",targetState="putting",cond=whenDispatch("putDishesP"))
 				}	 
 				state("taking") { //this:State
 					action { //it:State

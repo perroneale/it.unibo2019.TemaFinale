@@ -2,8 +2,6 @@ System roomexploration
    
 mqttBroker "localhost" : 1883
 
-Dispatch stepFail : stepFail(DURATION)
-Dispatch stepOk : stepOk(S)
 Dispatch modelChangeAction : modelChangeAction(DEST, ACTION)
 Dispatch tableFound : tableFound(T)
 Dispatch explore : explore(E)

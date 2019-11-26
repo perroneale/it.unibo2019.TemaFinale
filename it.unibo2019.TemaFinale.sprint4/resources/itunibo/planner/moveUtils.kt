@@ -156,9 +156,9 @@ object moveUtils{
   	}
  	suspend fun rotateRight(actor : ActorBasic, pauseTime : Int = PauseTime){
  		actor.forward("modelChangeAction", "modelChangeAction(robot,d)", "butlerresourcemodel")
- 		doPlannedMove(actor, "d" )	    //update map
-		delay( pauseTime.toLong() )
 		actor.forward("modelChangeAction", "modelChangeAction(robot,h)", "butlerresourcemodel")
+		doPlannedMove(actor, "d" )	    //update map
+		delay( pauseTime.toLong() )
 		showCurrentRobotState()
 	}
 	
@@ -181,9 +181,9 @@ object moveUtils{
  	}
 	suspend fun rotateLeft(actor : ActorBasic, pauseTime : Int = PauseTime){
 		actor.forward("modelChangeAction", "modelChangeAction(robot,a)", "butlerresourcemodel")
- 		doPlannedMove(actor, "a" )	    //update map	
 		delay( pauseTime.toLong() )
 		actor.forward("modelChangeAction", "modelChangeAction(robot,h)", "butlerresourcemodel")
+		doPlannedMove(actor, "a" )	    //update map
 		showCurrentRobotState()		
 	}
 	

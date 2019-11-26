@@ -15,25 +15,31 @@ class Mind ( name: String, scope: CoroutineScope ) : ActorBasicFsm( name, scope)
 	}
 		
 	override fun getBody() : (ActorBasicFsm.() -> Unit){
+		var forward = false
+			  var obstacle = false
 		return { //this:ActionBasciFsm
 				state("s0") { //this:State
 					action { //it:State
 						println("###MIND STARTED ")
 					}
-					 transition( edgeName="goto",targetState="test", cond=doswitch() )
-				}	 
-				state("test") { //this:State
-					action { //it:State
-						forward("robotAction", "robotAction(w)" ,"butler" ) 
-						delay(700) 
-						forward("robotAction", "robotAction(h)" ,"butler" ) 
-					}
+					 transition( edgeName="goto",targetState="waitCmd", cond=doswitch() )
 				}	 
 				state("waitCmd") { //this:State
 					action { //it:State
 					}
-					 transition(edgeName="t03",targetState="handleAction",cond=whenDispatch("modelChangedAction"))
-					transition(edgeName="t04",targetState="handleSonar",cond=whenEvent("sonarRobot"))
+					 transition(edgeName="t04",targetState="handleAction",cond=whenEvent("modelChangedAction"))
+					transition(edgeName="t05",targetState="handleSonar",cond=whenEvent("sonarRobot"))
+					transition(edgeName="t06",targetState="reply",cond=whenDispatch("isObstacle"))
+				}	 
+				state("reply") { //this:State
+					action { //it:State
+						if(obstacle){ forward("obstacle", "obstacle" ,"roomexploration" ) 
+						 }
+						else
+						 { forward("notObstacle", "notObstacle" ,"roomexploration" ) 
+						  }
+					}
+					 transition( edgeName="goto",targetState="waitCmd", cond=doswitch() )
 				}	 
 				state("handleAction") { //this:State
 					action { //it:State
@@ -41,6 +47,13 @@ class Mind ( name: String, scope: CoroutineScope ) : ActorBasicFsm( name, scope)
 						                        currentMsg.msgContent()) ) { //set msgArgList
 								println("$name in ${currentState.stateName} | $currentMsg")
 								forward("robotAction", "robotAction(${payloadArg(1)})" ,"butler" ) 
+								forward = (payloadArg(1) == "w")
+								if(payloadArg(1).equals("a")){ delay(160) 
+								forward("modelChangeAction", "modelChangeAction(robot,h)" ,"butlerresourcemodel" ) 
+								 }
+								if(payloadArg(1).equals("d")){ delay(180) 
+								forward("modelChangeAction", "modelChangeAction(robot,h)" ,"butlerresourcemodel" ) 
+								 }
 						}
 					}
 					 transition( edgeName="goto",targetState="waitCmd", cond=doswitch() )
@@ -50,9 +63,15 @@ class Mind ( name: String, scope: CoroutineScope ) : ActorBasicFsm( name, scope)
 						if( checkMsgContent( Term.createTerm("sonarRobot(DISTANCE)"), Term.createTerm("sonarRobot(Distance)"), 
 						                        currentMsg.msgContent()) ) { //set msgArgList
 								val Distance = Integer.parseInt(payloadArg(0));
-								if(Distance <= 10 ){ println("###Mind, Obstacle at $Distance")
+								if(Distance <= 10 && forward){ println("###Mind, Obstacle at $Distance")
 								forward("modelChangeAction", "modelChangeAction(robot,h)" ,"butlerresourcemodel" ) 
 								 }
+								if(Distance <= 22){ println("###MIND PER EXPLORATION OBSTACLE")
+								obstacle = true
+								 }
+								else
+								 { obstacle = false
+								  }
 						}
 					}
 					 transition( edgeName="goto",targetState="waitCmd", cond=doswitch() )

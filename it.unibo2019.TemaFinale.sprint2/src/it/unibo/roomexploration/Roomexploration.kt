@@ -43,16 +43,21 @@ class Roomexploration ( name: String, scope: CoroutineScope ) : ActorBasicFsm( n
 						solve("consult('moves.pl')","") //set resVar	
 						itunibo.planner.plannerUtil.initAI(  )
 						itunibo.planner.moveUtils.showCurrentRobotState(  )
-						delay(3000) 
 					}
-					 transition( edgeName="goto",targetState="doExploration", cond=doswitch() )
+					 transition( edgeName="goto",targetState="waitStart", cond=doswitch() )
+				}	 
+				state("waitStart") { //this:State
+					action { //it:State
+					}
+					 transition(edgeName="t00",targetState="doExploration",cond=whenDispatch("startExploration"))
 				}	 
 				state("doExploration") { //this:State
 					action { //it:State
 						forward("isObstacle", "isObstacle" ,"mind" ) 
+						itunibo.planner.moveUtils.testFunction(myself)
 					}
-					 transition(edgeName="t00",targetState="wallFound",cond=whenDispatch("obstacle"))
-					transition(edgeName="t01",targetState="moveAhead",cond=whenDispatch("notObstacle"))
+					 transition(edgeName="t01",targetState="wallFound",cond=whenDispatch("obstacle"))
+					transition(edgeName="t02",targetState="moveAhead",cond=whenDispatch("notObstacle"))
 				}	 
 				state("wallFound") { //this:State
 					action { //it:State
@@ -118,11 +123,12 @@ class Roomexploration ( name: String, scope: CoroutineScope ) : ActorBasicFsm( n
 						    }
 						   }
 						 forward("isObstacle", "isObsacle" ,"mind" ) 
+						 itunibo.planner.moveUtils.testFunctionRightDir(myself)
 						  }
 					}
-					 transition(edgeName="t02",targetState="explorationDone",cond=whenDispatch("terminated"))
-					transition(edgeName="t03",targetState="tableFound",cond=whenDispatch("obstacle"))
-					transition(edgeName="t04",targetState="moveAhead2",cond=whenDispatch("notObstacle"))
+					 transition(edgeName="t03",targetState="explorationDone",cond=whenDispatch("terminated"))
+					transition(edgeName="t04",targetState="tableFound",cond=whenDispatch("obstacle"))
+					transition(edgeName="t05",targetState="moveAhead2",cond=whenDispatch("notObstacle"))
 				}	 
 				state("tableFound") { //this:State
 					action { //it:State
@@ -147,9 +153,10 @@ class Roomexploration ( name: String, scope: CoroutineScope ) : ActorBasicFsm( n
 						itunibo.planner.moveUtils.moveAhead(myself ,FORWARDTIME2 )
 						itunibo.planner.moveUtils.rotateLeft(myself)
 						forward("isObstacle", "isObstacle" ,"mind" ) 
+						itunibo.planner.moveUtils.testFunctionRightDir(myself)
 					}
-					 transition(edgeName="t05",targetState="rightDir",cond=whenDispatch("obstacle"))
-					transition(edgeName="t06",targetState="underTableRd",cond=whenDispatch("notObstacle"))
+					 transition(edgeName="t06",targetState="rightDir",cond=whenDispatch("obstacle"))
+					transition(edgeName="t07",targetState="underTableRd",cond=whenDispatch("notObstacle"))
 				}	 
 				state("leftDir") { //this:State
 					action { //it:State
@@ -159,8 +166,8 @@ class Roomexploration ( name: String, scope: CoroutineScope ) : ActorBasicFsm( n
 						itunibo.planner.moveUtils.rotateRight(myself)
 						forward("isObstacle", "isObstacle" ,"mind" ) 
 					}
-					 transition(edgeName="t07",targetState="leftDir",cond=whenDispatch("obstacle"))
-					transition(edgeName="t08",targetState="underTableLd",cond=whenDispatch("notObstacle"))
+					 transition(edgeName="t08",targetState="leftDir",cond=whenDispatch("obstacle"))
+					transition(edgeName="t09",targetState="underTableLd",cond=whenDispatch("notObstacle"))
 				}	 
 				state("underTableLd") { //this:State
 					action { //it:State
@@ -175,9 +182,9 @@ class Roomexploration ( name: String, scope: CoroutineScope ) : ActorBasicFsm( n
 						 forward("isObstacle", "isObstacle" ,"mind" ) 
 						  }
 					}
-					 transition(edgeName="t09",targetState="explorationDone",cond=whenDispatch("terminated"))
-					transition(edgeName="t010",targetState="continueExplLD",cond=whenDispatch("obstacle"))
-					transition(edgeName="t011",targetState="underTableLd",cond=whenDispatch("notObstacle"))
+					 transition(edgeName="t010",targetState="explorationDone",cond=whenDispatch("terminated"))
+					transition(edgeName="t011",targetState="continueExplLD",cond=whenDispatch("obstacle"))
+					transition(edgeName="t012",targetState="underTableLd",cond=whenDispatch("notObstacle"))
 				}	 
 				state("underTableRd") { //this:State
 					action { //it:State
@@ -190,11 +197,12 @@ class Roomexploration ( name: String, scope: CoroutineScope ) : ActorBasicFsm( n
 						 { itunibo.planner.moveUtils.moveAhead(myself ,FORWARDTIME2 )
 						 itunibo.planner.moveUtils.rotateLeft2(myself)
 						 forward("isObstacle", "isObstacle" ,"mind" ) 
+						 itunibo.planner.moveUtils.testFunctionRightDir(myself)
 						  }
 					}
-					 transition(edgeName="t012",targetState="explorationDone",cond=whenDispatch("terminated"))
-					transition(edgeName="t013",targetState="continueExplRD",cond=whenDispatch("obstacle"))
-					transition(edgeName="t014",targetState="underTableRd",cond=whenDispatch("notObstacle"))
+					 transition(edgeName="t013",targetState="explorationDone",cond=whenDispatch("terminated"))
+					transition(edgeName="t014",targetState="continueExplRD",cond=whenDispatch("obstacle"))
+					transition(edgeName="t015",targetState="underTableRd",cond=whenDispatch("notObstacle"))
 				}	 
 				state("continueExplRD") { //this:State
 					action { //it:State
@@ -213,9 +221,6 @@ class Roomexploration ( name: String, scope: CoroutineScope ) : ActorBasicFsm( n
 				state("explorationDone") { //this:State
 					action { //it:State
 						println("###EXPLORATION DONE###")
-						itunibo.planner.moveUtils.saveMap(myself ,mapName )
-						var mapString = itunibo.planner.plannerUtil.getMap()
-						emit("map", "map(mapString,mapName)" ) 
 						itunibo.planner.moveUtils.setGoal(myself ,"0", "0" )
 						itunibo.planner.moveUtils.doPlan(myself)
 					}
@@ -238,6 +243,15 @@ class Roomexploration ( name: String, scope: CoroutineScope ) : ActorBasicFsm( n
 				state("inRH") { //this:State
 					action { //it:State
 						println("###BUTLER IN RH ")
+						itunibo.planner.moveUtils.saveMap(myself ,mapName )
+						var mapString = itunibo.planner.plannerUtil.getMapOneLine2()
+								  println(mapString)
+						emit("map", "map($mapString,$mapName)" )
+					}
+					 transition( edgeName="goto",targetState="finish", cond=doswitch() )
+				}	 
+				state("finish") { //this:State
+					action { //it:State
 					}
 				}	 
 			}

@@ -18,7 +18,55 @@ class Table ( name: String, scope: CoroutineScope ) : ActorBasicFsm( name, scope
 		return { //this:ActionBasciFsm
 				state("s0") { //this:State
 					action { //it:State
+						println("Table STARTED")
 					}
+					 transition( edgeName="goto",targetState="waitCmd", cond=doswitch() )
+				}	 
+				state("waitCmd") { //this:State
+					action { //it:State
+					}
+					 transition(edgeName="t04",targetState="taking",cond=whenDispatch("getDishesTable"))
+					transition(edgeName="t05",targetState="putting",cond=whenDispatch("putDishesTable"))
+					transition(edgeName="t06",targetState="takeFood",cond=whenDispatch("getFoodTable"))
+					transition(edgeName="t07",targetState="putFood",cond=whenDispatch("putFoodTable"))
+				}	 
+				state("taking") { //this:State
+					action { //it:State
+						if( checkMsgContent( Term.createTerm("getDishesTable(ND,NB,NP)"), Term.createTerm("getDishesTable(D,B,P)"), 
+						                        currentMsg.msgContent()) ) { //set msgArgList
+								var Dishes = payloadArg(0).toString().toInt()
+											  var Bicc = payloadArg(1).toString().toInt()
+											  var Posate = payloadArg(2).toString().toInt()
+											itunibo.appliance.Table.getTable().take(Dishes,Bicc,Posate)
+						}
+					}
+					 transition( edgeName="goto",targetState="waitCmd", cond=doswitch() )
+				}	 
+				state("putting") { //this:State
+					action { //it:State
+						if( checkMsgContent( Term.createTerm("putDishesTable(ND,NB,NP)"), Term.createTerm("putDishesTable(D,B,P)"), 
+						                        currentMsg.msgContent()) ) { //set msgArgList
+								var Dishes = payloadArg(0).toString().toInt()
+											  var Bicc = payloadArg(1).toString().toInt()
+											  var Posate = payloadArg(2).toString().toInt()
+											itunibo.appliance.Table.getTable().add(Dishes,Bicc,Posate)
+						}
+					}
+					 transition( edgeName="goto",targetState="waitCmd", cond=doswitch() )
+				}	 
+				state("takeFood") { //this:State
+					action { //it:State
+						var foodOnTable = itunibo.appliance.Table.getTable().getFoodOnTable()
+					}
+					 transition( edgeName="goto",targetState="waitCmd", cond=doswitch() )
+				}	 
+				state("putFood") { //this:State
+					action { //it:State
+						if( checkMsgContent( Term.createTerm("putFoodTable(CODE,NAME,QUANTITY)"), Term.createTerm("putFoodTable(LIST)"), 
+						                        currentMsg.msgContent()) ) { //set msgArgList
+						}
+					}
+					 transition( edgeName="goto",targetState="waitCmd", cond=doswitch() )
 				}	 
 			}
 		}

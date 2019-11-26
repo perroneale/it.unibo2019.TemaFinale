@@ -1,6 +1,7 @@
 System sprint4
       
-mqttBroker "localhost" : 1883
+mqttBroker "192.168.43.102" : 1883
+//mqttBroker "localhost" : 1883
 
 Dispatch check: check(C)
 Dispatch nextMove : nextMove(M)
@@ -51,33 +52,37 @@ Dispatch updatePos : updatePos(X, Y)
 Dispatch destinationReached : destinationReached(X, Y)
 Dispatch startExploration : startExploration(STepTime)
 Dispatch startExplorationVirtual : startExplorationVirtual(StepTime)
-Dispatch stop : stop(S)
-Dispatch reactivate : reactivate(R)
-//sprint3
+//Dispatch stop : stop(S)
+//Dispatch reactivate : reactivate(R)
+
 Dispatch getDishesPantry : getDishesPantry(ND, NB, NP)
 Dispatch putDishesPantry : putDishes(ND, NB, NP)
-Dispatch putDishesTable  : putDishes(ND, NB, NP)
-Dispatch getDishesTable  : getDishes(ND, NB, NP)
-Dispatch putFoodTable    : putFood(CODE, NAME, QUANTITY)
+Dispatch putDishesTable  : putDishesTable(ND, NB, NP)
+Dispatch getDishesTable  : getDishesTable(ND, NB, NP)
+Dispatch putFoodTable    : putFoodTable(CODE, NAME, QUANTITY)
 Dispatch putDishesDish   : putDishes(ND, NB, NP)
-Dispatch getDishesDish   : getDishes(ND, NB, NP)   
+Dispatch getDishesDish   : getDishes(ND, NB, NP)  
+Dispatch robotType : robotType(TYPE)
+Dispatch getFoodTable : getFoodTable(T)
 //from resourcemodelbutler
 Event modelChangedTask : modelChangedTask(TASK)
 Event modelChangedpreparing : modelChangedpreparing(DEST, TASK, C, Q)
 Event modelChangedadding : modelChangedadding(DEST, TASK, N, Q)
 Event modelChangedcleaning : modelChangedcleaning(DEST, TASK, C, Q)
-Dispatch modelChangedAction : modelChangedAction(DEST, ACTION) //ACTION = w,a,s,d,h
+Event modelChangedstop : modelChangedstop(DEST, TASK, C, Q)
+Event modelChangedreactivate : modelChangedreactivate(DEST, TASK, C, Q)
+Event modelChangedAction : modelChangedAction(DEST, ACTION) //ACTION = w,a,s,d,h
 Event modelChangedPosition : modelChangedPosition(X, Y)
 Event sonarRobot : sonarRobot(DISTANCE)
 Event obstacleDetected : obstacleDetected(DISTANCE)
 Event map : map(MAPSTRING, MAPNAME)
 Event rotatoryCounter : rotatoryCounter(COUNTER)
 
-Context ctxButler ip[host="localhost" port=8080] +mqtt
+Context ctxButler ip[host="192.168.43.100" port=8080] +mqtt
 Context ctxMaitre ip[host="localhost" port=8081] +mqtt
-Context ctxFridge ip[host="localhost" port=8082] +mqtt
-Context ctxExploration ip[host="192.168.43.102" port=8086] +mqtt
-Context ctxRoomExplVirtual ip[host="localhost" port=8087] +mqtt
+Context ctxFridge ip[host="192.168.43.100" port=8082] +mqtt
+Context ctxExploration ip[host="notcarelocalhost2" port=8086] +mqtt
+Context ctxRoomExplVirtual ip[host="notcarelocalhost" port=8087] +mqtt
 ExternalQActor roomexploration context ctxExploration
 ExternalQActor roomexplorationvirtual context ctxRoomExplVirtual
 
@@ -144,12 +149,47 @@ QActor dishwasher context ctxButler{
 
 QActor table context ctxButler{
 	State s0 initial{
+		println("Table STARTED")
+	}Goto waitCmd
+	
+	State waitCmd{
 		
-	}
+	}Transition t0 whenMsg getDishesTable -> taking
+				   whenMsg putDishesTable -> putting
+				   whenMsg getFoodTable -> takeFood
+				   whenMsg putFoodTable -> putFood
+	//D,B,P
+	State taking{
+		onMsg(getDishesTable : getDishesTable(D,B,P)){
+			["var Dishes = payloadArg(0).toString().toInt()
+			  var Bicc = payloadArg(1).toString().toInt()
+			  var Posate = payloadArg(2).toString().toInt()
+			itunibo.appliance.Table.getTable().take(Dishes,Bicc,Posate)"]
+			  
+		}
+	}Goto waitCmd
+	
+	State putting{
+		onMsg(putDishesTable : putDishesTable(D,B,P)){
+			["var Dishes = payloadArg(0).toString().toInt()
+			  var Bicc = payloadArg(1).toString().toInt()
+			  var Posate = payloadArg(2).toString().toInt()
+			itunibo.appliance.Table.getTable().add(Dishes,Bicc,Posate)"]
+			  
+		}
+	}Goto waitCmd
+	
+	State takeFood{
+		["var foodOnTable = itunibo.appliance.Table.getTable().getFoodOnTable()"]
+	}Goto waitCmd
+
+	State putFood{
+		onMsg(putFoodTable : putFoodTable(LIST)){
+			//["itunibo.appliance.Table.getTable().addFood()"]
+		}
+		
+	}Goto waitCmd
 }
-
-
-
 
 QActor butlerresourcemodel context ctxButler{
 	//["var mapCreated = false"]
@@ -161,7 +201,8 @@ QActor butlerresourcemodel context ctxButler{
 	
 	State waitModelChange{
 		
-	}Transition t0 whenMsg modelChangeTask -> handleModelChangeTask
+	}Transition t0 whenMsg robotType -> updateRobotType
+				   whenMsg modelChangeTask -> handleModelChangeTask
 				   whenMsg modelChangeAction -> handleModelChangeAction
 				   whenMsg modelChangePos -> handleModelChangePos
 				   whenMsg modelUpdateAction -> updateModel
@@ -192,6 +233,17 @@ QActor butlerresourcemodel context ctxButler{
 			run itunibo.robot.resourceModelSupport.updateModelPosition(myself, payloadArg(1), payloadArg(2))
 		}
 	}Goto waitModelChange
+	
+	State updateRobotType{
+		onMsg(robotType : robotType(ROBOT)){
+			["var Robot = \"\" 
+			Robot = payloadArg(0)"]
+			println("add robottype")
+			solve(assert(robotType($Robot)))
+			solve(robotType(R))
+			println("${getCurSol(\"R\").toString()}")
+		}
+	}Goto waitModelChange
 }
 
 QActor mind context ctxButler{
@@ -200,7 +252,9 @@ QActor mind context ctxButler{
 	  var rotation = false
 	  var rotatory = 0
 	  var NumRot = 0
-	  var TimeVirtual = 0L"]
+	  var TimeVirtual = 0L
+	  //var Test = false
+	  var Distance = 0"]
 	State s0 initial{
 		println("###MIND STARTED ")
 		solve(consult("config.pl"))
@@ -213,13 +267,17 @@ QActor mind context ctxButler{
 			["TimeVirtual = getCurSol(\"TV\").toString().toLong()"]
 			println("$TimeVirtual")
 		}
+		/*solve(test(TEST))
+		ifSolved{
+			["Test = getCurSol(\"TEST\").toString()"]
+		}*/
 	}Goto waitCmd
 	
 	State waitCmd{
 		/*modelChangedAction viene emessa da butlerResourceModel a seguito del
 		 * cambiamento del modello, a seguito della ricezione di un comando tra w, a,s,d,h.
 		 */
-	}Transition t0 whenMsg modelChangedAction -> handleAction
+	}Transition t0 whenEvent modelChangedAction -> handleAction
 				   whenEvent sonarRobot -> handleSonar
 				   whenEvent rotatoryCounter -> handleRotatory
 				   whenMsg isObstacle -> reply
@@ -246,10 +304,13 @@ QActor mind context ctxButler{
 	
 	
 	State reply{
+		["storeCurrentMessageForReply()"]
 		if"obstacle"{
-			forward roomexploration -m obstacle : obstacle
+			//forward roomexploration -m obstacle : obstacle($Distance)
+			["replyToCaller(\"obstacle\", \"obstacle($Distance)\")"]
 		}else{
-			forward roomexploration -m notObstacle : notObstacle	
+			//forward roomexploration -m notObstacle : notObstacle($Distance)	
+			["replyToCaller(\"notObstacle\", \"notObstacle($Distance)\")"]
 		}
 	}Goto waitCmd
 				   
@@ -287,14 +348,14 @@ QActor mind context ctxButler{
 	}Goto waitCmd
 	
 	State handleSonar{
-		onMsg(sonarRobot : sonarRobot (Distance)){
-			["val Distance = Integer.parseInt(payloadArg(0));"]
-			if "Distance <= 10 && forward"{
+		onMsg(sonarRobot : sonarRobot(Distance)){
+			["Distance = Integer.parseInt(payloadArg(0));"]
+			if "Distance <= 15 && forward"{
 				println("###Mind, Obstacle at $Distance")
 				//aggiorno il modello
 				forward butler -m robotAction : robotAction(h)
 				forward butlerresourcemodel -m modelUpdateAction : modelUpdateAction(robot, h)
-				emit obstacleDetected : obstacleDetected(Distance)
+				emit obstacleDetected : obstacleDetected($Distance)
 			}
 			if "Distance <= 22"{
 				println("###MIND PER EXPLORATION OBSTACLE")
@@ -357,7 +418,6 @@ QActor butlermind context ctxButler{
 		println("---BUTLERMIND in preparing")
 		["Task = \"preparing\";"]
 		forward planningroute -m calculateRoute : calculateRoute(pantry)
-		//["position = \"pantry\""]
 	}Transition t0 whenMsg destinationReached -> actionPrepare
 	  
 	State actionPrepare{
@@ -370,19 +430,16 @@ QActor butlermind context ctxButler{
 		if"position == \"pantry\""{
 				//prendo i piatti
 				forward pantry -m getDishesPantry : getDishesPantry($Dishes, $Bicchieri, $Posate)
-				delay 1000
-				run itunibo.robot.robotSupport.updatePantryTake(Dishes, Posate, Bicchieri)
+				run itunibo.appliance.applianceCoAPResourcesManagment.updatePantryTake(Dishes, Posate, Bicchieri)
 				forward planningroute -m calculateRoute : calculateRoute(table)
-				//["position = \"table\""]
 		}else{
 			if"position == \"table\" && table == 0"{
 				//poso i piatti sul tavolo
 				forward table -m putDishesTable : putDishes($Dishes, $Bicchieri, $Posate)
 				delay 1000
-				run itunibo.robot.robotSupport.updateTableAdd(Dishes, Posate, Bicchieri)
+				run itunibo.appliance.applianceCoAPResourcesManagment.updateTableAdd(Dishes, Posate, Bicchieri)
 				forward planningroute -m calculateRoute : calculateRoute(fridge)
 				["table++"]
-				//["position = \"fridge\""]
 			}else{
 				if"position == \"fridge\""{
 					//prenod il cibo dal frigo
@@ -390,17 +447,16 @@ QActor butlermind context ctxButler{
 					run itunibo.coap.client.butlerMindClient.requireAllFood(FoodCont)
 					delay 2000
 					forward planningroute -m calculateRoute : calculateRoute(table)
-					//["position = \"table\""]
 				}else{
 					if"position == \"table\" && table == 1"{
 						//poso il cibo sul tavolo
-						run itunibo.robot.robotSupport.roomState.updateFoodOnTable(FoodCont)
+						run itunibo.appliance.applianceCoAPResourcesManagment.roomState.updateFoodOnTable(FoodCont)
+						["var StringFood = FoodCont.toString()"]
+						forward table -m putFoodTable : putFoodTable(StringFood)
 						forward planningroute -m calculateRoute : calculateRoute(rh)
 						["table = 0"]
-						//["position = \"rh\""]
 					}else{
 						if"position == \"rh\""{
-							//["position = \"rh\""]
 							forward maitre -m completedTask : completedTask($Task)
 							forward butlermind -m completedTask : completedTask
 							
@@ -442,12 +498,12 @@ QActor butlermind context ctxButler{
 			//poso i piatti nella dishwasher
 			forward dishwasher -m putDishesDish : putDishes($Dishes, $Bicchieri, $Posate)
 			delay 1000
-			run itunibo.robot.robotSupport.updateDishwasherAdd(CurrentCluteryTable)
+			run itunibo.appliance.applianceCoAPResourcesManagment.updateDishwasherAdd(CurrentCluteryTable)
 			forward planningroute -m calculateRoute : calculateRoute(rh)
 		}else{
 			if"position == \"table\" && table == 0"{
 				//prendo il cibo dal tavolo
-				["FoodOnTable = itunibo.robot.robotSupport.roomState.getAllFoodFromTable()"]
+				["FoodOnTable = itunibo.appliance.applianceCoAPResourcesManagment.roomState.getAllFoodFromTable()"]
 				forward planningroute -m calculateRoute : calculateRoute(fridge)
 				["table++"]
 			}else{
@@ -461,7 +517,7 @@ QActor butlermind context ctxButler{
 						
 						forward table -m getDishesTable : getDishes($Dishes, $Bicchieri, $Posate)
 						delay 1000
-						["CurrentCluteryTable = itunibo.robot.robotSupport.updateTableTake()"]
+						["CurrentCluteryTable = itunibo.appliance.applianceCoAPResourcesManagment.updateTableTake()"]
 						forward planningroute -m calculateRoute : calculateRoute(dishwasher)
 						["table = 0"]
 					}else{
@@ -505,7 +561,7 @@ QActor butlermind context ctxButler{
 		}
 		if"position == \"table\""{
 			//metto il cibo sul tavolo
-			run itunibo.robot.robotSupport.roomState.addFoodOnTable(FoodCode, NameReq, QuantityReq)
+			run itunibo.appliance.applianceCoAPResourcesManagment.roomState.addFoodOnTable(FoodCode, NameReq, QuantityReq)
 			forward planningroute -m calculateRoute : calculateRoute(rh)
 		}else{
 			if"position == \"fridge\""{
@@ -543,6 +599,7 @@ QActor planningroute context ctxButler {
 		solve(consult("planningRouteKB.pl"))
 		solve(consult("nearTable.pl"))
 		solve(consult("basicRobotConfig.pl"))
+		solve(consult("config.pl"))
 		solve(robot(R,PORT)) //R = virtual | realnano
 		println("###Butler STARTED")
 		ifSolved {
@@ -600,13 +657,13 @@ QActor planningroute context ctxButler {
 	State doExploration{
 		//mando un messaggio al roomExplorer
 		if"Robot == \"virtual\""{
-			solve("timeVirtual(TIME)")
+			solve(timeVirtual(TIME))
 			["StepTime = getCurSol(\"TIME\").toString()"]
-			forward roomexplorationvirtual -m startExplorationVirtual : startExplorationVirtual(StepTime)
+			forward roomexplorationvirtual -m startExplorationVirtual : startExplorationVirtual($StepTime)
 		}else{
-			solve("timeForward(TIME)")
+			solve(timeForward(TIME))
 			["StepTime = getCurSol(\"TIME\").toString()"]
-			forward roomexploration -m startExploration : startExploration(StepTime)
+			forward roomexploration -m startExploration : startExploration($StepTime)
 		}
 		
 	}Transition t0 whenEvent map and "(set == false)"-> createMap
@@ -698,7 +755,9 @@ QActor execroute context ctxButler{
 	  var X= \"\"
 	  var Y = \"\"
 	  var ForwardTime = 0
-	  var TimeVirtual = 0L"]
+	  var StepTime = 0L
+	  var TimeVirtual = 0L
+	  var Robot = \"\""]
 	
 	State s0 initial{
 		println("###EXECROUTE STARTED")
@@ -706,7 +765,8 @@ QActor execroute context ctxButler{
 		solve(consult("config.pl"))
 		solve(consult("basicRobotConfig.pl"))
 		solve(robot(R,PORT))
-		if"(getCurSol(\"R\").toString() == \"virtual\")"{
+		["Robot = getCurSol(\"R\").toString()"]
+		if"(Robot == \"virtual\")"{
 			solve(timeVirtual(TV))
 			ifSolved{
 				["ForwardTime = getCurSol(\"TV\").toString().toInt()"]
@@ -717,6 +777,7 @@ QActor execroute context ctxButler{
 			["ForwardTime = getCurSol(\"TF\").toString().toInt()"]
 			println("ForwardTime")
 		}
+		["StepTime = ForwardTime.toLong()"]
 	}Goto waitCmd
 	  
 	State waitCmd{
@@ -728,40 +789,85 @@ QActor execroute context ctxButler{
 		ifSolved {
 			["Curmove = getCurSol(\"M\").toString()"]
 		} else {
-			println("*************IN ELSE")
 			["Curmove = \"nomove\" "]
 			println("Curmove = $Curmove")
 		}  
 		if "(Curmove != \"nomove\")"{
-			["startTimer()"]
-			run itunibo.planner.moveUtils.execMove(myself, Curmove, ForwardTime)
-			//delay 700
+			/*run itunibo.planner.moveUtils.execMove(myself, Curmove, ForwardTime)
+			
 			["X = itunibo.planner.moveUtils.getPosX(myself).toString()
 		  	  Y = itunibo.planner.moveUtils.getPosY(myself).toString()"]
 			forward butlerresourcemodel -m modelChangePos : modelChangePos(robot, $X,$Y) 
 			delay 200
-			forward execroute -m nextMove : nextMove
+			forward execroute -m nextMove : nextMove*/
+			if"Curmove == \"w\""{
+				println("Exec move $Curmove")
+				forward butlerresourcemodel -m modelChangeAction : modelChangeAction(robot, $Curmove)
+				["startTimer()"]
+			}else{
+				forward butlerresourcemodel -m modelChangeAction : modelChangeAction(robot, $Curmove)
+				delay 2000
+				["this.scope.launch{
+				autoMsg(\"nextMove\",\"nextMove(n)\")
+				}"]
+			}
+			
 		}else{
 			println("*************IN ELSE22")
-			forward execroute -m check : check
-			/*["this.scope.launch{
-				autoMsg(\"check\",\"check\")
-			}"]*/  
+			/*forward execroute -m check : check(c)
+			delay 500*/
+			["this.scope.launch{
+				autoMsg(\"check\",\"check(c)\")
+			}"]
 		}
-	}Transition t0 whenMsg check -> execRouteCompleted
-				   whenMsg nextMove -> execRoute
-				   whenMsg stop -> stopApplication 
+	}Transition t0 whenTimeVar StepTime -> testState
+				   whenMsg check -> execRouteCompleted
+				   whenMsg nextMove -> testState
+				   whenEvent modelChangedstop  and "(Curmove ==\"w\")" -> stopApplication 
 				   whenEvent obstacleDetected -> handleObstacle
 	  
 	State execRouteCompleted{
+		println("****EXECROUTE IN execRouteCompleted")
 		forward butlermind -m destinationReached : destinationReached($X,$Y)
 	}Goto waitCmd
 	
-	State handleObstacle{
-		//suona il buzzer finchè l'oggetto non si sposta
-		//butler è già fermo, faccio suonare il buzzer
+	State stopApplication{	
+		println("###EXECROUTE stopped")
+		forward butlerresourcemodel -m modelChangeAction : modelChangeAction(robot, h)
 		["Duration = getDuration()"]
-	}Goto checkObstacle
+	}Transition t0 whenEvent modelChangedreactivate -> completeStep
+	
+	State handleObstacle{
+		println("ççççççççççIN HANDLE OBSTACLE StepTime = $StepTime")
+		//["Duration = getDuration()"]
+		//delay 800
+		if"(Robot == \"virtual\")"{
+			forward butlerresourcemodel -m modelChangeAction : modelChangeAction(robot, $Curmove)
+			["startTimer()"]
+		}else{
+			machineExec "\"sudo bash startBuzzer.sh\""
+			["Duration = getDuration()"]
+			println("Duration = $Duration")
+			["this.scope.launch{
+				autoMsg(\"check\",\"check(c)\")
+			}"]			
+		}
+	}Transition t0 whenTimeVar StepTime -> testState
+				   whenMsg check -> checkObstacle
+				   //whenEvent obstacleDetected -> handleObstacle
+				   
+	State testState{
+		println("££££in teststate")
+		/*forward butlerresourcemodel -m modelUpdateAction : modelUpdateAction(robot, h)
+		run itunibo.planner.moveUtils.doPlannedMove(myself, Curmove)*/
+		forward butlerresourcemodel -m modelChangeAction : modelChangeAction(robot, h)
+		run itunibo.planner.moveUtils.doPlannedMove(myself, Curmove)
+		run itunibo.planner.moveUtils.showCurrentRobotState()
+		["X = itunibo.planner.moveUtils.getPosX(myself).toString()
+		  Y = itunibo.planner.moveUtils.getPosY(myself).toString()"]
+		forward butlerresourcemodel -m modelChangePos : modelChangePos(robot, $X,$Y) 
+		delay 1000
+	}Goto execRoute
 	
 	State checkObstacle{
 		forward mind -m isObstacle : isObstacle
@@ -769,27 +875,29 @@ QActor execroute context ctxButler{
 				   whenMsg notObstacle -> completeStep
 				   
 	State completeStep{
-		["var stepTime = 770 - Duration"]
-		run itunibo.planner.moveUtils.moveAheadWithoutUpdate(myself, stepTime)
-	}Goto execRoute
+		["var StepTime2 = StepTime - Duration"]
+		println("StepTime2 = $StepTime2")
+		machineExec "\"sudo bash stopBuzzer.sh\""
+		//run itunibo.planner.moveUtils.moveAheadWithoutUpdate(myself, StepTime2)
+		forward butlerresourcemodel -m modelChangeAction : modelChangeAction(robot, $Curmove)
+		["startTimer()"]
+	}Transition t0 whenTimeVar StepTime2 -> testState//Goto execRoute
 	
-	State stopApplication{	
-		println("###EXECROUTE stopped")
-		forward butlerresourcemodel -m modelChangeAction : modelChangeAction(robot, h)
-	}Transition t0 whenMsg reactivate -> execRoute
+	
 }
    
 QActor butler context ctxButler{
-	
+	["var Robot = \"\""]
 	State s0 initial{
 		solve(consult("basicRobotConfig.pl"))
 		solve(robot(R,PORT)) //R = virtual | realnano
 		println("###Butler STARTED")
 		ifSolved {
-			println("###USING ROBOT : ${getCurSol(\"R\")}, port = ${getCurSol(\"PORT\")}")
-			//include l'esecuzione del sonar
-			run itunibo.robot.robotSupport.create(myself, @R, @PORT)  
-			if"getCurSol(\"R\").toString() == \"nano\""{
+			["Robot = getCurSol(\"R\").toString() "]
+			forward butlerresourcemodel -m  robotType : robotType($Robot)
+			println("###USING ROBOT : ${Robot}, port = ${getCurSol(\"PORT\")}")
+			run itunibo.robot.robotSupport.create(myself, @R, @PORT)
+			if"(Robot == \"realnano\")" {
 				run itunibo.test.arduinoConnection.connect(myself)
 			} 
 			

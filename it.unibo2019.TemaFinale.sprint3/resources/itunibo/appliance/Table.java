@@ -60,8 +60,15 @@ public class Table {
 		this.posate = posate;
 	}
 	
+	public void add(int dishes, int bicchieri, int posate) {
+		this.dishes += dishes;
+		this.bicchieri += bicchieri;
+		this.posate += posate;
+	}
 	
-	
-	
-
+	public void take(int dishes, int bicchieri, int posate) {
+		this.dishes -= dishes;
+		this.bicchieri -= bicchieri;
+		this.posate -= posate;
+	}
 }

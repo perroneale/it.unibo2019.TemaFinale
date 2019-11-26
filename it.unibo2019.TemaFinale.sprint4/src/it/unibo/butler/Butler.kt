@@ -15,15 +15,18 @@ class Butler ( name: String, scope: CoroutineScope ) : ActorBasicFsm( name, scop
 	}
 		
 	override fun getBody() : (ActorBasicFsm.() -> Unit){
+		var Robot = ""
 		return { //this:ActionBasciFsm
 				state("s0") { //this:State
 					action { //it:State
 						solve("consult('basicRobotConfig.pl')","") //set resVar	
 						solve("robot(R,PORT)","") //set resVar	
 						println("###Butler STARTED")
-						if(currentSolution.isSuccess()) { println("###USING ROBOT : ${getCurSol("R")}, port = ${getCurSol("PORT")}")
+						if(currentSolution.isSuccess()) { Robot = getCurSol("R").toString() 
+						forward("robotType", "robotType($Robot)" ,"butlerresourcemodel" ) 
+						println("###USING ROBOT : ${Robot}, port = ${getCurSol("PORT")}")
 						itunibo.robot.robotSupport.create(myself ,getCurSol("R").toString(), getCurSol("PORT").toString() )
-						if(getCurSol("R").toString() == "nano"){ itunibo.test.arduinoConnection.connect(myself)
+						if((Robot == "realnano")){ itunibo.test.arduinoConnection.connect(myself)
 						 }
 						 }
 						else
@@ -35,7 +38,7 @@ class Butler ( name: String, scope: CoroutineScope ) : ActorBasicFsm( name, scop
 				state("waitCmd") { //this:State
 					action { //it:State
 					}
-					 transition(edgeName="t038",targetState="handleRobotAction",cond=whenDispatch("robotAction"))
+					 transition(edgeName="t047",targetState="handleRobotAction",cond=whenDispatch("robotAction"))
 				}	 
 				state("handleRobotAction") { //this:State
 					action { //it:State

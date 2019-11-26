@@ -27,10 +27,11 @@ class Butlerresourcemodel ( name: String, scope: CoroutineScope ) : ActorBasicFs
 				state("waitModelChange") { //this:State
 					action { //it:State
 					}
-					 transition(edgeName="t04",targetState="handleModelChangeTask",cond=whenDispatch("modelChangeTask"))
-					transition(edgeName="t05",targetState="handleModelChangeAction",cond=whenDispatch("modelChangeAction"))
-					transition(edgeName="t06",targetState="handleModelChangePos",cond=whenDispatch("modelChangePos"))
-					transition(edgeName="t07",targetState="updateModel",cond=whenDispatch("modelUpdateAction"))
+					 transition(edgeName="t08",targetState="updateRobotType",cond=whenDispatch("robotType"))
+					transition(edgeName="t09",targetState="handleModelChangeTask",cond=whenDispatch("modelChangeTask"))
+					transition(edgeName="t010",targetState="handleModelChangeAction",cond=whenDispatch("modelChangeAction"))
+					transition(edgeName="t011",targetState="handleModelChangePos",cond=whenDispatch("modelChangePos"))
+					transition(edgeName="t012",targetState="updateModel",cond=whenDispatch("modelUpdateAction"))
 				}	 
 				state("updateModel") { //this:State
 					action { //it:State
@@ -66,6 +67,20 @@ class Butlerresourcemodel ( name: String, scope: CoroutineScope ) : ActorBasicFs
 						                        currentMsg.msgContent()) ) { //set msgArgList
 								println("Butlerresourcemodel in handleModelChangePos")
 								itunibo.robot.resourceModelSupport.updateModelPosition(myself ,payloadArg(1), payloadArg(2) )
+						}
+					}
+					 transition( edgeName="goto",targetState="waitModelChange", cond=doswitch() )
+				}	 
+				state("updateRobotType") { //this:State
+					action { //it:State
+						if( checkMsgContent( Term.createTerm("robotType(TYPE)"), Term.createTerm("robotType(ROBOT)"), 
+						                        currentMsg.msgContent()) ) { //set msgArgList
+								var Robot = "" 
+											Robot = payloadArg(0)
+								println("add robottype")
+								solve("assert(robotType($Robot))","") //set resVar	
+								solve("robotType(R)","") //set resVar	
+								println("${getCurSol("R").toString()}")
 						}
 					}
 					 transition( edgeName="goto",targetState="waitModelChange", cond=doswitch() )

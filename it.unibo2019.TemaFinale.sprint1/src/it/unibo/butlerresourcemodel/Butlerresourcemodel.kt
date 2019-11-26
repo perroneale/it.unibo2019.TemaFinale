@@ -30,6 +30,7 @@ class Butlerresourcemodel ( name: String, scope: CoroutineScope ) : ActorBasicFs
 					 transition(edgeName="t00",targetState="handleModelChange",cond=whenDispatch("modelChangeTask"))
 					transition(edgeName="t01",targetState="handleModelChange",cond=whenDispatch("modelChangeAction"))
 					transition(edgeName="t02",targetState="handleModelChange",cond=whenDispatch("modelChangePos"))
+					transition(edgeName="t03",targetState="createMap",cond=whenEvent("map"))
 				}	 
 				state("handleModelChange") { //this:State
 					action { //it:State
@@ -44,6 +45,16 @@ class Butlerresourcemodel ( name: String, scope: CoroutineScope ) : ActorBasicFs
 						if( checkMsgContent( Term.createTerm("modelChangePos(DEST,POSITION)"), Term.createTerm("modelChangePos(robot,POS)"), 
 						                        currentMsg.msgContent()) ) { //set msgArgList
 								itunibo.robot.resourceModelSupport.updateModelPosition(myself ,payloadArg(1) )
+						}
+					}
+					 transition( edgeName="goto",targetState="waitModelChange", cond=doswitch() )
+				}	 
+				state("createMap") { //this:State
+					action { //it:State
+						if( checkMsgContent( Term.createTerm("map(MAPSTRING,MAPNAME)"), Term.createTerm("map(MAPSTRING,MAPNAME)"), 
+						                        currentMsg.msgContent()) ) { //set msgArgList
+								itunibo.planner.plannerUtil.saveMap( payloadArg(0), payloadArg(1)  )
+								itunibo.planner.plannerUtil.loadRoomMap( payloadArg(1)  )
 						}
 					}
 					 transition( edgeName="goto",targetState="waitModelChange", cond=doswitch() )

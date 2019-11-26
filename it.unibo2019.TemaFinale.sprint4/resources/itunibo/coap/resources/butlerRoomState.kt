@@ -12,6 +12,7 @@ import org.eclipse.californium.core.coap.MediaTypeRegistry
 import itunibo.robot.coapPositionModifier
 import itunibo.appliance.Food
 import org.json.JSONArray
+import itunibo.appliance.applianceCoAPResourcesManagment
 
 class butlerRoomState(name: String) : CoapResource(name){
 	var roomState = ArrayList<Pair<String, Int>>()
@@ -30,7 +31,7 @@ class butlerRoomState(name: String) : CoapResource(name){
 			server.add(position)
 			server.start();
 			println("@@@CoAP server start roomstate")
-			robotSupport.setroomstate(resourceCoap)
+			applianceCoAPResourcesManagment.setroomstate(resourceCoap)
 			coapPositionModifier.setPositionresource(position)
 		}
 	}

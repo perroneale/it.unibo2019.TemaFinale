@@ -25,7 +25,7 @@ class Planningroute ( name: String, scope: CoroutineScope ) : ActorBasicFsm( nam
 				state("waitGoal") { //this:State
 					action { //it:State
 					}
-					 transition(edgeName="t013",targetState="planningRoute",cond=whenDispatch("calculateRoute"))
+					 transition(edgeName="t015",targetState="planningRoute",cond=whenDispatch("calculateRoute"))
 				}	 
 				state("planningRoute") { //this:State
 					action { //it:State

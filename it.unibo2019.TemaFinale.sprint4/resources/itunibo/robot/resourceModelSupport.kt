@@ -14,13 +14,13 @@ object resourceModelSupport{
 		actor.solve("currentTask(robot, task(TASK))");
 		val currentTask = actor.getCurSol("TASK");
 		println("###CurrentTask : $currentTask");
-		if(content == "adding"){
+		/*if(content == "adding"){
 			actor.solve("updateFood($id, $q)");
 			actor.solve("food(ID, Q)");
 			val foodID = actor.getCurSol("ID");
 			val foodQ = actor.getCurSol("Q");
 			println("###Id cibo da aggiungere $foodID, quantità $foodQ")
-		}
+		}*/
 		//emetto un evento per butlermind
 		actor.scope.launch{
 			actor.emit("modelChanged$content", "modelChanged$content(robot, $content, $id, $q)");
@@ -33,14 +33,16 @@ object resourceModelSupport{
 		actor.solve("model(actuator, robot, state(S))");
 		val currentAction = actor.getCurSol("S");
 		println("###CurrentAction : $currentAction");
-		//emetto un evento per la mind
+		actor.solve("robotType(R)")
+		println("RRRRR" +actor.getCurSol("R").toString())
 		actor.scope.launch{
-			actor.forward("modelChangedAction", "modelChangedAction(robot, $content)", "mind")
-			//actor.emit("modelChangedAction", "modelChangedAction(robot, $content)");
-			/*if(content == "h"){
+			actor.emit("modelChangedAction", "modelChangedAction(robot, $content)");
+		}
+		if(actor.getCurSol("R").toString() == "realnano"){
+			if(content == "h"){
 				itunibo.test.arduinoConnection.resetCont()
 				itunibo.test.arduinoConnection.resetCont()
-			}*/
+			}
 		}
 	}
 	
@@ -62,12 +64,13 @@ object resourceModelSupport{
 		actor.solve("model(actuator, robot, state(S))");
 		val currentAction = actor.getCurSol("S");
 		println("###CurrentAction : $currentAction");
-		/*if(action == "h"){
-			itunibo.test.arduinoConnection.resetCont()
-			itunibo.test.arduinoConnection.resetCont()
-		}*/
-				
-		
+		actor.solve("robotType(R)")
+		if(actor.getCurSol("R").toString() == "realnano"){
+			if(action == "h"){
+				itunibo.test.arduinoConnection.resetCont()
+				itunibo.test.arduinoConnection.resetCont()
+			}
+		}
 	}
 }
 

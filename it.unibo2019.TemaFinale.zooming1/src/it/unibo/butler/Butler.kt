@@ -34,7 +34,7 @@ class Butler ( name: String, scope: CoroutineScope ) : ActorBasicFsm( name, scop
 					action { //it:State
 						solve("cmd(robot,task(waiting))","") //set resVar	
 					}
-					 transition(edgeName="t00",targetState="preparing",cond=whenDispatch("prepare"))
+					 transition(edgeName="t03",targetState="preparing",cond=whenEvent("modelChangedpreparing"))
 				}	 
 				state("preparing") { //this:State
 					action { //it:State
@@ -43,7 +43,7 @@ class Butler ( name: String, scope: CoroutineScope ) : ActorBasicFsm( name, scop
 						solve("cmd(robot,task(preparing))","") //set resVar	
 						forward("calculateRoute", "calculateRoute(pantry)" ,"butler" ) 
 					}
-					 transition(edgeName="t01",targetState="planningRoute",cond=whenDispatch("calculateRoute"))
+					 transition(edgeName="t04",targetState="planningRoute",cond=whenDispatch("calculateRoute"))
 				}	 
 				state("planningRoute") { //this:State
 					action { //it:State
@@ -53,7 +53,7 @@ class Butler ( name: String, scope: CoroutineScope ) : ActorBasicFsm( name, scop
 								forward("exec", "exec" ,"butler" ) 
 						}
 					}
-					 transition(edgeName="t02",targetState="execRoute",cond=whenDispatch("exec"))
+					 transition(edgeName="t05",targetState="execRoute",cond=whenDispatch("exec"))
 				}	 
 				state("execRoute") { //this:State
 					action { //it:State
@@ -68,12 +68,17 @@ class Butler ( name: String, scope: CoroutineScope ) : ActorBasicFsm( name, scop
 						if((Curmove != "nomove")){ forward("nextMove", "nextMove" ,"butler" ) 
 						 }
 						else
-						 { forward("check", "check" ,"butler" ) 
+						 { solve("updatePosition(pantry)","") //set resVar	
+						 solve("assert(move(w))","") //set resVar	
+						 solve("assert(move(w))","") //set resVar	
+						 solve("assert(move(w))","") //set resVar	
+						 println("%%%%regole aggiunte")
+						 forward("check", "check" ,"butler" ) 
 						  }
 					}
-					 transition(edgeName="t03",targetState="stopApplication",cond=whenDispatch("stop"))
-					transition(edgeName="t04",targetState="execRoute",cond=whenDispatch("nextMove"))
-					transition(edgeName="t05",targetState="checkPosition",cond=whenDispatch("check"))
+					 transition(edgeName="t06",targetState="stopApplication",cond=whenDispatch("stop"))
+					transition(edgeName="t07",targetState="execRoute",cond=whenDispatch("nextMove"))
+					transition(edgeName="t08",targetState="checkPosition",cond=whenDispatch("check"))
 				}	 
 				state("checkPosition") { //this:State
 					action { //it:State
@@ -85,56 +90,45 @@ class Butler ( name: String, scope: CoroutineScope ) : ActorBasicFsm( name, scop
 						solve("currentPosition(robot,position(P))","") //set resVar	
 						if(currentSolution.isSuccess()) { Position = getCurSol("P").toString()
 						 }
-						if((Position == "table")){ table++; PosTable = Position + table
-						if((Task == "preparing")){ forward("nearPrepare", "nearPrepare($PosTable)" ,"butler" ) 
-						 }
-						if((Task == "adding")){ forward("nearClean", "nearClean($PosTable)" ,"butler" ) 
-						 }
-						if((Task == "cleaning")){ forward("nearAdd", "nearAdd($PosTable)" ,"butler" ) 
-						 }
+						if((Position == "table")){ table++; Position = Position + table
 						 }
 						else
 						 { if((Position == "inRH")){ forward("inRH", "inRH" ,"butler" ) 
 						  }
 						 else
-						  { if((Task == "preparing")){ forward("nearPrepare", "nearPrepare($Position)" ,"butler" ) 
-						   }
-						  if((Task == "adding")){ forward("nearClean", "nearClean($Position)" ,"butler" ) 
-						   }
-						  if((Task == "cleaning")){ forward("nearAdd", "nearAdd($Position)" ,"butler" ) 
-						   }
+						  { forward("near", "near($Position)" ,"butler" ) 
 						   }
 						  }
 					}
-					 transition(edgeName="t06",targetState="execActionPrepare",cond=whenDispatch("nearPrepare"))
-					transition(edgeName="t07",targetState="execActionAdd",cond=whenDispatch("nearAdd"))
-					transition(edgeName="t08",targetState="execActionClean",cond=whenDispatch("nearClean"))
-					transition(edgeName="t09",targetState="sendAck",cond=whenDispatch("inRH"))
+					 transition(edgeName="t09",targetState="execActionPrepare",cond=whenDispatchGuarded("near",{Task.equals("preparing")}))
+					transition(edgeName="t010",targetState="execActionAdd",cond=whenDispatchGuarded("near",{Task == "adding"}))
+					transition(edgeName="t011",targetState="execActionClean",cond=whenDispatchGuarded("near",{Task == "cleaning"}))
+					transition(edgeName="t012",targetState="sendAck",cond=whenDispatch("inRH"))
 				}	 
 				state("execActionPrepare") { //this:State
 					action { //it:State
-						if( checkMsgContent( Term.createTerm("nearPrepare(X)"), Term.createTerm("nearPrepare(pantry)"), 
+						if( checkMsgContent( Term.createTerm("near(X)"), Term.createTerm("near(pantry)"), 
 						                        currentMsg.msgContent()) ) { //set msgArgList
 								println("Butler takes dishes from pantry")
 								forward("calculateRoute", "calculateRoute(table)" ,"butler" ) 
 						}
-						if( checkMsgContent( Term.createTerm("nearPrepare(X)"), Term.createTerm("nearPrepare(fridge)"), 
+						if( checkMsgContent( Term.createTerm("near(X)"), Term.createTerm("neare(fridge)"), 
 						                        currentMsg.msgContent()) ) { //set msgArgList
 								println("Butler takes food from fridge")
 								forward("calculateRoute", "calculateRoute(table)" ,"butler" ) 
 						}
-						if( checkMsgContent( Term.createTerm("nearPrepare(X)"), Term.createTerm("nearPrepare(table1)"), 
+						if( checkMsgContent( Term.createTerm("near(X)"), Term.createTerm("near(table1)"), 
 						                        currentMsg.msgContent()) ) { //set msgArgList
 								println("Butler puts dishes on table")
 								forward("calculateRoute", "calculateRoute(fridge)" ,"butler" ) 
 						}
-						if( checkMsgContent( Term.createTerm("nearPrepare(X)"), Term.createTerm("nearPrepare(table2)"), 
+						if( checkMsgContent( Term.createTerm("near(X)"), Term.createTerm("near(table2)"), 
 						                        currentMsg.msgContent()) ) { //set msgArgList
 								println("Butler puts food on table")
 								forward("calculateRoute", "calculateRoute(rh)" ,"butler" ) 
 						}
 					}
-					 transition(edgeName="t010",targetState="planningRoute",cond=whenDispatch("calculateRoute"))
+					 transition(edgeName="t013",targetState="planningRoute",cond=whenDispatch("calculateRoute"))
 				}	 
 				state("sendAck") { //this:State
 					action { //it:State
@@ -148,14 +142,14 @@ class Butler ( name: String, scope: CoroutineScope ) : ActorBasicFsm( name, scop
 					action { //it:State
 						println("Butler stopping")
 					}
-					 transition(edgeName="t011",targetState="execRoute",cond=whenDispatch("reactivate"))
+					 transition(edgeName="t014",targetState="execRoute",cond=whenDispatch("reactivate"))
 				}	 
 				state("waitCmd2") { //this:State
 					action { //it:State
 						solve("cmd(robot,task(waiting))","") //set resVar	
 					}
-					 transition(edgeName="t012",targetState="adding",cond=whenDispatch("addFood"))
-					transition(edgeName="t013",targetState="cleaning",cond=whenDispatch("clean"))
+					 transition(edgeName="t015",targetState="adding",cond=whenEvent("modelChangedadding"))
+					transition(edgeName="t016",targetState="cleaning",cond=whenEvent("modelChangedcleaning"))
 				}	 
 				state("cleaning") { //this:State
 					action { //it:State
@@ -188,7 +182,7 @@ class Butler ( name: String, scope: CoroutineScope ) : ActorBasicFsm( name, scop
 								forward("calculateRoute", "calculateRoute(rh)" ,"butler" ) 
 						}
 					}
-					 transition(edgeName="t014",targetState="planningRoute",cond=whenDispatch("calculateRoute"))
+					 transition(edgeName="t017",targetState="planningRoute",cond=whenDispatch("calculateRoute"))
 				}	 
 				state("adding") { //this:State
 					action { //it:State
@@ -199,8 +193,8 @@ class Butler ( name: String, scope: CoroutineScope ) : ActorBasicFsm( name, scop
 								forward("foodAvailability", "foodAvailability(${payloadArg(0)},${payloadArg(1)})" ,"fridge" ) 
 						}
 					}
-					 transition(edgeName="t015",targetState="nextStep",cond=whenDispatch("positiveResponse"))
-					transition(edgeName="t016",targetState="sendWarning",cond=whenDispatch("negativeResponse"))
+					 transition(edgeName="t018",targetState="nextStep",cond=whenDispatch("positiveResponse"))
+					transition(edgeName="t019",targetState="sendWarning",cond=whenDispatch("negativeResponse"))
 				}	 
 				state("nextStep") { //this:State
 					action { //it:State
@@ -230,7 +224,7 @@ class Butler ( name: String, scope: CoroutineScope ) : ActorBasicFsm( name, scop
 								forward("calculateRoute", "calculateRoute(rh)" ,"butler" ) 
 						}
 					}
-					 transition(edgeName="t017",targetState="planningRoute",cond=whenDispatch("calculateRoute"))
+					 transition(edgeName="t020",targetState="planningRoute",cond=whenDispatch("calculateRoute"))
 				}	 
 			}
 		}

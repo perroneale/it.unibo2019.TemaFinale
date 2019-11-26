@@ -32,7 +32,7 @@ class Butler ( name: String, scope: CoroutineScope ) : ActorBasicFsm( name, scop
 						println("$name in ${currentState.stateName} | $currentMsg")
 						println("mi reco alla pantry")
 						delay(2000) 
-						forward("takeDishesP", "takeDishesP" ,"pantry" ) 
+						forward("takeDishesP", "takeDishesP(D,P,B)" ,"pantry" ) 
 						println("mi reco al tavolo")
 						delay(2000) 
 						println("mi reco al frigo")
@@ -43,7 +43,7 @@ class Butler ( name: String, scope: CoroutineScope ) : ActorBasicFsm( name, scop
 						println("torno nella posizione RH")
 						delay(2000) 
 						forward("completedTask", "completedTask(prepare)" ,"maitre" ) 
-						forward("terminatedTask", "terminatedTask" ,"butler" ) 
+						forward("terminatedTask", "terminatedTask(prepare)" ,"butler" ) 
 					}
 					 transition(edgeName="t01",targetState="waitCmd2",cond=whenDispatch("terminatedTask"))
 					transition(edgeName="t02",targetState="stopApplicationP",cond=whenDispatch("stop"))
@@ -52,7 +52,7 @@ class Butler ( name: String, scope: CoroutineScope ) : ActorBasicFsm( name, scop
 					action { //it:State
 					}
 					 transition(edgeName="t03",targetState="adding",cond=whenDispatch("addFood"))
-					transition(edgeName="t04",targetState="clearing",cond=whenDispatch("clear"))
+					transition(edgeName="t04",targetState="cleaning",cond=whenDispatch("clear"))
 				}	 
 				state("stopApplicationP") { //this:State
 					action { //it:State
@@ -67,15 +67,15 @@ class Butler ( name: String, scope: CoroutineScope ) : ActorBasicFsm( name, scop
 						forward("terminatedTask", "terminatedTask" ,"butler" ) 
 					}
 					 transition(edgeName="t06",targetState="waitCmd2",cond=whenDispatch("terminatedTask"))
-					transition(edgeName="t07",targetState="stopApplicationAF",cond=whenDispatch("stop"))
+					transition(edgeName="t07",targetState="stopApplicationA",cond=whenDispatch("stop"))
 				}	 
-				state("stopApplicationAF") { //this:State
+				state("stopApplicationA") { //this:State
 					action { //it:State
 						println("Butler stopping during prepare activity")
 					}
 					 transition(edgeName="t08",targetState="adding",cond=whenDispatch("reactivate"))
 				}	 
-				state("clearing") { //this:State
+				state("cleaning") { //this:State
 					action { //it:State
 						println("$name in ${currentState.stateName} | $currentMsg")
 						println("mi reco al tavolo")
@@ -100,7 +100,7 @@ class Butler ( name: String, scope: CoroutineScope ) : ActorBasicFsm( name, scop
 					action { //it:State
 						println("Butler stopping during prepare activity")
 					}
-					 transition(edgeName="t011",targetState="clearing",cond=whenDispatch("reactivate"))
+					 transition(edgeName="t011",targetState="cleaning",cond=whenDispatch("reactivate"))
 				}	 
 			}
 		}

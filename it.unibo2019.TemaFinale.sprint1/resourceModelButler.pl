@@ -44,8 +44,7 @@ updateCurrentPosition(NAME, VALUE) :- replaceRule( currentPosition(NAME, _), cur
 updateFood(ID, QUANTITY) :- replaceRule( food( _ , _ ), food(ID, QUANTITY)).
 
 changeModel( CATEG, NAME, VALUE ) :-
-   replaceRule( model(CATEG,NAME,_),  model(CATEG,NAME,state(VALUE)) ).
-   %% showResourceModel.	%% at each change, show the model
+   replaceRule( model(CATEG,NAME,_),  model(CATEG,NAME,state(VALUE)) ), showResourceModel.	%% at each change, show the model
 
 showResourceModel :- 
 	output("RESOURCE MODEL ---------- "),

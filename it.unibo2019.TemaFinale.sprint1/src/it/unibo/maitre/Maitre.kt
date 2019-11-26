@@ -20,7 +20,6 @@ class Maitre ( name: String, scope: CoroutineScope ) : ActorBasicFsm( name, scop
 					action { //it:State
 						println("###Maitre STARTED")
 					}
-					 transition( edgeName="goto",targetState="sendingP", cond=doswitch() )
 				}	 
 				state("sendingP") { //this:State
 					action { //it:State
@@ -43,22 +42,22 @@ class Maitre ( name: String, scope: CoroutineScope ) : ActorBasicFsm( name, scop
 						forward("addFood", "addFood(2,2)" ,"butler" ) 
 						forward("add", "add" ,"maitre" ) 
 					}
-					 transition(edgeName="t025",targetState="waitingAfAck",cond=whenDispatch("add"))
-					transition(edgeName="t026",targetState="waitingClAck",cond=whenDispatch("cl"))
+					 transition(edgeName="t027",targetState="waitingAfAck",cond=whenDispatch("add"))
+					transition(edgeName="t028",targetState="waitingClAck",cond=whenDispatch("cl"))
 				}	 
 				state("waitingAfAck") { //this:State
 					action { //it:State
 						println("$name in ${currentState.stateName} | $currentMsg")
 					}
-					 transition(edgeName="t027",targetState="sendingAC",cond=whenDispatch("completedTask"))
-					transition(edgeName="t028",targetState="updateFA",cond=whenDispatch("currentFood"))
+					 transition(edgeName="t029",targetState="sendingAC",cond=whenDispatch("completedTask"))
+					transition(edgeName="t030",targetState="updateFA",cond=whenDispatch("currentFood"))
 				}	 
 				state("waitingClAck") { //this:State
 					action { //it:State
 						println("$name in ${currentState.stateName} | $currentMsg")
 					}
-					 transition(edgeName="t029",targetState="sendingP",cond=whenDispatch("completedTask"))
-					transition(edgeName="t030",targetState="updateFC",cond=whenDispatch("currentFood"))
+					 transition(edgeName="t031",targetState="sendingP",cond=whenDispatch("completedTask"))
+					transition(edgeName="t032",targetState="updateFC",cond=whenDispatch("currentFood"))
 				}	 
 				state("updateFP") { //this:State
 					action { //it:State

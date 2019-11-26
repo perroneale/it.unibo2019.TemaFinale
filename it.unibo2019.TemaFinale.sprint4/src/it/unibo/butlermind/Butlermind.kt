@@ -48,7 +48,7 @@ class Butlermind ( name: String, scope: CoroutineScope ) : ActorBasicFsm( name, 
 						itunibo.robot.foodRequire.setContent( FoodString  )
 						itunibo.coap.resources.butlerRoomState.create(  )
 					}
-					 transition(edgeName="t012",targetState="updateKB",cond=whenDispatch("updateKBbm"))
+					 transition(edgeName="t017",targetState="updateKB",cond=whenDispatch("updateKBbm"))
 				}	 
 				state("updateKB") { //this:State
 					action { //it:State
@@ -64,7 +64,7 @@ class Butlermind ( name: String, scope: CoroutineScope ) : ActorBasicFsm( name, 
 					action { //it:State
 						forward("modelChangeTask", "modelChangeTask(robot,waiting,0,0)" ,"butlerresourcemodel" ) 
 					}
-					 transition(edgeName="t013",targetState="preparing",cond=whenEvent("modelChangedpreparing"))
+					 transition(edgeName="t018",targetState="preparing",cond=whenEvent("modelChangedpreparing"))
 				}	 
 				state("preparing") { //this:State
 					action { //it:State
@@ -72,7 +72,7 @@ class Butlermind ( name: String, scope: CoroutineScope ) : ActorBasicFsm( name, 
 						Task = "preparing";
 						forward("calculateRoute", "calculateRoute(pantry)" ,"planningroute" ) 
 					}
-					 transition(edgeName="t014",targetState="actionPrepare",cond=whenDispatch("destinationReached"))
+					 transition(edgeName="t019",targetState="actionPrepare",cond=whenDispatch("destinationReached"))
 				}	 
 				state("actionPrepare") { //this:State
 					action { //it:State
@@ -84,14 +84,13 @@ class Butlermind ( name: String, scope: CoroutineScope ) : ActorBasicFsm( name, 
 								println(position)
 						}
 						if(position == "pantry"){ forward("getDishesPantry", "getDishesPantry($Dishes,$Bicchieri,$Posate)" ,"pantry" ) 
-						delay(1000) 
-						itunibo.robot.robotSupport.updatePantryTake( Dishes, Posate, Bicchieri  )
+						itunibo.appliance.applianceCoAPResourcesManagment.updatePantryTake( Dishes, Posate, Bicchieri  )
 						forward("calculateRoute", "calculateRoute(table)" ,"planningroute" ) 
 						 }
 						else
 						 { if(position == "table" && table == 0){ forward("putDishesTable", "putDishes($Dishes,$Bicchieri,$Posate)" ,"table" ) 
 						 delay(1000) 
-						 itunibo.robot.robotSupport.updateTableAdd( Dishes, Posate, Bicchieri  )
+						 itunibo.appliance.applianceCoAPResourcesManagment.updateTableAdd( Dishes, Posate, Bicchieri  )
 						 forward("calculateRoute", "calculateRoute(fridge)" ,"planningroute" ) 
 						 table++
 						  }
@@ -102,7 +101,9 @@ class Butlermind ( name: String, scope: CoroutineScope ) : ActorBasicFsm( name, 
 						  forward("calculateRoute", "calculateRoute(table)" ,"planningroute" ) 
 						   }
 						  else
-						   { if(position == "table" && table == 1){ itunibo.robot.robotSupport.roomState.updateFoodOnTable( FoodCont  )
+						   { if(position == "table" && table == 1){ itunibo.appliance.applianceCoAPResourcesManagment.roomState.updateFoodOnTable( FoodCont  )
+						   var StringFood = FoodCont.toString()
+						   forward("putFoodTable", "putFoodTable(StringFood)" ,"table" ) 
 						   forward("calculateRoute", "calculateRoute(rh)" ,"planningroute" ) 
 						   table = 0
 						    }
@@ -115,8 +116,8 @@ class Butlermind ( name: String, scope: CoroutineScope ) : ActorBasicFsm( name, 
 						   }
 						  }
 					}
-					 transition(edgeName="t015",targetState="actionPrepare",cond=whenDispatch("destinationReached"))
-					transition(edgeName="t016",targetState="waitCmd2",cond=whenDispatch("completedTask"))
+					 transition(edgeName="t020",targetState="actionPrepare",cond=whenDispatch("destinationReached"))
+					transition(edgeName="t021",targetState="waitCmd2",cond=whenDispatch("completedTask"))
 				}	 
 				state("waitCmd2") { //this:State
 					action { //it:State
@@ -125,8 +126,8 @@ class Butlermind ( name: String, scope: CoroutineScope ) : ActorBasicFsm( name, 
 						position = "rh"
 						println("###IN waitCmd2")
 					}
-					 transition(edgeName="t017",targetState="adding",cond=whenEvent("modelChangedadding"))
-					transition(edgeName="t018",targetState="cleaning",cond=whenEvent("modelChangedcleaning"))
+					 transition(edgeName="t022",targetState="adding",cond=whenEvent("modelChangedadding"))
+					transition(edgeName="t023",targetState="cleaning",cond=whenEvent("modelChangedcleaning"))
 				}	 
 				state("cleaning") { //this:State
 					action { //it:State
@@ -134,7 +135,7 @@ class Butlermind ( name: String, scope: CoroutineScope ) : ActorBasicFsm( name, 
 						forward("calculateRoute", "calculateRoute(table)" ,"planningroute" ) 
 						position = "table"
 					}
-					 transition(edgeName="t019",targetState="actionClean",cond=whenDispatch("destinationReached"))
+					 transition(edgeName="t024",targetState="actionClean",cond=whenDispatch("destinationReached"))
 				}	 
 				state("actionClean") { //this:State
 					action { //it:State
@@ -147,11 +148,11 @@ class Butlermind ( name: String, scope: CoroutineScope ) : ActorBasicFsm( name, 
 						}
 						if(position == "dishwasher"){ forward("putDishesDish", "putDishes($Dishes,$Bicchieri,$Posate)" ,"dishwasher" ) 
 						delay(1000) 
-						itunibo.robot.robotSupport.updateDishwasherAdd( CurrentCluteryTable  )
+						itunibo.appliance.applianceCoAPResourcesManagment.updateDishwasherAdd( CurrentCluteryTable  )
 						forward("calculateRoute", "calculateRoute(rh)" ,"planningroute" ) 
 						 }
 						else
-						 { if(position == "table" && table == 0){ FoodOnTable = itunibo.robot.robotSupport.roomState.getAllFoodFromTable()
+						 { if(position == "table" && table == 0){ FoodOnTable = itunibo.appliance.applianceCoAPResourcesManagment.roomState.getAllFoodFromTable()
 						 forward("calculateRoute", "calculateRoute(fridge)" ,"planningroute" ) 
 						 table++
 						  }
@@ -162,7 +163,7 @@ class Butlermind ( name: String, scope: CoroutineScope ) : ActorBasicFsm( name, 
 						  else
 						   { if(position == "table" && table == 1){ forward("getDishesTable", "getDishes($Dishes,$Bicchieri,$Posate)" ,"table" ) 
 						   delay(1000) 
-						   CurrentCluteryTable = itunibo.robot.robotSupport.updateTableTake()
+						   CurrentCluteryTable = itunibo.appliance.applianceCoAPResourcesManagment.updateTableTake()
 						   forward("calculateRoute", "calculateRoute(dishwasher)" ,"planningroute" ) 
 						   table = 0
 						    }
@@ -175,8 +176,8 @@ class Butlermind ( name: String, scope: CoroutineScope ) : ActorBasicFsm( name, 
 						   }
 						  }
 					}
-					 transition(edgeName="t020",targetState="actionClean",cond=whenDispatch("destinationReached"))
-					transition(edgeName="t021",targetState="waitCmd1",cond=whenDispatch("completedTask"))
+					 transition(edgeName="t025",targetState="actionClean",cond=whenDispatch("destinationReached"))
+					transition(edgeName="t026",targetState="waitCmd1",cond=whenDispatch("completedTask"))
 				}	 
 				state("adding") { //this:State
 					action { //it:State
@@ -188,14 +189,14 @@ class Butlermind ( name: String, scope: CoroutineScope ) : ActorBasicFsm( name, 
 								itunibo.coap.client.butlerMindClient.foodAvailability(myself ,payloadArg(2), payloadArg(3) )
 						}
 					}
-					 transition(edgeName="t022",targetState="nextStep",cond=whenDispatch("positiveResponse"))
-					transition(edgeName="t023",targetState="sendWarning",cond=whenDispatch("negativeResponse"))
+					 transition(edgeName="t027",targetState="nextStep",cond=whenDispatch("positiveResponse"))
+					transition(edgeName="t028",targetState="sendWarning",cond=whenDispatch("negativeResponse"))
 				}	 
 				state("nextStep") { //this:State
 					action { //it:State
 						forward("calculateRoute", "calculateRoute(fridge)" ,"planningroute" ) 
 					}
-					 transition(edgeName="t024",targetState="actionAdd",cond=whenDispatch("destinationReached"))
+					 transition(edgeName="t029",targetState="actionAdd",cond=whenDispatch("destinationReached"))
 				}	 
 				state("actionAdd") { //this:State
 					action { //it:State
@@ -206,7 +207,7 @@ class Butlermind ( name: String, scope: CoroutineScope ) : ActorBasicFsm( name, 
 								position = getCurSol("POSITION").toString()
 								println(position)
 						}
-						if(position == "table"){ itunibo.robot.robotSupport.roomState.addFoodOnTable( FoodCode, NameReq, QuantityReq  )
+						if(position == "table"){ itunibo.appliance.applianceCoAPResourcesManagment.roomState.addFoodOnTable( FoodCode, NameReq, QuantityReq  )
 						forward("calculateRoute", "calculateRoute(rh)" ,"planningroute" ) 
 						 }
 						else
@@ -219,8 +220,8 @@ class Butlermind ( name: String, scope: CoroutineScope ) : ActorBasicFsm( name, 
 						   }
 						  }
 					}
-					 transition(edgeName="t025",targetState="actionAdd",cond=whenDispatch("destinationReached"))
-					transition(edgeName="t026",targetState="waitCmd2",cond=whenDispatch("completedTask"))
+					 transition(edgeName="t030",targetState="actionAdd",cond=whenDispatch("destinationReached"))
+					transition(edgeName="t031",targetState="waitCmd2",cond=whenDispatch("completedTask"))
 				}	 
 				state("sendWarning") { //this:State
 					action { //it:State

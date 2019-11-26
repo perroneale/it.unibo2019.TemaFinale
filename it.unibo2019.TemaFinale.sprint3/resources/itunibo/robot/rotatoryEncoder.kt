@@ -22,8 +22,9 @@ class rotatoryEncoder(name : String, val owner : ActorBasicFsm, val conn : Seria
 			if(curData.isEmpty()){
 				
 			}else{
-				println(curData)
+				
 				var d = curData.replace("\n","")
+				println("current data = $d")
 				val event = MsgUtil.buildEvent(name,"rotatoryCounter","rotatoryCounter($d)")
 				owner.emit(event)
 			}

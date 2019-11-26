@@ -1,0 +1,579 @@
+System zooming2
+
+//from maitre to butler
+Dispatch prepare : prepare(P)
+Dispatch addFood : addFood(C,Q) //C = food code, Q = quantity
+Dispatch clean : clean(C)
+Dispatch stop : stop(S)
+Dispatch reactivate : reactivate(R)
+
+//from butler to butler
+Dispatch terminatedTask : terminatedTask(TASK)
+Dispatch nearPantry : nearPantry(N)
+Dispatch nearTable : nearTable(N)
+Dispatch nearFridge : nearFridge(N)
+Dispatch nearTableP : nearTableP(P)
+Dispatch inRH : inRH(I)
+
+Dispatch check: check(C)
+Dispatch nextMove : nextMove(N)
+Dispatch exec : exec(E)
+Dispatch calculateRoute : calculateRoute(X) //X = Goal
+Dispatch nearPrepare : nearPrepare(X) //X posizione
+Dispatch nearAdd : nearAdd(X) //X posizione
+Dispatch nearClean : nearClean(X) //X posizione
+Dispatch near : near(X)
+
+//from maitre to maitre
+Dispatch add : add(A)
+Dispatch cl : cl(C)
+
+//from butler to maitre
+Dispatch completedTask : completedTask(X)
+Dispatch warning : warning(C,Q,AQ)  //C = food code, Q = quantity, AQ = quantità disponibile nel frigo
+
+//from butler to fridge
+Dispatch foodAvailability : foodAvailability(C,Q) //C = food code, Q = quantity
+Dispatch foodTaken : foodTaken(C,Q) //C = food code, Q = quantity
+Dispatch foodPutted : foodPutted(C,Q)   //C = food code, Q = quantity
+
+//from butler to pantry
+Dispatch takeDishesP : takeDishesP(D,P,B)
+Dispatch putDishesP : putDishesP(D,P,B)
+
+//from butler to dishwasher
+Dispatch takeDishesD : takeDishes(D)
+Dispatch putDishesD : putDishesD(D,P,B)
+
+Dispatch takeDishesT : takeDishesT(D,P,B)
+Dispatch putDishesT : putDishesT(D,P,B)
+Dispatch takeFoodT : takeFoodT(LIST)
+Dispatch putFoodT : putFoodT(LIST)
+
+//from pantry to butler
+Dispatch returnStateP : returnStateP(X)
+
+//from dishwasher to butler
+Dispatch returnStateD : returnStateD(X)
+
+//from fridge to butler
+Dispatch positiveResponse : positiveResponse(C,Q)    //C = food code, Q = quantity
+Dispatch negativeResponse : negativeResponse(C,Q,AQ) //C = food code, Q = quantity, AQ = quantità disponibile nel frigo
+
+//from fridge to maitre
+Dispatch currentFood : currentFood(X)  //in una fase successiva si deciderà come comunicare il contenuto del frigo
+
+//from frontend
+Dispatch modelChangeTask : modelChangeTask(DEST, TASK, IDCIBO, QUANTITY)
+Dispatch modelChangeAction : modelChangeAction(DEST, ACTION)
+Dispatch modelChangePos : modelChangePos(DEST, POSITION)
+Dispatch modelUpdateAction : modelUpdateAction(DEST, ACTION)
+
+Dispatch robotAction : robotAction(X) //X = w,a,s,d,h
+
+//from resourcemodelbutler
+Event modelChangedpreparing : modelChangedpreparing(DEST, TASK)
+Event modelChangedadding : modelChangedadding(DEST, TASK)
+Event modelChangedcleaning : modelChangedcleaning(DEST, TASK)
+Event modelChangedAction : modelChangedAction(DEST, ACTION) //ACTION = w,a,s,d,h
+Event sonarRobot : sonarRobot(DISTANCE)
+
+Context ctxButler ip[host="localhost" port=8080]
+Context ctxMaitre ip[host="localhost" port=8081]
+Context ctxFridge ip[host="localhost" port=8082]
+
+
+QActor butlerresourcemodel context ctxButler{
+	State s0 initial{
+		solve(consult("sysRules.pl"))
+		solve(consult("resourceModelButler.pl"))
+		println("###RESOURCEMODEL STARTED---")
+	}Goto waitModelChange
+	
+	State waitModelChange{
+		
+	}Transition t0 whenMsg modelChangeTask -> handleModelChange
+				   whenMsg modelChangeAction -> handleModelChange
+				   whenMsg modelChangePos -> handleModelChange
+	
+	State handleModelChange{
+		onMsg(modelChangeTask : modelChangeTask(robot, TASK, IDCIBO, QUANTITY)){
+			run itunibo.robot.resourceModelSupport.updateModelTask(myself, payloadArg(1), payloadArg(2), payloadArg(3))
+		}
+		onMsg(modelChangeAction : modelChangeAction(robot, ACTION)){
+			run itunibo.robot.resourceModelSupport.updateModelAction(myself, payloadArg(1))
+		}
+		onMsg(modelChangePos : modelChangePos(robot, POS)){
+			run itunibo.robot.resourceModelSupport.updateModelPosition(myself, payloadArg(1))
+		}
+	} Goto waitModelChange
+}
+
+QActor mind context ctxButler{
+	State s0 initial{
+		println("###MIND STARTED ")
+	}Goto waitCmd
+	
+	State waitCmd{
+		/*modelChangedAction viene emessa da butlerResourceModel a seguito del
+		 * cambiamento del modello, a seguito della ricezione di un comando tra w, a,s,d,h.
+		 */
+	}Transition t0 whenEvent modelChangedAction -> handleAction
+				   whenEvent sonarRobot -> handleSonar
+				   
+	State handleAction{
+		onMsg(modelChangedAction : modelChangedAction(robot, ACTION)){
+			printCurrentMessage
+			forward butler -m robotAction : robotAction($payloadArg(1))
+		}
+	}Goto waitCmd
+	
+	State handleSonar{
+		onMsg(sonarRobot : sonarRobot (Distance)){
+			["val Distance = Integer.parseInt(payloadArg(0));"]
+			if "Distance <= 10 "{
+				println("###Mind, Obstacle at $Distance")
+				//aggiorno il modello
+				forward butlerresourcemodel -m modelChangeAction : modelChangeAction(robot, h)
+			}
+		}
+	}Goto waitCmd
+}
+QActor butlermind context ctxButler{
+	["var Task = \"\";"]
+	  
+	State s0 initial{
+		solve(consult("sysRules.pl"))
+		solve(consult("resourceModelButler.pl"))
+		println("ButlerMind STARTED")
+	}Goto waitCmd1
+	
+	State waitCmd1{
+		["Task = \"\";"]
+		//aggiorno il modello perchè il robot è in attesa di un messaggio
+		forward butlerresourcemodel -m modelChangeTask : modelChangeTask(robot, waiting)
+	}Transition t0 whenEvent modelChangedpreparing -> preparing
+	
+	//PREPARE ACTION
+	
+	State preparing{
+		println("---BUTLERMIND in preparing")
+		["Task = \"preparing\";"]
+		forward planningroute -m calculateRoute : calculateRoute(pantry)
+	}Goto waitAck
+	
+	State waitAck{
+		solve(currentTask(robot, task(T)))
+		 ifSolved{
+		 	["Task = getCurSol(\"T\").toString()"]
+		 	println("task = $Task")
+		 }
+	}Transition t0 whenMsg completedTask and "Task.equals(\"preparing\")" -> waitCmd2
+				   whenMsg completedTask and "Task.equals(\"cleaning\")" -> waitCmd1
+				   whenMsg completedTask and "Task.equals(\"adding\")" -> waitCmd2
+	
+	State waitCmd2{
+		["Task = \"\";"]
+		//aggiorno il modello perchè il robot è in attesa di un messaggio
+		forward butlerresourcemodel -m modelChangeTask : modelChangeTask(robot, waiting)
+	}Transition t0 whenEvent modelChangedadding -> adding
+				   whenEvent modelChangedcleaning -> cleaning
+	
+	State cleaning{
+		["Task = \"cleaning\";"]
+		forward planningroute -m calculateRoute : calculateRoute(table)
+	}Goto waitAck
+				
+	State adding{
+		["Task = \"adding\";"]
+		onMsg(addFood : addFood(C,Q)){
+		forward fridge -m foodAvailability : foodAvailability($payloadArg(0),$payloadArg(1))
+		}
+	}Transition t0 whenMsg positiveResponse -> nextStep
+				   whenMsg negativeResponse -> sendWarning
+	
+	State nextStep{
+		forward planningroute -m calculateRoute : calculateRoute(fridge)
+	}Goto waitAck
+	
+	State sendWarning{
+		onMsg(negativeResponse : negativeResponse(C,Q,AQ)){
+			forward maitre -m warning : warning($payloadArg(0),$payloadArg(1),$payloadArg(2))
+		}
+	}Goto waitCmd2
+
+}
+
+QActor planningroute context ctxButler {
+	State s0 initial{
+		println("###PLANNINGROUTE STARTED")
+	}Goto waitGoal
+	
+	State waitGoal{
+	}Transition t0 whenMsg calculateRoute -> planningRoute
+	
+	State planningRoute{
+		onMsg(calculateRoute : calculateRoute(GOAL)){
+			//lancio il planning che calcola la strada e la salva in una KB
+			println("###PLANNINGROUTE calculate route to ${payloadArg(0)}")
+			forward execroute -m exec : exec
+		}
+	}Goto waitGoal
+}
+
+QActor execroute context ctxButler{
+	["var Curmove =\"\";
+	  var nextState =\"\"; 
+	  var table = 0;
+	  var Position = \"\"; 
+	  var PosTable = \"\";
+	  var Task = \"\";"]
+	
+	State s0 initial{
+		println("###EXECROUTE STARTED")
+	}Goto waitCmd
+	
+	State waitCmd{
+	}Transition t0 whenMsg exec -> execRoute
+	
+	State execRoute{
+		//LAB16
+		println("###EXECROUTE STATE EXEC ROUTE")
+		solve(retract(move(M))) //consume a move
+		ifSolved {
+			["Curmove = getCurSol(\"M\").toString()"]
+			println("Exec move $Curmove")
+			//richiamo resource per eseguire la mossa
+			//dealy tempo mossa
+			
+		} else {
+			["Curmove=\"nomove\" "]
+		}
+		if "(Curmove != \"nomove\")"{
+			//run itunibo.planner.moveUtils.doPannedMove(myself,Curmove)
+			forward execroute -m nextMove : nextMove
+		}else{
+			/*solve(updatePosition(pantry))
+			solve(assert(move(w)))
+			solve(assert(move(w)))
+			solve(assert(move(w)))
+			println("%%%%regole aggiunte")*/
+			forward execroute -m check : check
+		}
+	}Transition t0 whenMsg stop -> stopApplication
+				   whenMsg nextMove -> execRoute
+				   whenMsg check -> checkPosition
+				   whenEvent sonarRobot -> handleObstacle
+				   
+	State checkPosition{
+		/*
+		 * Verifico la posizione in cui mi trovo
+		 * ed in base a questa transito nel prossimo stato
+		 */
+		 println("###EXECROUTE in checkPosition")
+		 solve(currentTask(robot, task(T)))
+		 ifSolved{
+		 	["Task = getCurSol(\"T\").toString()"]
+		 	println("task = $Task")
+		 }
+		 solve(currentPosition(robot, position(P)))
+		 ifSolved {
+		 	["Position = getCurSol(\"P\").toString()"]
+		 }
+		 if "(Position == \"table\")"{
+		 	["table++; Position = Position + table"]
+		 }else{
+		 	if "(Position == \"inRH\")"{
+		 		forward execroute -m inRH: inRH
+		 	}else{
+		 		forward execroute -m near : near($Position)
+		 	}
+		 }
+	}Transition t0 whenMsg near and "Task.equals(\"preparing\")" -> execTaskPrepare
+				   whenMsg near and "Task.equals(\"adding\")"  -> execTaskAdd
+				   whenMsg near and "Task.equals(\"cleaning\")"-> execTaskClean
+				   whenMsg inRH -> sendAck
+	
+	State handleObstacle{
+		//suona il buzzer finchè l'oggetto non si sposta
+	}Goto execRoute
+
+	State execTaskPrepare{
+		onMsg(nearPrepare : nearPrepare(pantry)){
+			println("###EXECROUTE takes dishes from pantry")
+			//Codice per prendere i piatti
+			forward planningroute -m calculateRoute : calculateRoute(table)
+		}
+		onMsg(nearPrepare : nearPrepare(fridge)){
+			println("###EXECROUTE takes food from fridge")
+			
+			forward planningroute -m calculateRoute : calculateRoute(table)
+		}
+		onMsg(nearPrepare : nearPrepare(table1)){
+			println("###EXECROUTE puts dishes on table")
+			
+			forward planningroute -m calculateRoute : calculateRoute(fridge)
+		}
+		onMsg(nearPrepare : nearPrepare(table2)){
+			println("###EXECROUTE puts food on table")
+			
+			forward planningroute -m calculateRoute : calculateRoute(rh)
+		}
+	}Goto waitCmd
+	
+	State sendAck{
+		["table = 0;"]
+		println("###EXECROUTE finished $Task task")
+		forward maitre -m completedTask : completedTask($Task)
+		//forward mind fine task
+		forward butlermind -m completedTask : completedTask($Task)
+	}Goto waitCmd
+	
+	State stopApplication{	
+		println("###EXECROUTE stopped")
+	}Transition t0 whenMsg reactivate -> execRoute
+	
+	
+	State execTaskClean{
+		onMsg(nearClean : nearClean(dishwasher)){
+			println("###EXECROUTE puts dishes into dishwasher")
+			
+			forward planningroute -m calculateRoute : calculateRoute(table)
+		}
+		onMsg(nearClean : nearClean(fridge)){
+			println("###EXECROUTE puts food into fridge")
+			
+			forward planningroute -m calculateRoute : calculateRoute(table)
+		}
+		onMsg(nearClean : nearClean(table1)){
+			println("###EXECROUTE takes dishes from table")
+			
+			forward planningroute -m calculateRoute : calculateRoute(fridge)
+		}
+		onMsg(nearClean : nearClean(table2)){
+			println("###EXECROUTE takes food from table")
+			
+			forward planningroute -m calculateRoute : calculateRoute(rh)
+		}
+	}Goto waitCmd
+	
+	State execTaskAdd{
+		onMsg(nearAdd : nearAdd(fridge)){
+			println("###EXECROUTE takes food from fridge")
+			
+			forward planningroute -m calculateRoute : calculateRoute(table)
+		}
+		onMsg(nearAdd : nearAdd(table1)){
+			println("###EXECROUTE puts food on table")
+			
+			forward planningroute -m calculateRoute : calculateRoute(rh)
+		}
+	}Goto waitCmd
+}
+   
+QActor butler context ctxButler{
+	State s0 initial{
+		solve(consult("basicRobotConfig.pl"))
+		solve(robot(R,PORT)) //R = virtual | realnano
+		println("###Butler STARTED")
+		ifSolved {
+			println("###USING ROBOT : ${getCurSol(\"R\")}, port = ${getCurSol(\"PORT\")}")
+			//include l'esecuzione del sonar
+			run itunibo.robot.robotSupport.create(myself, @R, @PORT)    
+		}else{
+			println("No Robot")
+		}
+	}Goto waitCmd
+	
+	State waitCmd{
+	}Transition t0 whenMsg robotAction -> handleRobotAction
+	
+	State handleRobotAction{
+		printCurrentMessage
+		onMsg(robotAction : robotAction(ACTION)){
+			run itunibo.robot.robotSupport.move("msg(${payloadArg(0)})")
+		}
+	}Goto waitCmd  
+}  
+
+
+QActor maitre context ctxMaitre{
+	State s0 initial{
+		println("###Maitre STARTED")
+	}Goto sendingP
+	
+	State sendingP{
+		//delay 2000
+		//println("----Maitre send prepare message")
+		//forward butler -m prepare : prepare
+	}Goto waitingPAck
+	
+	State waitingPAck{
+		//eventualmente in questo stato posso mandare un messaggio di stop, reactivate
+		onMsg(completedTask : completedTask(T)){
+			println("Butler finito ${payloadArg(0)} task")
+		}
+	}/*Transition t0 whenMsg completedTask -> sendingAC
+				   whenMsg currentFood -> updateFP*/
+	
+	State sendingAC{
+		forward butler -m addFood : addFood(2,2)
+		forward maitre -m add : add
+		/*forward butler -m clear : clear
+		forward maitre -m cl : cl*/
+	}Transition t0 whenMsg add -> waitingAfAck
+				   whenMsg cl -> waitingClAck
+	
+	State waitingAfAck{
+		printCurrentMessage
+	}Transition t0 whenMsg completedTask -> sendingAC
+				   whenMsg currentFood -> updateFA
+	
+	State waitingClAck{
+		printCurrentMessage
+	}Transition t0 whenMsg completedTask -> sendingP
+				   whenMsg currentFood -> updateFC
+				   
+	State updateFP{
+		//aggiorno informazioni sul contenuto del frigo
+	}
+	
+	State updateFC{
+		//aggiorno informazioni sul contenuto del frigo
+	}
+	
+	State updateFA{
+		//aggiorno informazioni sul contenuto del frigo
+	}
+}
+
+QActor fridge context ctxFridge{
+	["var Quantity = 0;"]
+	State s0 initial{
+		println("Fridge STARTED")
+		solve(consult("sysRules.pl"))
+		solve(consult("fridgeContent.pl"))
+		println("----FRIDGE : comunico al maitre il mio contenuto")
+		//forward maitre -m currentFood : currentFood(lista)
+	}Goto waitCmd
+	
+	State waitCmd{
+		
+	}Transition t0 whenMsg foodAvailability -> checking
+				   whenMsg foodTaken -> updatingTf
+				   whenMsg foodPutted -> updatingPf
+				   
+	State checking{
+		onMsg(foodAvailability : foodAvailability(Code, Quant)){
+			solve(food($payloadArg(0), Q))
+			ifSolved {
+				["Quantity = getCurSol(\"Q\").toString().toInt()"]
+			}
+			if "Quantity <= payloadArg(1).toString().toInt()"{
+				forward butler -m positiveResponse : positiveResponse
+			}else{
+				forward butler -m negativeResponse : negativeResponse($payloadArg(0),$payloadArg(1),$Quantity)
+			}
+		}
+	}Goto waitCmd
+	
+	/*
+	 * Dispatch takeFood : takeFood(C,Q) //C = food code, Q = quantity
+	   Dispatch putFood : putFood(C,Q)   //C = food code, Q = quantity 
+	 */
+	State updatingTf{
+		["var QA = 0; 
+		  var Diff = 0"]
+		onMsg(foodTaken : foodTaken(Code, Quant)){
+			//vedo la quantità disponibile
+			solve(food($payloadArg(0), QA))
+			ifSolved{
+				["QA = getCurSol(\"QA\").toString().toInt();
+				  Diff = QA - payloadArg(1).toString().toInt()"]
+			}
+			solve(updateQuantity($payloadArg(0), $Diff ))
+			//comunico il cambiamento al maitre
+		}
+	}Goto s0
+	
+	State updatingPf{
+		["var QA = 0; 
+		  var Diff = 0"]
+		onMsg(foodPutted : foodPutted(Code, Quant)){
+			//vedo la quantità disponibile
+			solve(food($payloadArg(0), QA))
+			ifSolved{
+				["QA = getCurSol(\"QA\").toString().toInt();
+				  Diff = QA + payloadArg(1).toString().toInt()"]
+			}
+			solve(updateQuantity($payloadArg(0), $Diff ))
+			//comunico il cambiamento al maitre
+		}
+	}Goto s0
+}
+
+QActor pantry context ctxButler{
+	State s0 initial{
+		println("Pantry STARTED")
+	}Goto waitCmd
+	
+	State waitCmd{
+		
+	}Transition t0 whenMsg takeDishesP -> taking
+				   whenMsg putDishesP -> putting
+	
+	State taking{
+		//richiamato il metodo per prelevare i piatti
+	}Goto waitCmd
+	
+	State putting{
+		//richiamo il metodo per inserire i piatti nella pantry
+	}Goto waitCmd
+}
+
+QActor dishwasher context ctxButler{
+	State s0 initial{
+		println("Dishwasher STARTED")
+	}Goto waitCmd
+	
+	State waitCmd{
+		
+	}Transition t0 whenMsg takeDishesD -> taking
+				   whenMsg putDishesD -> putting
+	
+	State taking{
+		//richiamo il metodo per prelevare i piatti
+	}Goto waitCmd
+	
+	State putting{
+		//richiamo il metodo per inserire i piatti
+	}Goto waitCmd
+}
+QActor table context ctxButler{
+	State s0 initial{
+		println("Table STARTED")
+	}Goto waitCmd
+	
+	State waitCmd{
+		
+	}Transition t0 whenMsg takeDishesT -> taking
+				   whenMsg putDishesT -> putting
+				   whenMsg takeFoodT -> takeFood
+				   whenMsg putFoodT -> putFood
+	
+	State taking{
+		//richiamo il metodo per prelevare i piatti
+	}Goto waitCmd
+	
+	State putting{
+		//richiamo il metodo per inserire i piatti
+	}Goto waitCmd
+	
+	State takeFood{
+		
+	}Goto waitCmd
+
+	State putFood{
+		
+	}Goto waitCmd
+}

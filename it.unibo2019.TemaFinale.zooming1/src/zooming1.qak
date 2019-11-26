@@ -1,23 +1,23 @@
 System butlerzooming1
 
 //from maitre to butler
-Dispatch prepare : prepare
+Dispatch prepare : prepare(P)
 Dispatch addFood : addFood(C,Q) //C = food code, Q = quantity
-Dispatch clean : clean
-Dispatch stop : stop
-Dispatch reactivate : reactivate
+Dispatch clean : clean(C)
+Dispatch stop : stop(S)
+Dispatch reactivate : reactivate(R)
 
 //from butler to butler
-Dispatch terminatedTask : terminatedTask
-Dispatch nearPantry : nearPantry
-Dispatch nearTable : nearTable
-Dispatch nearFridge : nearFridge
-Dispatch nearTableP : nearTableP
-Dispatch inRH : inRH
+Dispatch terminatedTask : terminatedTask(TASK)
+Dispatch nearPantry : nearPantry(N)
+Dispatch nearTable : nearTable(N)
+Dispatch nearFridge : nearFridge(N)
+Dispatch nearTableP : nearTableP(P)
+Dispatch inRH : inRH(I)
 
-Dispatch check: check
-Dispatch nextMove : nextMove
-Dispatch exec : exec
+Dispatch check: check(C)
+Dispatch nextMove : nextMove(N)
+Dispatch exec : exec(E)
 Dispatch calculateRoute : calculateRoute(X) //X = Goal
 Dispatch nearPrepare : nearPrepare(X) //X posizione
 Dispatch nearAdd : nearAdd(X) //X posizione
@@ -25,8 +25,8 @@ Dispatch nearClean : nearClean(X) //X posizione
 Dispatch near : near(X)
 
 //from maitre to maitre
-Dispatch add : add
-Dispatch cl : cl
+Dispatch add : add(A)
+Dispatch cl : cl(C)
 
 //from butler to maitre
 Dispatch completedTask : completedTask(X)
@@ -38,20 +38,17 @@ Dispatch foodTaken : foodTaken(C,Q) //C = food code, Q = quantity
 Dispatch foodPutted : foodPutted(C,Q)   //C = food code, Q = quantity
 
 //from butler to pantry
-Dispatch retrieveStateP : retrieveStateP
-Dispatch takeDishesP : takeDishesP
-Dispatch putDishesP : putDishesP
+Dispatch takeDishesP : takeDishesP(D,P,B)
+Dispatch putDishesP : putDishesP(D,P,B)
 
 //from butler to dishwasher
-Dispatch retrieveStateD : retrieveStateD
-Dispatch takeDishesD : takeDishesD
-Dispatch putDishesD : putDishesD
+Dispatch takeDishesD : takeDishes(D)
+Dispatch putDishesD : putDishesD(D,P,B)
 
-//from pantry to butler
-Dispatch returnStateP : returnStateP(X)
-
-//from dishwasher to butler
-Dispatch returnStateD : returnStateD(X)
+Dispatch takeDishesT : takeDishesT(D,P,B)
+Dispatch putDishesT : putDishesT(D,P,B)
+Dispatch takeFoodT : takeFoodT(LIST)
+Dispatch putFoodT : putFoodT(LIST)
 
 //from fridge to butler
 Dispatch positiveResponse : positiveResponse(C,Q)    //C = food code, Q = quantity
@@ -60,9 +57,50 @@ Dispatch negativeResponse : negativeResponse(C,Q,AQ) //C = food code, Q = quanti
 //from fridge to maitre
 Dispatch currentFood : currentFood(X)  //in una fase successiva si deciderà come comunicare il contenuto del frigo
 
+Dispatch modelChangeTask : modelChangeTask(DEST, TASK, IDCIBO, QUANTITY)
+Dispatch modelChangeAction : modelChangeAction(DEST, ACTION)
+Dispatch modelChangePos : modelChangePos(DEST, POSITION)
+Dispatch modelUpdateAction : modelUpdateAction(DEST, ACTION)
+
+Dispatch robotAction : robotAction(X) //X = w,a,s,d,h
+
+//from resourcemodelbutler
+Event modelChangedpreparing : modelChangedpreparing(DEST, TASK)
+Event modelChangedadding : modelChangedadding(DEST, TASK)
+Event modelChangedcleaning : modelChangedcleaning(DEST, TASK)
+Event modelChangedAction : modelChangedAction(DEST, ACTION) //ACTION = w,a,s,d,h
+Event sonarRobot : sonarRobot(DISTANCE)
+
+
 Context ctxButler ip[host="localhost" port=8080]
 Context ctxMaitre ip[host="localhost" port=8081]
 Context ctxFridge ip[host="localhost" port=8082]
+
+QActor butlerresourcemodel context ctxButler{
+	State s0 initial{
+		solve(consult("sysRules.pl"))
+		solve(consult("resourceModelButler.pl"))
+		println("###RESOURCEMODEL STARTED---")
+	}Goto waitModelChange
+	
+	State waitModelChange{
+		
+	}Transition t0 whenMsg modelChangeTask -> handleModelChange
+				   whenMsg modelChangeAction -> handleModelChange
+				   whenMsg modelChangePos -> handleModelChange
+	
+	State handleModelChange{
+		onMsg(modelChangeTask : modelChangeTask(robot, TASK, IDCIBO, QUANTITY)){
+			run itunibo.robot.resourceModelSupport.updateModelTask(myself, payloadArg(1), payloadArg(2), payloadArg(3))
+		}
+		onMsg(modelChangeAction : modelChangeAction(robot, ACTION)){
+			run itunibo.robot.resourceModelSupport.updateModelAction(myself, payloadArg(1))
+		}
+		onMsg(modelChangePos : modelChangePos(robot, POS)){
+			run itunibo.robot.resourceModelSupport.updateModelPosition(myself, payloadArg(1))
+		}
+	} Goto waitModelChange
+} 
 
 QActor butler context ctxButler{
 	["var Curmove =\"\";
@@ -80,7 +118,7 @@ QActor butler context ctxButler{
 	
 	State waitCmd1{
 		solve(cmd(robot, task(waiting)))
-	}Transition t0 whenMsg prepare -> preparing
+	}Transition t0 whenEvent modelChangedpreparing -> preparing
 	
 	//PREPARE ACTION
 	
@@ -113,7 +151,6 @@ QActor butler context ctxButler{
 			["Curmove=\"nomove\" "]
 		}
 		if "(Curmove != \"nomove\")"{
-			//run itunibo.planner.moveUtils.doPannedMove(myself,Curmove)
 			forward butler -m nextMove : nextMove
 		}else{
 			solve(updatePosition(pantry))
@@ -152,40 +189,8 @@ QActor butler context ctxButler{
 		 		forward butler -m near : near($Position)
 		 	}
 		 }
-		 /*if "(Position == \"table\")"{
-		 	["table++; PosTable = Position + table"]
-		 	//forward butler -m near : near($PosTable)
-		 	if "(Task == \"preparing\")"{
-		 			forward butler -m nearPrepare : nearPrepare($PosTable)
-		 		}
-		 		if "(Task == \"adding\")"{
-		 			forward butler -m nearClean : nearClean($PosTable)
-		 		}
-		 		if "(Task == \"cleaning\")"{
-		 			forward butler -m nearAdd : nearAdd($PosTable)
-		 		}
-		 }else{
-		 	if "(Position == \"inRH\")"{
-		 		forward butler -m inRH : inRH
-		 	}else{
-		 		//forward butler -m near : near($Position)
-		 		if "(Task == \"preparing\")"{
-		 			forward butler -m nearPrepare : nearPrepare($Position)
-		 		}
-		 		if "(Task == \"adding\")"{
-		 			forward butler -m nearClean : nearClean($Position)
-		 		}
-		 		if "(Task == \"cleaning\")"{
-		 			forward butler -m nearAdd : nearAdd($Position)
-		 		}
-		 		
-		 	}
-		 }*/
-	}/*Transition t0 whenMsg nearPrepare -> execActionPrepare
-				   whenMsg nearAdd  -> execActionAdd
-				   whenMsg nearClean -> execActionClean
-				   whenMsg inRH -> sendAck*/
-	Transition t0 whenMsg near and "Task.equals(\"preparing\")" -> execActionPrepare
+		 
+	}Transition t0 whenMsg near and "Task.equals(\"preparing\")" -> execActionPrepare
 				   whenMsg near and "Task == \"adding\""  -> execActionAdd
 				   whenMsg near and "Task == \"cleaning\""-> execActionClean
 				   whenMsg inRH -> sendAck
@@ -207,22 +212,6 @@ QActor butler context ctxButler{
 			println("Butler puts food on table")
 			forward butler -m calculateRoute : calculateRoute(rh)
 		}
-		/*onMsg(nearPrepare : nearPrepare(pantry)){
-			println("Butler takes dishes from pantry")
-			forward butler -m calculateRoute : calculateRoute(table)
-		}
-		onMsg(nearPrepare : nearPrepare(fridge)){
-			println("Butler takes food from fridge")
-			forward butler -m calculateRoute : calculateRoute(table)
-		}
-		onMsg(nearPrepare : nearPrepare(table1)){
-			println("Butler puts dishes on table")
-			forward butler -m calculateRoute : calculateRoute(fridge)
-		}
-		onMsg(nearPrepare : nearPrepare(table2)){
-			println("Butler puts food on table")
-			forward butler -m calculateRoute : calculateRoute(rh)
-		}*/
 	}Transition t0 whenMsg calculateRoute -> planningRoute
 	
 	State sendAck{
@@ -239,8 +228,8 @@ QActor butler context ctxButler{
 	
 	State waitCmd2{
 		solve(cmd(robot, task(waiting)))
-	}Transition t0 whenMsg addFood -> adding
-				   whenMsg clean -> cleaning
+	}Transition t0 whenEvent modelChangedadding -> adding
+				   whenEvent modelChangedcleaning -> cleaning
 	
 	State cleaning{
 		["table = 0;"]
@@ -308,7 +297,7 @@ QActor maitre context ctxMaitre{
 	State sendingP{
 		delay 2000
 		println("----Maitre send prepare message")
-		forward butler -m prepare : prepare
+		forward butlerresourcemodel -m modelChangeTask : modelChangeTask(robot, preparing, 0, 0)
 	}Goto waitingPAck
 	
 	State waitingPAck{
@@ -422,13 +411,8 @@ QActor pantry context ctxButler{
 	
 	State waitCmd{
 		
-	}Transition t0 whenMsg retrieveStateP -> retrieving
-				   whenMsg takeDishesP -> taking
+	}Transition t0 whenMsg takeDishesP -> taking
 				   whenMsg putDishesP -> putting
-	
-	State retrieving{
-		//richiamo il metodo per conoscere lo stato 
-	}Goto waitCmd
 	
 	State taking{
 		//richiamato il metodo per prelevare i piatti
@@ -446,13 +430,8 @@ QActor dishwasher context ctxButler{
 	
 	State waitCmd{
 		
-	}Transition t0 whenMsg retrieveStateD -> retrieving
-				   whenMsg takeDishesD -> taking
+	}Transition t0 whenMsg takeDishesD -> taking
 				   whenMsg putDishesD -> putting
-	
-	State retrieving{
-		//richiamo il metodo per conoscere lo stato
-	}Goto waitCmd
 	
 	State taking{
 		//richiamo il metodo per prelevare i piatti
@@ -460,5 +439,34 @@ QActor dishwasher context ctxButler{
 	
 	State putting{
 		//richiamo il metodo per inserire i piatti
+	}Goto waitCmd
+}
+
+QActor table context ctxButler{
+	State s0 initial{
+		println("Table STARTED")
+	}Goto waitCmd
+	
+	State waitCmd{
+		
+	}Transition t0 whenMsg takeDishesT -> taking
+				   whenMsg putDishesT -> putting
+				   whenMsg takeFoodT -> takeFood
+				   whenMsg putFoodT -> putFood
+	
+	State taking{
+		//richiamo il metodo per prelevare i piatti
+	}Goto waitCmd
+	
+	State putting{
+		//richiamo il metodo per inserire i piatti
+	}Goto waitCmd
+	
+	State takeFood{
+		
+	}Goto waitCmd
+
+	State putFood{
+		
 	}Goto waitCmd
 }

@@ -1,18 +1,18 @@
 System system0
 
 //from maitre to butler
-Dispatch prepare : prepare
+Dispatch prepare : prepare(P)
 Dispatch addFood : addFood(C,Q) //C = food code, Q = quantity
-Dispatch clear : clear
-Dispatch stop : stop
-Dispatch reactivate : reactivate
+Dispatch clear : clear(C)
+Dispatch stop : stop(S)
+Dispatch reactivate : reactivate(R)
 
 //from butler to butler
-Dispatch terminatedTask : terminatedTask
+Dispatch terminatedTask : terminatedTask(TASK)
 
 //from maitre to maitre
-Dispatch add : add
-Dispatch cl : cl
+Dispatch add : add(A)
+Dispatch cl : cl(C)
 
 //from butler to maitre
 Dispatch completedTask : completedTask(X)
@@ -24,15 +24,17 @@ Dispatch takeFood : takeFood(C,Q) //C = food code, Q = quantity
 Dispatch putFood : putFood(C,Q)   //C = food code, Q = quantity
 
 //from butler to pantry
-Dispatch retrieveStateP : retrieveStateP
-Dispatch takeDishesP : takeDishesP
-Dispatch putDishesP : putDishesP
+Dispatch takeDishesP : takeDishesP(D,P,B)
+Dispatch putDishesP : putDishesP(D,P,B)
 
 //from butler to dishwasher
-Dispatch retrieveStateD : retrieveStateD
-Dispatch takeDishesD : takeDishesD
-Dispatch putDishesD : putDishesD
+Dispatch takeDishesD : takeDishes(D)
+Dispatch putDishesD : putDishesD(D,P,B)
 
+Dispatch takeDishesT : takeDishesT(D,P,B)
+Dispatch putDishesT : putDishesT(D,P,B)
+Dispatch takeFoodT : takeFoodT(LIST)
+Dispatch putFoodT : putFoodT(LIST)
 //from pantry to butler
 Dispatch returnStateP : returnStateP(X)
 
@@ -45,6 +47,10 @@ Dispatch negativeResponse : negativeResponse(C,Q,AQ) //C = food code, Q = quanti
 
 //from fridge to maitre
 Dispatch currentFood : currentFood(X)  //in una fase successiva si deciderà come comunicare il contenuto del frigo
+
+Dispatch foodAvailability : foodAvailability(C,Q)
+Dispatch positiveResponse : positiveResponse(P)
+Dispatch negativeResponse : negativeResponse(C,QR,AQ)
 
 Context ctxButler ip[host="localhost" port=8080]
 Context ctxMaitre ip[host="localhost" port=8081]
@@ -63,7 +69,7 @@ QActor butler context ctxButler{
 		printCurrentMessage
 		println("mi reco alla pantry")
 		delay 2000
-		forward pantry -m takeDishesP : takeDishesP
+		forward pantry -m takeDishesP : takeDishesP(D,P,B)
 		println("mi reco al tavolo")
 		delay 2000
 		println("mi reco al frigo")
@@ -74,7 +80,7 @@ QActor butler context ctxButler{
 		println("torno nella posizione RH")
 		delay 2000
 		forward maitre -m completedTask : completedTask(prepare)
-		forward butler -m terminatedTask : terminatedTask
+		forward butler -m terminatedTask : terminatedTask(prepare)
 	}
 	Transition t0 whenMsg terminatedTask -> waitCmd2
 				  whenMsg stop -> stopApplicationP
@@ -82,7 +88,7 @@ QActor butler context ctxButler{
 	State waitCmd2{
 		
 	}Transition t0 whenMsg addFood -> adding
-				   whenMsg clear -> clearing
+				   whenMsg clear -> cleaning
 	
 	State stopApplicationP{	
 		println("Butler stopping during prepare activity")
@@ -94,13 +100,13 @@ QActor butler context ctxButler{
 		forward maitre -m completedTask : completedTask(addFood)
 		forward butler -m terminatedTask : terminatedTask
 	}Transition t0 whenMsg terminatedTask -> waitCmd2
-				   whenMsg stop -> stopApplicationAF
+				   whenMsg stop -> stopApplicationA
 				   
-	State stopApplicationAF{
+	State stopApplicationA{
 		println("Butler stopping during prepare activity")
 	}Transition t0 whenMsg reactivate -> adding
 	
-	State clearing{
+	State cleaning{
 		printCurrentMessage
 		println("mi reco al tavolo")
 		delay 2000
@@ -122,7 +128,7 @@ QActor butler context ctxButler{
 				   
 	State stopApplicationC{
 		println("Butler stopping during prepare activity")
-	}Transition t0 whenMsg reactivate -> clearing
+	}Transition t0 whenMsg reactivate -> cleaning
 	
 }
 
@@ -205,13 +211,8 @@ QActor pantry context ctxButler{
 	
 	State waitCmd{
 		
-	}Transition t0 whenMsg retrieveStateP -> retrieving
-				   whenMsg takeDishesP -> taking
+	}Transition t0 whenMsg takeDishesP -> taking
 				   whenMsg putDishesP -> putting
-	
-	State retrieving{
-		//richiamo il metodo per conoscere lo stato 
-	}Goto waitCmd
 	
 	State taking{
 		//richiamato il metodo per prelevare i piatti
@@ -229,13 +230,8 @@ QActor dishwasher context ctxButler{
 	
 	State waitCmd{
 		
-	}Transition t0 whenMsg retrieveStateD -> retrieving
-				   whenMsg takeDishesD -> taking
+	}Transition t0 whenMsg takeDishesD -> taking
 				   whenMsg putDishesD -> putting
-	
-	State retrieving{
-		//richiamo il metodo per conoscere lo stato
-	}Goto waitCmd
 	
 	State taking{
 		//richiamo il metodo per prelevare i piatti
@@ -243,5 +239,34 @@ QActor dishwasher context ctxButler{
 	
 	State putting{
 		//richiamo il metodo per inserire i piatti
+	}Goto waitCmd
+}
+
+QActor table context ctxButler{
+	State s0 initial{
+		println("Table STARTED")
+	}Goto waitCmd
+	
+	State waitCmd{
+		
+	}Transition t0 whenMsg takeDishesT -> taking
+				   whenMsg putDishesT -> putting
+				   whenMsg takeFoodT -> takeFood
+				   whenMsg putFoodT -> putFood
+	
+	State taking{
+		//richiamo il metodo per prelevare i piatti
+	}Goto waitCmd
+	
+	State putting{
+		//richiamo il metodo per inserire i piatti
+	}Goto waitCmd
+	
+	State takeFood{
+		
+	}Goto waitCmd
+
+	State putFood{
+		
 	}Goto waitCmd
 }

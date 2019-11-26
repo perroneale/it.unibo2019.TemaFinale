@@ -58,13 +58,13 @@ dependencies {
 //CUSTOM
     compile name: 'uniboInterfaces'
     compile name: '2p301'
-    compile name: 'it.unibo.qakactor-1.0'
+    compile name: 'it.unibo.qakactor-1.2'
  
     //For p2p two-way connections (TCP, UDP, BTH, Serial ...)
     compile name: 'unibonoawtsupports'
 
 	//BLS
-	compile name: 'it.unibo.bls19Local-1.0'
+	//compile name: 'it.unibo.bls19Local-1.0'
 	//RADAR
 	compile name: 'radarPojo'
 	//RADAR GUI
@@ -89,6 +89,7 @@ compileTestKotlin {
 sourceSets {
     main.java.srcDirs += 'src'
     main.java.srcDirs += 'resources'
+    main.java.srcDirs += 'testSrc'
 }
 
 mainClassName = 'it.unibo.ctxButler.MainCtxButlerKt'

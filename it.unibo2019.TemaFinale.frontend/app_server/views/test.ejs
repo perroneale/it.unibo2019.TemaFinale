@@ -1,0 +1,626 @@
+<html>
+    <head>
+        <link rel="stylesheet" href="/stylesheets/style2.css">
+        <meta name="viewport" content="width=device-width, initial-scale=1" /> 
+        <title>Butler Controller</title>
+    </head>
+    <body>
+        <script src="state.js"></script>
+        <script src="/socket.io/socket.io.js"></script>
+        <script>
+                var lastcell = "start";
+                var row = 0
+                var col = 0
+                var cont = 1
+                var cont2 = 1
+                var myYellow = "#F9E542"
+                var myWhite = "#FFFFFF"
+                var prevFridgeCont = {}
+                var prevTableContent = {"dishes" : [], "foodtable" : []}
+                window.onload = function(){
+                    document.getElementById('fieldset2').style.height = document.getElementById('fieldset1').clientHeight - 16;
+
+                    /*
+                    richiesta HTTP per ottenere il contenuto del frigo che è stato salvato nel file.js 
+                    iosocketemitter 
+                    */
+
+                    const http = new XMLHttpRequest();
+                    var url = 'http://localhost:3000/getcont';
+                    http.open('GET', url, true);
+                    http.send();
+                    http.onreadystatechange = function(){
+                        if(this.status==200 && this.readyState == 4){
+                            var response = JSON.parse(http.response);
+                            console.log(response.cont);
+                            var p = JSON.parse(response.cont)
+                            console.log("££££££££££ first "+ getFirst())
+                            if(getFirst()){
+                                console.log(p)
+                                createTab(p.content)
+                                setFirst(false)
+                                console.log("@@@@@@@@@ first "+ getFirst())
+                            }else{
+                                updateTab(p.content)
+                            }
+                        }
+                    }
+                   
+                    /*
+                    richiesta HTTP per il contenuto del tavolo
+                    */
+
+                    const http3 = new XMLHttpRequest();
+                    url = 'http://localhost:3000/gettablecont';
+                    http3.open('GET', url, true);
+                    http3.send();
+                    http3.onreadystatechange = function(){
+                        if(this.status==200 && this.readyState == 4){
+                            var response = JSON.parse(http3.response);
+                            console.log(response.content);
+                            if(response.content.dishes.length == 0){
+                                console.log("niente da aggiungere al table on load")
+                            }else{
+                                updateRoomState(response.content.dishes)
+                                updateRoomStateFood(response.content.foodtable)
+                            }
+                        }
+                    }
+
+                    /*
+                    richiesta HTTP per avere la posizione degli ostacoli nella stanza 
+                    */
+
+                    const http4 = new XMLHttpRequest();
+                    var url = 'http://localhost:3000/requestmap';
+                    http4.open('GET', url, true);
+                    http4.send();
+
+                    updateButtonState(getButtonState());
+
+                    document.getElementById('addButton').onclick = function(){
+                        var inputName = document.getElementById('idFoodName')
+                        inputName.innerHTML = ''
+                        inputName.placeholder = 'Insert Food Name'
+                        var quant = document.getElementById('quantFoodQuant')
+                        quant.innerHTML = ''
+                        quant.placeholder = placeholder="0"
+                    }
+
+            }
+
+            var decoder = new TextDecoder("utf-8");
+
+            function ab2str(buf) {
+                return decoder.decode(new Uint8Array(buf));
+            }
+
+            var socket =  io('http://localhost:3000');
+            socket.on('connect', function(){
+                console.log("HTML CONNECTED!!");
+            });
+
+            /*
+            Quando viene invoca la funzione updateContent nel file iosocketemitter
+            viene emesso tramite socket un messaggio con il nuovo contenuto del frigo
+            alla ricezione di questo messaggio, se è la prima volta che viene 
+            ricevuto (getFirst()) viene creata la tabella dinamicamente; altrimenti vengono 
+            aggiornati i valori.
+            */
+
+            socket.on('update', function(v){
+                console.log("socket update fridge content ")
+                var string = ab2str(v);
+                var json = JSON.parse(string)
+                console.log(json.content);
+                if(getFirst()){
+                    createTab(json.content)
+                    setFirst(false)
+                }else{
+                    updateTab(json.content)
+                }
+            });
+
+            function updateTab(json){
+                console.log("in function updateTab")
+                for(var i in json){
+                    if(json[i].quantity != prevFridgeCont[i].quantity){
+                        console.log("element " + json[i].name+" different")
+                        var element = document.getElementById(json[i].name)
+                        element.innerHTML = json[i].quantity
+                        element.style.backgroundColor = myYellow
+                    }
+                }
+                prevFridgeCont = json
+                setTimeout(resetTable, 1000, "fridgeTable");
+            }
+
+            function createTab(j){
+                console.log("in function createTab "+ j)
+                var table = document.getElementById('fridgeTable')
+                for(var i in j){
+                    var newRow = table.insertRow(cont)
+                    var code = newRow.insertCell(0)
+                    var name = newRow.insertCell(1)
+                    var quantity = newRow.insertCell(2)
+                    console.log("----" + j[i])
+                    code.innerHTML = j[i].foodCode
+                    name.innerHTML = j[i].name
+                    quantity.innerHTML = j[i].quantity
+                    quantity.id = j[i].name
+                    quantity.style.backgroundColor = myYellow
+                    console.log("test id "+ document.getElementById(j[i].name).innerHTML)
+                    cont++
+                }
+                prevFridgeCont = j
+                console.log("prevFridgeCont")
+                console.log(prevFridgeCont)
+                setTimeout(() => {
+                    for(var i in j){
+                        var name = j[i].name
+                        var el = document.getElementById(name)
+                        console.log("changecolor "+el.id)
+                        el.style.backgroundColor = myWhite
+                    }
+                }, 1000, j);
+            };
+
+            function resetTable(tableName){
+                console.log("from reseTable parameter1 "+tableName)
+                var table = document.getElementById(tableName);
+                var td = table.getElementsByTagName("td")
+                for(i = 0; i< td.length; i++){
+                    td[i].style.backgroundColor = myWhite
+                }
+            }
+            /*
+            Quando viene invoca la funzione setmap nel file iosocketemitter
+            viene emesso tramite socket un messaggio con la posizione degli ostacoli nella stanza
+            */
+
+            socket.on('obstacle', function(ob){
+                if(getFirstMap()){
+                    console.log("from fronted "+ ab2str(ob))
+                    var json = JSON.parse(ab2str(ob))
+                    row = json.dimX
+                    col = json.dimY
+                    console.log("row "+ row+" col "+col)
+                    createMap(json)
+                    setFirstMap(false)
+                }else{
+                    updateMap(json.obstacles)
+                }                
+            });
+            
+            //scrive una X nella cella in corrispondenza di un ostacolo
+
+            function createMap(json){
+                console.log("in create obstacle map")
+                const width = col*51;
+                const height = row*51;
+                var testDiv = document.getElementById("testgrid")
+                testDiv.style.border = "solid"
+                testDiv.style.borderWidth = "0.5px"
+                testDiv.style.height = height.toString()+"px";
+                testDiv.style.width = width.toString()+"px";
+                testDiv.style.margin = "auto";
+                for(i = 0; i<row; i++){
+                    for(j=0; j<col;j++){
+                        var cell = document.createElement("div");
+                        cell.id = i.toString()+j.toString();
+                        cell.className = "row"+i;
+                        cell.style.backgroundColor = "#FFFFFF";
+                        cell.style.display = "inline-block";
+                        cell.style.width = "50px";
+                        cell.style.height = "50px";
+                        cell.style.borderStyle = "solid";
+                        cell.style.borderWidth = "0.5px";
+                        cell.style.borderColor = "#000000";
+                        cell.style.fontSize = "36px"
+                        cell.style.textAlign ="center"
+                        cell.style.verticalAlign = "top"
+                        console.log("created div " + cell.id);  
+                        testDiv.append(cell);
+                    }
+                }
+
+                document.getElementById('00').innerHTML = "r"
+                for(c in json.obstacle){
+                    document.getElementById(json.obstacle[c].x.toString()+json.obstacle[c].y.toString()).innerHTML = "X"
+                }
+            }
+
+            function updateMap(json){
+                console.log("in update obstacle map")
+                for(c in json){
+                    document.getElementById(json[c].x.toString()+json[c].y.toString()).innerHTML = "X"
+                }
+            }
+
+            /*
+            Quando viene invoca la funzione updatePos nel file iosocketemitter
+            viene emesso tramite socket un messaggio con la nuova posizione del butler 
+            in formato json. Nella cella corrispondente a questa posizione viene 
+            scritta una "r", nella precedente cella, salvata in lastcell, viene cancellata la "r". 
+            */
+
+            socket.on('updatePosition', function(json){
+                console.log("In updatePosition")
+                x = json.x
+                y = json.y
+                if(lastcell === "start"){
+                    document.getElementById("00").innerHTML = " ";
+                    document.getElementById(x.toString()+y.toString()).innerHTML = "r";
+                    lastcell = x.toString()+y.toString();
+                }else{
+                    document.getElementById(lastcell).innerHTML = " ";
+                    document.getElementById(x.toString()+y.toString()).innerHTML = "r";
+                    lastcell = x.toString()+y.toString();
+                }
+            });
+
+            /*
+            Quando viene invoca la funzione updateState nel file iosocketemitter
+            viene emesso tramite socket un messaggio con il nuovo contenuto del tavolo.
+            */
+
+            socket.on('updateRoom', function(v){
+                //var string = ab2str(v);
+                //console.log("Update room string "+string)
+                var json = v;
+                console.log("Update room string "+JSON.stringify(json))
+                console.log(json.dishes)
+                updateRoomState(json.dishes)
+                console.log("foodTable")
+                console.log(json.foodtable)
+                updateRoomStateFood(json.foodtable)
+                /*if(json.foodtable.length == 0){
+                    console.log("niente da aggiungere sul tavolo")
+                }else{
+                    if(getSocketFirst()){
+                        createTableFood(json.foodtable)
+                        setSocketFirst(false)
+                    }else{
+                        updateTableFood(json.foodtable) 
+                    }   
+                }*/
+            });
+
+            function updateRoomStateFood(json){
+                if(json.length == 0){
+                    if(!getFirstTable()){
+                        //il cibo è stato prelevato dal tavolo
+                        var table = document.getElementById('foodtable')
+                        var row = table.rows.length
+                        for(var i = 1; i < row; i++){
+                            var quantCell = table.rows[i].cells[2]
+                            quantCell.innerHTML = 0
+                            quantCell.style.backgroundColor = myYellow
+                        }
+                        setTimeout(() => {
+                            for(var i = 1; i < row; i++){
+                            var quantCell = table.rows[i].cells[2]
+                            quantCell.style.backgroundColor = myWhite
+                        }
+                        }, 1000, row);
+                    }else{
+                        console.log("niente da aggiungere sul tavolo")
+                    }
+                }else{
+                    if(getFirstTable()){
+                        createTableFood(json)
+                        fillDataList(json)
+                        setFirstTable(false)
+                    }else{
+                        updateTableFood(json) 
+                    }   
+                }
+            };
+
+            function fillDataList(json){
+                var dataList = document.getElementById('possiblefood')
+
+                for(food in json){
+                    var option = document.createElement('option')
+                    option.value = json[food].name
+                    dataList.appendChild(option)
+                }
+            }
+
+            function createTableFood(json){
+                console.log("in function createTab ")
+                console.log(json)
+                var table = document.getElementById('foodtable')
+                for(var i in json){
+                    console.log("Creo riga cibo "+ json[i].name)
+                    var newRow = table.insertRow(cont2)
+                    var code = newRow.insertCell(0)
+                    var name = newRow.insertCell(1)
+                    var quantity = newRow.insertCell(2)
+                    code.innerHTML = json[i].foodCode
+                    name.innerHTML = json[i].name
+                    quantity.innerHTML = json[i].quantity
+                    quantity.id = json[i].name+"table"
+                    console.log("test id "+ document.getElementById(json[i].name+"table").innerHTML)
+                    quantity.style.backgroundColor = myYellow
+                    cont2++
+                }
+                prevTableContent.foodtable = json
+                setTimeout(() => {
+                    for(i in json){
+                        var element = document.getElementById(json[i].name+"table")
+                        element.style.backgroundColor = myWhite
+                    }
+                }, 1000, json);
+            };
+
+            function updateTableFood(json){
+                console.log("in updateTableFood")
+                console.log(json)
+                for(var i in json){
+                    if(document.getElementById(json[i].name+"table") == null){
+                        console.log("non c'è")
+                        var table = document.getElementById('foodtable')
+                        var newRow = table.insertRow(cont2)
+                        var code = newRow.insertCell(0)
+                        var name = newRow.insertCell(1)
+                        var quantity = newRow.insertCell(2)
+                        code.innerHTML = json[i].foodCode
+                        name.innerHTML = json[i].name
+                        quantity.innerHTML = json[i].quantity
+                        quantity.id = json[i].name+"table"
+                        console.log("test id "+ document.getElementById(json[i].name+"table").innerHTML)
+                        quantity.style.backgroundColor = myYellow
+                        cont2++
+                        //TODO
+                        //per ora faccio un test, per vedere se undefined funziona, dopo aggiungo la nuova riga alla table
+                    }else{
+                        if(json[i].quantity != prevTableContent.foodtable[i].quantity){
+                            console.log("update element "+ json[i].name+"table")
+                            var el = document.getElementById(json[i].name+"table")
+                            el.innerHTML = json[i].quantity
+                            el.style.backgroundColor = myYellow
+                        }
+                        
+                    }
+                }
+                prevTableContent.foodtable = json
+                setTimeout(() => {
+                    for(i in json){
+                        var element = document.getElementById(json[i].name+"table")
+                        element.style.backgroundColor = myWhite
+                    }
+                }, 1000,json);
+            };
+
+            function updateRoomState(json){
+                console.log("in updateRoomState")
+                console.log(json)
+                if(getFirstDishes()){
+                    for(var i in json){
+                        console.log("element " + json[i].first)
+                        var element = document.getElementById(json[i].first)
+                        element.innerHTML = json[i].second;
+                        element.style.backgroundColor = myYellow
+                    }
+                    prevTableContent.dishes = json
+                    setFirstDishes(false) 
+                }else{
+                    for(var i in json){
+                        if(json[i].second != prevTableContent.dishes[i].second){
+                            console.log("element " + json[i].first)
+                        var element = document.getElementById(json[i].first)
+                        element.innerHTML = json[i].second;
+                        element.style.backgroundColor = myYellow
+                        }
+                    }
+                    prevTableContent.dishes = json
+                }
+                setTimeout(() => {
+                    for(j in json){
+                        var element = document.getElementById(json[j].first)
+                        element.style.backgroundColor = myWhite
+                    }
+                }, 1000,json);
+                
+            };
+
+            socket.on('foodnotav', function(json){
+                console.log(json)
+                alert("WARNING!!!\nCibo: " + json.foodcode+"\nQuanità richiesta: "+json.quantity + "\nQuantità disponibile: "+json.avquant)
+            });
+
+            socket.on('completedTask', function(ct){
+                console.log(ct)
+                switch(ct){
+                    case "preparing":
+                        document.getElementById('prepareButton').disabled = true;
+                        document.getElementById('addButton').disabled = false;
+                        document.getElementById('cleanButton').disabled = false;
+                        break;
+                    case "adding":
+                        document.getElementById('prepareButton').disabled = true;
+                        document.getElementById('addButton').disabled = false;
+                        document.getElementById('cleanButton').disabled = false;
+                        break;
+                    case "cleaning":
+                        document.getElementById('prepareButton').disabled = false;
+                        document.getElementById('addButton').disabled = true;
+                        document.getElementById('cleanButton').disabled = true;
+                        break;
+                }
+                updateButton(document.getElementById('prepareButton').disabled, document.getElementById('addButton').disabled, document.getElementById('cleanButton').disabled)
+            });
+
+            function updateButtonState(json){
+                console.log(json)
+                for(button in json){
+                    document.getElementById(json[button].name).disabled = json[button].disabled
+                }
+            }
+
+            
+            socket.on('disconnect', function(){console.log('disconnected')});
+        </script>
+        <div style="overflow: auto;">
+            <div id="actionCommand">
+                <fieldset  id="fieldset1">
+                    <legend>Butler Action:</legend>
+                    <div id="divtest">
+                        <div class="divcell">
+                            <form action="/prepare" method="POST" class="topPadding">
+                                <button type="submit" class="buttonClass" id="prepareButton">Prepare</button>
+                            </form>
+                        </div>
+                        <div class="divcell2" id="test">
+                            <form action="/add" method="POST" id="add">
+                                <p class="text">Food Name:<br></p>
+                                <input name="foodName" type="text" class="inputT" id="idFoodName" placeholder="Insert Food Name" list="possiblefood"><br>
+                                <datalist id="possiblefood"></datalist>
+                                <p class="text">Food Quantity:<br></p>
+                                <input name="foodQuantity" type="number" min="0" placeholder="0" id="quantFoodQuant" class="inputT"><br>
+                                <button type="submit" class="buttonClass" id="addButton" disabled>Add Food</button>
+                            </form>
+                        </div>
+                        <div class="divcell">
+                            <form action="/clean" method="POST" class="topPadding">
+                                <button type="submit" class="buttonClass" disabled id="cleanButton">Clean</button>
+                            </form>
+                        </div>
+                        <div class="divcell">
+                            <form action="/stop" method="POST" class="topPadding">
+                                <button type="submit" class="buttonClass">Stop</button>
+                            </form>
+                        </div>
+                        <div class="divcell">
+                            <form action="/reactivate" method="POST" class="topPadding">
+                                <button type="submit" class="buttonClass">Reactivate</button>
+                            </form>
+                        </div>
+                    </div>
+                </fieldset>
+            </div>
+            <div id="movementCommand">
+                <fieldset  id="fieldset2">
+                    <legend>Butler Commands</legend>
+                    <table style="margin: auto;">
+                        <tr>
+                            <td></td>
+                            <td></td>
+                            <td>
+                                <form action="/w" method="POST">
+                                    <button type="submit" class="buttonClass">W</button>
+                                </form>
+                            </td>
+                            <td></td>
+                            <td></td>
+                        </tr>
+                        <tr>
+                            <td>
+                                <form action="/a" method="POST">
+                                    <button type="submit" class="buttonClass">A</button>
+                                </form>
+                            </td>
+                            <td></td>
+                            <td>
+                                <form action="/h" method="POST">
+                                    <button type="submit" class="buttonClass">H</button>
+                                </form>
+                            </td>
+                            <td></td>
+                            <td>
+                                <form action="/d" method="POST">
+                                    <button type="submit" class="buttonClass">D</button>
+                                </form>
+                            </td>    
+
+                        </tr>
+                        <tr>
+                            <td></td>
+                            <td></td>
+                            <td>
+                                <form action="/s" method="POST">
+                                    <button type="submit" class="buttonClass">S</button>
+                                </form>
+                            </td>
+                            <td></td>
+                            <td></td>
+                        </tr>
+                    </table>
+                </fieldset>
+            </div>
+        </div>
+        <div style="overflow: auto;">
+            <div id="roomstate">
+                <fieldset>
+                    <legend>Room State:</legend>
+                    <p class="text">Fridge Content:</p>
+                    <table id="fridgeTable">
+                        <tr>
+                            <th>Food Code</th>
+                            <th>Food Name</th>
+                            <th>Food Quantity</th>
+                        </tr>
+                    </table>
+                    <p class="text">Table Content:</p>
+                    <table id="pantry">
+                        <tr>
+                            <td>Pantry cutlery:</td>
+                            <td id="posatePantry"></td>
+                        </tr>
+                        <tr>
+                            <td>Pantry dishes:</td>
+                            <td id="dishesPantry"></td>
+                        </tr>
+                        <tr>
+                            <td>Pantry glasses:</td>
+                            <td id="bicchieriPantry"></td>
+                        </tr> 
+                    </table>
+                    <table id="table">
+                        <tr>
+                            <td>Table cutlery:</td>
+                            <td id="posateTable"></td>
+                        </tr>
+                        <tr>
+                            <td>Table dishes:</td>
+                            <td id="dishesTable"></td>
+                        </tr>
+                        <tr>
+                            <td>Table glasses:</td>
+                            <td id="bicchieriTable"></td>
+                        </tr> 
+                    </table>
+                    <table id="dishwasher">
+                        <tr>
+                            <td>Dishwasher cutlery:</td>
+                            <td id="posateDish"></td>
+                        </tr>
+                        <tr>
+                            <td>Dishwasher dishes:</td>
+                            <td id="dishesDish"></td>
+                        </tr>
+                        <tr>
+                            <td>Dishwasher glasses:</td>
+                            <td id="bicchieriDish"></td>
+                        </tr> 
+                    </table>
+                    <table id="foodtable">
+                        <tr>
+                            <th>Food Code</th>
+                            <th>Food Name</th>
+                            <th>Food Quantity</th>
+                        </tr>
+
+                    </table>
+                </fieldset>
+            </div>
+            <div id="map">
+                <fieldset>
+                    <legend>Map:</legend>
+                    <div id="testgrid"></div>
+                </fieldset>
+            </div>
+        </div>
+    </body>
+</html>

@@ -67,7 +67,4 @@ public class Pantry {
 		public String toString() {
 			return "Pantry Content : dishes=" + dishes + ", posate=" + posate + ", bicchieri=" + bicchieri + "";
 		}
-		
-		
-		
 }

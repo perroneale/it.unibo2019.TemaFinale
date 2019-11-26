@@ -27,16 +27,16 @@ Event map : map(MAPSTRING, MAPNAME)
 Event explorationCompleted : explorationCompleted(E)
 
 Context ctxRoomExplVirtual ip[host="localhost" port=8087] +mqtt
-Context ctxResourceModel ip[host="192.168.43.100" port=8080] +mqtt
-    
+Context ctxResourceModel ip[host="localhost" port=8080] +mqtt
+      
 ExternalQActor mind context ctxResourceModel
 ExternalQActor butlerresourcemodel context ctxResourceModel 
 
 QActor onestep context ctxRoomExplVirtual{
 	[" 
-var foundObstacle = false; 
-var StepTime = 0L; 
-var Duration=0 
+		var foundObstacle = false; 
+		var StepTime = 0L; 
+		var Duration=0 
 "]    
 	State s0 initial {	  
 		println("onestepahead STARTED")  
@@ -46,22 +46,24 @@ var Duration=0
  
  	State waitCmd{
  		["foundObstacle = false "]
+ 		println("IN WAITCMD")
  	}Transition t0 whenMsg onestep -> doMoveForward
  	
-	State doMoveForward{		
-		["storeCurrentMessageForReply()"]  	//TODO: introduce a qak operation
+	State doMoveForward{	
 		onMsg( onestep : onestep( TIME ) ) {
-			["StepTime = payloadArg(0).toString().toLong()"]   
+			["StepTime = payloadArg(0).toLong()"]   
+			println("STEP TIME $StepTime")
  			forward butlerresourcemodel -m modelChangeAction : modelChangeAction(robot,w)
 	 		["startTimer()"] //startTimer is built-in in the actor
-		}      
+		}    
 	}          
 	Transition t0 whenTimeVar StepTime  -> endDoMoveForward		
  		          whenEvent obstacleDetected    -> stepFail	   
  		   
 	State endDoMoveForward{
+		println("STEPDONE")
 		forward butlerresourcemodel -m modelChangeAction : modelChangeAction(robot,h)
-		forward roomexplorationvirtual -m stepOk : stepOk  //TODO: introduce a qak operation
+		forward roomexplorationvirtual -m stepOk : stepOk(a)
 	}
 	Goto waitCmd
 	
@@ -71,15 +73,15 @@ var Duration=0
 		forward butlerresourcemodel -m modelChangeAction : modelChangeAction(robot, s)
 		["Thread.sleep(Duration.toLong())"]
 		forward butlerresourcemodel -m modelChangeAction : modelChangeAction(robot, h)
-		forward roomexplorationvirtual -m stepFail : stepFail
+		forward roomexplorationvirtual -m stepFail : stepFail(b)
 	}
 	Goto waitCmd  
-}
+}  
   
 QActor roomexplorationvirtual context ctxRoomExplVirtual{
 	["var RotationCount = 0;
-	  var FORWARDTIME = 770;
-	  var FORWARDTIME2 = 900;
+	  var FORWARDTIME = 0;
+	  var FORWARDTIME2 = 0;
 	  var DimX = 0
 	  var DimY = 0
 	  var EdgeCounterX = 0
@@ -109,26 +111,34 @@ QActor roomexplorationvirtual context ctxRoomExplVirtual{
 		}*/
 		run itunibo.planner.plannerUtil.initAI()
 		run itunibo.planner.moveUtils.showCurrentRobotState()
-		
+		  
 	}Goto waitStart
 	
 	State waitStart{
 		
-	}Transition t0 whenMsg startExplorationVirtual -> doExploration
-	   
-	State doExploration{
+	}Transition t0 whenMsg startExplorationVirtual -> testState
+	
+	State testState{
 		onMsg(startExplorationVirtual : startExplorationVirtual(StepTime)){
-			["FORWARDTIME = payloadArg(0).toString().toInt()"]
+			["FORWARDTIME = payloadArg(0).toInt()"]
+			forward onestep -m onestep : onestep($FORWARDTIME)
 		}
-		onMsg(stepOk : stepOk){
-			run itunibo.planner.moveUtils.doPlannedMove(myself, "w")
-			run itunibo.planner.moveUtils.showCurrentRobotState()
-			delay 2000
-		}
-		forward onestep -m onestep : onestep($FORWARDTIME)
 	}Transition t0 whenMsg stepFail -> wallFound
 				   whenMsg stepOk -> doExploration
-				   
+	
+	State doExploration{
+		onMsg(stepOk : stepOk(S)){
+			println("STEPOK RECEIVED")
+			run itunibo.planner.moveUtils.doPlannedMove(myself, "w")
+			run itunibo.planner.moveUtils.showCurrentRobotState()
+			delay 500
+			forward onestep -m onestep : onestep($FORWARDTIME)
+		}
+		
+		
+	}Transition t0 whenMsg stepFail -> wallFound
+				   whenMsg stepOk -> doExploration
+			 	   
 	State wallFound{
 		println("###MURO TROVATO")
 		run itunibo.planner.plannerUtil.wallFound()
@@ -136,7 +146,12 @@ QActor roomexplorationvirtual context ctxRoomExplVirtual{
 		["RotationCount ++"]
 		println("###Rotation Count = $RotationCount")
 		run itunibo.planner.moveUtils.showCurrentRobotState()
-	}Goto endBoundary if "(RotationCount >= 4) " else doExploration
+	}Goto endBoundary if "(RotationCount >= 4) " else sendOneStep
+	
+	State sendOneStep{
+		forward onestep -m onestep : onestep($FORWARDTIME)
+	}Transition t0 whenMsg stepFail -> wallFound
+				   whenMsg stepOk -> doExploration
 	
 	State endBoundary{
 		println("###BoundaryExplored")
@@ -145,10 +160,11 @@ QActor roomexplorationvirtual context ctxRoomExplVirtual{
 		  println(\"DimX : $DimX\")
 		  println(\"DimY : $DimY\")"]
 	}Goto exploreRoom
-	
+	  
 	State exploreRoom{
-		onMsg(stepOk : stepOk){
+		onMsg(stepOk : stepOk(S)){
 			run itunibo.planner.moveUtils.doPlannedMove(myself, "w")
+			run itunibo.planner.moveUtils.showCurrentRobotState()
 		}
 		["XRobot = itunibo.planner.moveUtils.getPosX(myself)
 		  YRobot = itunibo.planner.moveUtils.getPosY(myself)
@@ -169,21 +185,21 @@ QActor roomexplorationvirtual context ctxRoomExplVirtual{
 			if "(XRobot == 0) && (YRobot == 0)" {
 				println("###IN 00")
 				run itunibo.planner.moveUtils.moveAhead(myself, FORWARDTIME)
-				run itunibo.planner.moveUtils.rotateLeft2(myself)
+				run itunibo.planner.moveUtils.rotateLeft(myself)
 			}else{
 				if "(XRobot == 0) && (YRobot > 0)"{
 					["ContY = 0"]
 					println("###IN 0>")
-					run itunibo.planner.moveUtils.rotateLeft2(myself)
+					run itunibo.planner.moveUtils.rotateLeft(myself)
 					run itunibo.planner.moveUtils.moveAhead(myself, FORWARDTIME)
-					run itunibo.planner.moveUtils.rotateLeft2(myself)
+					run itunibo.planner.moveUtils.rotateLeft(myself)
 				}else{
 					if "(XRobot == DimX - 2) && (YRobot > 0)"{
 						["ContY = 0"]
 						println("###-2>")
-						run itunibo.planner.moveUtils.rotateRight2(myself)
+						run itunibo.planner.moveUtils.rotateRight(myself)
 						run itunibo.planner.moveUtils.moveAhead(myself, FORWARDTIME)
-						run itunibo.planner.moveUtils.rotateRight2(myself)
+						run itunibo.planner.moveUtils.rotateRight(myself)
 					}
 				}
 			}
@@ -203,24 +219,24 @@ QActor roomexplorationvirtual context ctxRoomExplVirtual{
 	
 	State rightDir{
 		run itunibo.planner.moveUtils.setObstacleOnCurrentDirection(myself)
-		run itunibo.planner.moveUtils.rotateRight2(myself)
+		run itunibo.planner.moveUtils.rotateRight(myself)
 		run itunibo.planner.moveUtils.moveAhead(myself, FORWARDTIME)
-		run itunibo.planner.moveUtils.rotateLeft2(myself)
+		run itunibo.planner.moveUtils.rotateLeft(myself)
 		forward onestep -m onestep : onestep($FORWARDTIME)
 	}Transition t0 whenMsg stepFail -> rightDir
 			       whenMsg stepOk -> underTableRd
 	  
 	State leftDir{  
 			run itunibo.planner.moveUtils.setObstacleOnCurrentDirection(myself)
-			run itunibo.planner.moveUtils.rotateLeft2(myself)
+			run itunibo.planner.moveUtils.rotateLeft(myself)
 			run itunibo.planner.moveUtils.moveAhead(myself, FORWARDTIME)
-			run itunibo.planner.moveUtils.rotateRight2(myself)
+			run itunibo.planner.moveUtils.rotateRight(myself)
 			forward onestep -m onestep : onestep($FORWARDTIME)
 	}Transition t0 whenMsg stepFail -> leftDir
 			       whenMsg stepOk -> underTableLd
 	
 	State underTableLd{
-		 onMsg(stepOk : stepOk){
+		 onMsg(stepOk : stepOk(S)){
 		  	run itunibo.planner.moveUtils.doPlannedMove(myself, "w")
 			run itunibo.planner.moveUtils.showCurrentRobotState()
 		  }
@@ -231,7 +247,7 @@ QActor roomexplorationvirtual context ctxRoomExplVirtual{
 			println("###FINITO")
 			forward roomexplorationvirtual -m terminated : terminated
 		}else{
-			run itunibo.planner.moveUtils.rotateRight2(myself)
+			run itunibo.planner.moveUtils.rotateRight(myself)
 			forward onestep -m onestep : onestep($FORWARDTIME)
 		}  
 	}Transition t0 whenMsg terminated -> explorationDone
@@ -240,7 +256,7 @@ QActor roomexplorationvirtual context ctxRoomExplVirtual{
 	
 	
 	State underTableRd{
-		  onMsg(stepOk : stepOk){
+		  onMsg(stepOk : stepOk(S)){
 		  	run itunibo.planner.moveUtils.doPlannedMove(myself, "w")
 			run itunibo.planner.moveUtils.showCurrentRobotState()
 		  }  
@@ -250,8 +266,8 @@ QActor roomexplorationvirtual context ctxRoomExplVirtual{
 			println("###FINITO")
 			forward roomexplorationvirtual -m terminated : terminated
 		}else{
-			 run itunibo.planner.moveUtils.rotateLeft2(myself)
-		  	 delay 1000
+			 run itunibo.planner.moveUtils.rotateLeft(myself)
+		  	 delay 500
 			 forward onestep -m onestep : onestep($FORWARDTIME)
 		}   
 	}Transition t0 whenMsg terminated -> explorationDone
@@ -260,13 +276,13 @@ QActor roomexplorationvirtual context ctxRoomExplVirtual{
 		 	      
 	State continueExplRD{
 		run itunibo.planner.moveUtils.setObstacleOnCurrentDirection(myself)
-		run itunibo.planner.moveUtils.rotateRight2(myself)
+		run itunibo.planner.moveUtils.rotateRight(myself)
 		run itunibo.planner.moveUtils.moveAhead(myself, FORWARDTIME)
 	}Goto underTableRd
 	
 	State continueExplLD{
 		run itunibo.planner.moveUtils.setObstacleOnCurrentDirection(myself)
-		run itunibo.planner.moveUtils.rotateLeft2(myself)
+		run itunibo.planner.moveUtils.rotateLeft(myself)
 		run itunibo.planner.moveUtils.moveAhead(myself, FORWARDTIME)
 	}Goto underTableLd
 	

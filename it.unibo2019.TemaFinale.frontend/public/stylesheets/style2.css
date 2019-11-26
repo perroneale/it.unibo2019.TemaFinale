@@ -1,0 +1,96 @@
+html{
+    width:100%;
+    height:100%;
+}
+body{
+    padding: 0;
+    margin: 0;
+}
+.buttonClass{
+    background-color: darkcyan;
+    border: 2px solid white;
+    color: white;
+    text-align: center;
+    font-size: 18px;
+    padding: 14px 40px;
+    border-radius: 12px;
+    /*-webkit-animation-duration: 0.4s;
+    transition-duration: 0.4;*/
+}
+
+/*.buttonClass:hover{
+    background-color: darkcyan;
+    color: white;
+}*/
+
+.buttonClass:disabled{
+    background-color: gray;
+    color: black;
+    border-color: gray;
+}
+
+#addButton{
+    margin-top: 20px;
+}
+#divtest{
+    display: inline-block;
+    margin: 0 auto;    
+}
+
+.divcell{
+    display: inline-block;
+    padding: 10px;
+    border-top: 50% solid transparent;
+}
+
+.divcell2{
+    display: inline-block;
+    padding: 10px;
+}
+
+legend{
+    font-size: 18px;
+}
+
+p{
+    font-size: 18px;
+}
+
+input[type=text], [type=number]{
+    font-size: 18px;
+    border: none;
+    border-bottom: 2px solid darkcyan;
+}
+
+.row1{
+    display: inline-block;
+}
+
+#pantry{
+    display: inline-block;
+}
+
+#table{
+    display: inline-block;
+}
+
+#dishwasher{
+    display: inline-block;
+}
+
+#actionCommand{
+    float: left;
+    width: 70%;
+}
+#movementCommand{
+    float: left;
+    width: 30%;
+}
+#map{
+    float: left;
+    width: 30%;
+}
+#roomstate{
+    float: left;
+    width: 70%;
+}

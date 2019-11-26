@@ -25,7 +25,9 @@ class Execroute ( name: String, scope: CoroutineScope ) : ActorBasicFsm( name, s
 			  var X= ""
 			  var Y = ""
 			  var ForwardTime = 0
+			  var StepTime = 0L
 			  var TimeVirtual = 0L
+			  var Robot = ""
 		return { //this:ActionBasciFsm
 				state("s0") { //this:State
 					action { //it:State
@@ -34,7 +36,8 @@ class Execroute ( name: String, scope: CoroutineScope ) : ActorBasicFsm( name, s
 						solve("consult('config.pl')","") //set resVar	
 						solve("consult('basicRobotConfig.pl')","") //set resVar	
 						solve("robot(R,PORT)","") //set resVar	
-						if((getCurSol("R").toString() == "virtual")){ solve("timeVirtual(TV)","") //set resVar	
+						Robot = getCurSol("R").toString()
+						if((Robot == "virtual")){ solve("timeVirtual(TV)","") //set resVar	
 						if(currentSolution.isSuccess()) { ForwardTime = getCurSol("TV").toString().toInt()
 						println("ForwardTime")
 						 }
@@ -44,13 +47,14 @@ class Execroute ( name: String, scope: CoroutineScope ) : ActorBasicFsm( name, s
 						 ForwardTime = getCurSol("TF").toString().toInt()
 						 println("ForwardTime")
 						  }
+						StepTime = ForwardTime.toLong()
 					}
 					 transition( edgeName="goto",targetState="waitCmd", cond=doswitch() )
 				}	 
 				state("waitCmd") { //this:State
 					action { //it:State
 					}
-					 transition(edgeName="t030",targetState="execRoute",cond=whenDispatch("exec"))
+					 transition(edgeName="t035",targetState="execRoute",cond=whenDispatch("exec"))
 				}	 
 				state("execRoute") { //this:State
 					action { //it:State
@@ -59,60 +63,102 @@ class Execroute ( name: String, scope: CoroutineScope ) : ActorBasicFsm( name, s
 						if(currentSolution.isSuccess()) { Curmove = getCurSol("M").toString()
 						 }
 						else
-						{ println("*************IN ELSE")
-						Curmove = "nomove" 
+						{ Curmove = "nomove" 
 						println("Curmove = $Curmove")
 						 }
-						if((Curmove != "nomove")){ startTimer()
-						itunibo.planner.moveUtils.execMove(myself ,Curmove, ForwardTime )
-						X = itunibo.planner.moveUtils.getPosX(myself).toString()
-								  	  Y = itunibo.planner.moveUtils.getPosY(myself).toString()
-						forward("modelChangePos", "modelChangePos(robot,$X,$Y)" ,"butlerresourcemodel" ) 
-						delay(200) 
-						forward("nextMove", "nextMove" ,"execroute" ) 
+						if((Curmove != "nomove")){ if(Curmove == "w"){ println("Exec move $Curmove")
+						forward("modelChangeAction", "modelChangeAction(robot,$Curmove)" ,"butlerresourcemodel" ) 
+						startTimer()
+						 }
+						else
+						 { forward("modelChangeAction", "modelChangeAction(robot,$Curmove)" ,"butlerresourcemodel" ) 
+						 delay(2000) 
+						 this.scope.launch{
+						 				autoMsg("nextMove","nextMove(n)")
+						 				}
+						  }
 						 }
 						else
 						 { println("*************IN ELSE22")
-						 forward("check", "check" ,"execroute" ) 
+						 this.scope.launch{
+						 				autoMsg("check","check(c)")
+						 			}
 						  }
+						stateTimer = TimerActor("timer_execRoute", 
+							scope, context!!, "local_tout_execroute_execRoute", StepTime )
 					}
-					 transition(edgeName="t031",targetState="execRouteCompleted",cond=whenDispatch("check"))
-					transition(edgeName="t032",targetState="execRoute",cond=whenDispatch("nextMove"))
-					transition(edgeName="t033",targetState="stopApplication",cond=whenDispatch("stop"))
-					transition(edgeName="t034",targetState="handleObstacle",cond=whenEvent("obstacleDetected"))
+					 transition(edgeName="t036",targetState="testState",cond=whenTimeout("local_tout_execroute_execRoute"))   
+					transition(edgeName="t037",targetState="execRouteCompleted",cond=whenDispatch("check"))
+					transition(edgeName="t038",targetState="testState",cond=whenDispatch("nextMove"))
+					transition(edgeName="t039",targetState="stopApplication",cond=whenEventGuarded("modelChangedstop",{(Curmove =="w")}))
+					transition(edgeName="t040",targetState="handleObstacle",cond=whenEvent("obstacleDetected"))
 				}	 
 				state("execRouteCompleted") { //this:State
 					action { //it:State
+						println("****EXECROUTE IN execRouteCompleted")
 						forward("destinationReached", "destinationReached($X,$Y)" ,"butlermind" ) 
 					}
 					 transition( edgeName="goto",targetState="waitCmd", cond=doswitch() )
-				}	 
-				state("handleObstacle") { //this:State
-					action { //it:State
-						Duration = getDuration()
-					}
-					 transition( edgeName="goto",targetState="checkObstacle", cond=doswitch() )
-				}	 
-				state("checkObstacle") { //this:State
-					action { //it:State
-						forward("isObstacle", "isObstacle" ,"mind" ) 
-					}
-					 transition(edgeName="t035",targetState="checkObstacle",cond=whenDispatch("obstacle"))
-					transition(edgeName="t036",targetState="completeStep",cond=whenDispatch("notObstacle"))
-				}	 
-				state("completeStep") { //this:State
-					action { //it:State
-						var stepTime = 770 - Duration
-						itunibo.planner.moveUtils.moveAheadWithoutUpdate(myself ,stepTime )
-					}
-					 transition( edgeName="goto",targetState="execRoute", cond=doswitch() )
 				}	 
 				state("stopApplication") { //this:State
 					action { //it:State
 						println("###EXECROUTE stopped")
 						forward("modelChangeAction", "modelChangeAction(robot,h)" ,"butlerresourcemodel" ) 
+						Duration = getDuration()
 					}
-					 transition(edgeName="t037",targetState="execRoute",cond=whenDispatch("reactivate"))
+					 transition(edgeName="t041",targetState="completeStep",cond=whenEvent("modelChangedreactivate"))
+				}	 
+				state("handleObstacle") { //this:State
+					action { //it:State
+						println("ççççççççççIN HANDLE OBSTACLE StepTime = $StepTime")
+						if((Robot == "virtual")){ forward("modelChangeAction", "modelChangeAction(robot,$Curmove)" ,"butlerresourcemodel" ) 
+						startTimer()
+						 }
+						else
+						 { currentProcess=machineExec("sudo bash startBuzzer.sh")
+						 Duration = getDuration()
+						 println("Duration = $Duration")
+						 this.scope.launch{
+						 				autoMsg("check","check(c)")
+						 			}
+						  }
+						stateTimer = TimerActor("timer_handleObstacle", 
+							scope, context!!, "local_tout_execroute_handleObstacle", StepTime )
+					}
+					 transition(edgeName="t042",targetState="testState",cond=whenTimeout("local_tout_execroute_handleObstacle"))   
+					transition(edgeName="t043",targetState="checkObstacle",cond=whenDispatch("check"))
+				}	 
+				state("testState") { //this:State
+					action { //it:State
+						println("££££in teststate")
+						forward("modelChangeAction", "modelChangeAction(robot,h)" ,"butlerresourcemodel" ) 
+						itunibo.planner.moveUtils.doPlannedMove(myself ,Curmove )
+						itunibo.planner.moveUtils.showCurrentRobotState(  )
+						X = itunibo.planner.moveUtils.getPosX(myself).toString()
+								  Y = itunibo.planner.moveUtils.getPosY(myself).toString()
+						forward("modelChangePos", "modelChangePos(robot,$X,$Y)" ,"butlerresourcemodel" ) 
+						delay(1000) 
+					}
+					 transition( edgeName="goto",targetState="execRoute", cond=doswitch() )
+				}	 
+				state("checkObstacle") { //this:State
+					action { //it:State
+						forward("isObstacle", "isObstacle" ,"mind" ) 
+					}
+					 transition(edgeName="t044",targetState="checkObstacle",cond=whenDispatch("obstacle"))
+					transition(edgeName="t045",targetState="completeStep",cond=whenDispatch("notObstacle"))
+				}	 
+				state("completeStep") { //this:State
+					action { //it:State
+						var StepTime2 = StepTime - Duration
+						println("StepTime2 = $StepTime2")
+						currentProcess=machineExec("sudo bash stopBuzzer.sh")
+						forward("modelChangeAction", "modelChangeAction(robot,$Curmove)" ,"butlerresourcemodel" ) 
+						startTimer()
+						stateTimer = TimerActor("timer_completeStep", 
+							scope, context!!, "local_tout_execroute_completeStep", StepTime2 )
+					}
+					 transition(edgeName="t046",targetState="testState",cond=whenTimeout("local_tout_execroute_completeStep"))   
 				}	 
 			}
 		}

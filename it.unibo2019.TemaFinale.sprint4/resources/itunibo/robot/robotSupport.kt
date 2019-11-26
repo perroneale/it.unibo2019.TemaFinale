@@ -6,9 +6,10 @@ import itunibo.coap.resources.butlerRoomState
 import itunibo.appliance.Food
 
 object robotSupport{
-	lateinit var roomState : butlerRoomState
+	//lateinit var roomState : butlerRoomState
 	lateinit var robotKind : String
 	var time = 0L
+	
 	fun create( actor: ActorBasic, robot : String, port: String ){
 		robotKind = robot
 		when( robotKind ){
@@ -29,7 +30,7 @@ object robotSupport{
 		}
 	}
 	
-	fun setroomstate(brs : butlerRoomState){
+	/*fun setroomstate(brs : butlerRoomState){
 		roomState = brs
 	}
 	
@@ -55,6 +56,6 @@ object robotSupport{
 	
 	fun  updateTableTake() : ArrayList<Pair<String,Int>>{
 		return roomState.updateTabletake()
-	}
+	}*/
 	
 }

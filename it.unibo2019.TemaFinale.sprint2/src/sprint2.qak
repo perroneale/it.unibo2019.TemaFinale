@@ -2,23 +2,23 @@ System sprint2
        
 mqttBroker "localhost" : 1883
 //from maitre to butler
-Dispatch prepare : prepare
+Dispatch prepare : prepare(P)
 Dispatch addFood : addFood(C,Q) //C = food code, Q = quantity
-Dispatch clean : clean
-Dispatch stop : stop
-Dispatch reactivate : reactivate
+Dispatch clean : clean(C)
+Dispatch stop : stop(S)
+Dispatch reactivate : reactivate(R)
 
 //from butler to butler
-Dispatch terminatedTask : terminatedTask
-Dispatch nearPantry : nearPantry
-Dispatch nearTable : nearTable
-Dispatch nearFridge : nearFridge
-Dispatch nearTableP : nearTableP
-Dispatch inRH : inRH
+Dispatch terminatedTask : terminatedTask(TASK)
+Dispatch nearPantry : nearPantry(N)
+Dispatch nearTable : nearTable(N)
+Dispatch nearFridge : nearFridge(N)
+Dispatch nearTableP : nearTableP(P)
+Dispatch inRH : inRH(I)
 
-Dispatch check: check
-Dispatch nextMove : nextMove
-Dispatch exec : exec
+Dispatch check: check(C)
+Dispatch nextMove : nextMove(N)
+Dispatch exec : exec(E)
 Dispatch calculateRoute : calculateRoute(X) //X = Goal
 Dispatch nearPrepare : nearPrepare(X) //X posizione
 Dispatch nearAdd : nearAdd(X) //X posizione
@@ -26,8 +26,9 @@ Dispatch nearClean : nearClean(X) //X posizione
 Dispatch near : near(X)
 Dispatch updateKBbm : updateKBbm(LIST)
 //from maitre to maitre
-Dispatch add : add
-Dispatch cl : cl
+Dispatch add : add(A)
+Dispatch cl : cl(C)
+
 
 //from butler to maitre
 Dispatch completedTask : completedTask(TASK)
@@ -39,20 +40,17 @@ Dispatch foodTaken : foodTaken(C,Q) //C = food code, Q = quantity
 Dispatch foodPutted : foodPutted(C,Q)   //C = food code, Q = quantity
 
 //from butler to pantry
-Dispatch retrieveStateP : retrieveStateP
-Dispatch takeDishesP : takeDishesP
-Dispatch putDishesP : putDishesP
+Dispatch takeDishesP : takeDishesP(D,P,B)
+Dispatch putDishesP : putDishesP(D,P,B)
 
 //from butler to dishwasher
-Dispatch retrieveStateD : retrieveStateD
-Dispatch takeDishesD : takeDishesD
-Dispatch putDishesD : putDishesD
+Dispatch takeDishesD : takeDishes(D)
+Dispatch putDishesD : putDishesD(D,P,B)
 
-//from pantry to butler
-Dispatch returnStateP : returnStateP(X)
-
-//from dishwasher to butler
-Dispatch returnStateD : returnStateD(X)
+Dispatch takeDishesT : takeDishesT(D,P,B)
+Dispatch putDishesT : putDishesT(D,P,B)
+Dispatch takeFoodT : takeFoodT(LIST)
+Dispatch putFoodT : putFoodT(LIST)
 
 //from fridge to butler
 Dispatch positiveResponse : positiveResponse(C,Q)    //C = food code, Q = quantity
@@ -69,19 +67,15 @@ Dispatch modelUpdateAction : modelUpdateAction(DEST, ACTION)
 
 Dispatch robotAction : robotAction(X) //X = w,a,s,d,h
 
-Dispatch obstacleDetected : obstacleDetected
-
-Dispatch explore : explore
+Dispatch explore : explore(E)
 
 Dispatch userCmd   : userCmd(X)		
 
-Dispatch isObstacle : isObstacle
-Dispatch notObstacle : notObstacle
-Dispatch obstacle : obstacle
+Dispatch isObstacle : isObstacle(I)
+Dispatch notObstacle : notObstacle(N)
+Dispatch obstacle : obstacle(O)
 Dispatch updatePos : updatePos(X, Y)
 Dispatch destinationReached : destinationReached(X, Y)
-Dispatch startExploration : startExploration
-
 //from resourcemodelbutler
 Event modelChangedTask : modelChangedTask(TASK)
 Event modelChangedpreparing : modelChangedpreparing(DEST, TASK)
@@ -90,15 +84,13 @@ Event modelChangedcleaning : modelChangedcleaning(DEST, TASK)
 Event modelChangedAction : modelChangedAction(DEST, ACTION) //ACTION = w,a,s,d,h
 Event modelChangedPosition : modelChangedPosition(X, Y)
 Event sonarRobot : sonarRobot(DISTANCE)
-Event obstacleDetected : obstacleDetected
-Event obstacleExploration : obstacleExploration
+Event obstacleDetected : obstacleDetected(O)
 Event map : map(MAPSTRING, MAPNAME)
-Event mapSetted : mapSetted
 
-Context ctxButler ip[host="localhost" port=8080] -mqtt
-Context ctxMaitre ip[host="localhost" port=8081] -mqtt
-Context ctxFridge ip[host="localhost" port=8082] -mqtt
-Context ctxExploration ip[host="192.168.43.102" port=8086] -mqtt
+Context ctxButler ip[host="localhost" port=8080] +mqtt
+Context ctxMaitre ip[host="localhost" port=8081] +mqtt
+Context ctxFridge ip[host="localhost" port=8082] +mqtt
+Context ctxExploration ip[host="192.168.43.102" port=8086] +mqtt
 ExternalQActor roomexploration context ctxExploration
 
 QActor butlerresourcemodel context ctxButler{
@@ -216,8 +208,6 @@ QActor butlermind context ctxButler{
 	
 	
 	State waitCmd1{
-		//aggiorno il modello perchè il robot è in attesa di un messaggio
-		forward butlerresourcemodel -m modelChangeTask : modelChangeTask(robot, waiting,0,0)
 	}Transition t0 whenEvent modelChangedpreparing -> preparing
 				   
 				   
@@ -367,7 +357,7 @@ QActor butlermind context ctxButler{
 			forward planningroute -m calculateRoute : calculateRoute(table)
 		}
 		if"position == \"rh\""{
-			forward butlermind -m completedTask : completedTask()
+			forward butlermind -m completedTask : completedTask(adding)
 		}
 	}Transition t0 whenMsg destinationReached -> actionClean
 				   whenMsg completedTask -> waitCmd2
@@ -596,8 +586,7 @@ QActor maitre context ctxMaitre{
 	
 	State sendingP{
 		delay 2000
-		println("----Maitre send prepare message")
-		forward butlerresourcemodel -m modelChangeTask : modelChangeTask(robot, preparing, 0, 0)
+		//forward butlerresourcemodel -m modelChangeTask : modelChangeTask(robot, preparing, 0, 0)
 	}Transition t0 whenMsg completedTask -> sendingAC
 	
 	State sendingAC{
@@ -713,8 +702,7 @@ QActor pantry context ctxButler{
 	
 	State waitCmd{
 		
-	}Transition t0 whenMsg retrieveStateP -> retrieving
-				   whenMsg takeDishesP -> taking
+	}Transition t0 whenMsg takeDishesP -> taking
 				   whenMsg putDishesP -> putting
 	
 	State retrieving{
@@ -737,8 +725,7 @@ QActor dishwasher context ctxButler{
 	
 	State waitCmd{
 		
-	}Transition t0 whenMsg retrieveStateD -> retrieving
-				   whenMsg takeDishesD -> taking
+	}Transition t0 whenMsg takeDishesD -> taking
 				   whenMsg putDishesD -> putting
 	
 	State retrieving{
@@ -751,5 +738,33 @@ QActor dishwasher context ctxButler{
 	
 	State putting{
 		//richiamo il metodo per inserire i piatti
+	}Goto waitCmd
+}
+QActor table context ctxButler{
+	State s0 initial{
+		println("Table STARTED")
+	}Goto waitCmd
+	
+	State waitCmd{
+		
+	}Transition t0 whenMsg takeDishesT -> taking
+				   whenMsg putDishesT -> putting
+				   whenMsg takeFoodT -> takeFood
+				   whenMsg putFoodT -> putFood
+	
+	State taking{
+		//richiamo il metodo per prelevare i piatti
+	}Goto waitCmd
+	
+	State putting{
+		//richiamo il metodo per inserire i piatti
+	}Goto waitCmd
+	
+	State takeFood{
+		
+	}Goto waitCmd
+
+	State putFood{
+		
 	}Goto waitCmd
 }

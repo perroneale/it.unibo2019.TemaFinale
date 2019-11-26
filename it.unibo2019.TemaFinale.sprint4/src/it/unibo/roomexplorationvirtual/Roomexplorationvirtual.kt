@@ -16,8 +16,8 @@ class Roomexplorationvirtual ( name: String, scope: CoroutineScope ) : ActorBasi
 		
 	override fun getBody() : (ActorBasicFsm.() -> Unit){
 		var RotationCount = 0;
-			  var FORWARDTIME = 770;
-			  var FORWARDTIME2 = 900;
+			  var FORWARDTIME = 0;
+			  var FORWARDTIME2 = 0;
 			  var DimX = 0
 			  var DimY = 0
 			  var EdgeCounterX = 0
@@ -49,24 +49,32 @@ class Roomexplorationvirtual ( name: String, scope: CoroutineScope ) : ActorBasi
 				state("waitStart") { //this:State
 					action { //it:State
 					}
-					 transition(edgeName="t03",targetState="doExploration",cond=whenDispatch("startExplorationVirtual"))
+					 transition(edgeName="t03",targetState="testState",cond=whenDispatch("startExplorationVirtual"))
 				}	 
-				state("doExploration") { //this:State
+				state("testState") { //this:State
 					action { //it:State
 						if( checkMsgContent( Term.createTerm("startExplorationVirtual(StepTime)"), Term.createTerm("startExplorationVirtual(StepTime)"), 
 						                        currentMsg.msgContent()) ) { //set msgArgList
-								FORWARDTIME = payloadArg(0).toString().toInt()
+								FORWARDTIME = payloadArg(0).toInt()
+								forward("onestep", "onestep($FORWARDTIME)" ,"onestep" ) 
 						}
-						if( checkMsgContent( Term.createTerm("stepOk(S)"), Term.createTerm("stepOk"), 
-						                        currentMsg.msgContent()) ) { //set msgArgList
-								itunibo.planner.moveUtils.doPlannedMove(myself ,"w" )
-								itunibo.planner.moveUtils.showCurrentRobotState(  )
-								delay(2000) 
-						}
-						forward("onestep", "onestep($FORWARDTIME)" ,"onestep" ) 
 					}
 					 transition(edgeName="t04",targetState="wallFound",cond=whenDispatch("stepFail"))
 					transition(edgeName="t05",targetState="doExploration",cond=whenDispatch("stepOk"))
+				}	 
+				state("doExploration") { //this:State
+					action { //it:State
+						if( checkMsgContent( Term.createTerm("stepOk(S)"), Term.createTerm("stepOk(S)"), 
+						                        currentMsg.msgContent()) ) { //set msgArgList
+								println("STEPOK RECEIVED")
+								itunibo.planner.moveUtils.doPlannedMove(myself ,"w" )
+								itunibo.planner.moveUtils.showCurrentRobotState(  )
+								delay(500) 
+								forward("onestep", "onestep($FORWARDTIME)" ,"onestep" ) 
+						}
+					}
+					 transition(edgeName="t06",targetState="wallFound",cond=whenDispatch("stepFail"))
+					transition(edgeName="t07",targetState="doExploration",cond=whenDispatch("stepOk"))
 				}	 
 				state("wallFound") { //this:State
 					action { //it:State
@@ -78,7 +86,14 @@ class Roomexplorationvirtual ( name: String, scope: CoroutineScope ) : ActorBasi
 						itunibo.planner.moveUtils.showCurrentRobotState(  )
 					}
 					 transition( edgeName="goto",targetState="endBoundary", cond=doswitchGuarded({(RotationCount >= 4) }) )
-					transition( edgeName="goto",targetState="doExploration", cond=doswitchGuarded({! (RotationCount >= 4) }) )
+					transition( edgeName="goto",targetState="sendOneStep", cond=doswitchGuarded({! (RotationCount >= 4) }) )
+				}	 
+				state("sendOneStep") { //this:State
+					action { //it:State
+						forward("onestep", "onestep($FORWARDTIME)" ,"onestep" ) 
+					}
+					 transition(edgeName="t08",targetState="wallFound",cond=whenDispatch("stepFail"))
+					transition(edgeName="t09",targetState="doExploration",cond=whenDispatch("stepOk"))
 				}	 
 				state("endBoundary") { //this:State
 					action { //it:State
@@ -92,9 +107,10 @@ class Roomexplorationvirtual ( name: String, scope: CoroutineScope ) : ActorBasi
 				}	 
 				state("exploreRoom") { //this:State
 					action { //it:State
-						if( checkMsgContent( Term.createTerm("stepOk(S)"), Term.createTerm("stepOk"), 
+						if( checkMsgContent( Term.createTerm("stepOk(S)"), Term.createTerm("stepOk(S)"), 
 						                        currentMsg.msgContent()) ) { //set msgArgList
 								itunibo.planner.moveUtils.doPlannedMove(myself ,"w" )
+								itunibo.planner.moveUtils.showCurrentRobotState(  )
 						}
 						XRobot = itunibo.planner.moveUtils.getPosX(myself)
 								  YRobot = itunibo.planner.moveUtils.getPosY(myself)
@@ -110,30 +126,30 @@ class Roomexplorationvirtual ( name: String, scope: CoroutineScope ) : ActorBasi
 						else
 						 { if((XRobot == 0) && (YRobot == 0)){ println("###IN 00")
 						 itunibo.planner.moveUtils.moveAhead(myself ,FORWARDTIME )
-						 itunibo.planner.moveUtils.rotateLeft2(myself)
+						 itunibo.planner.moveUtils.rotateLeft(myself)
 						  }
 						 else
 						  { if((XRobot == 0) && (YRobot > 0)){ ContY = 0
 						  println("###IN 0>")
-						  itunibo.planner.moveUtils.rotateLeft2(myself)
+						  itunibo.planner.moveUtils.rotateLeft(myself)
 						  itunibo.planner.moveUtils.moveAhead(myself ,FORWARDTIME )
-						  itunibo.planner.moveUtils.rotateLeft2(myself)
+						  itunibo.planner.moveUtils.rotateLeft(myself)
 						   }
 						  else
 						   { if((XRobot == DimX - 2) && (YRobot > 0)){ ContY = 0
 						   println("###-2>")
-						   itunibo.planner.moveUtils.rotateRight2(myself)
+						   itunibo.planner.moveUtils.rotateRight(myself)
 						   itunibo.planner.moveUtils.moveAhead(myself ,FORWARDTIME )
-						   itunibo.planner.moveUtils.rotateRight2(myself)
+						   itunibo.planner.moveUtils.rotateRight(myself)
 						    }
 						    }
 						   }
 						 forward("onestep", "onestep($FORWARDTIME)" ,"onestep" ) 
 						  }
 					}
-					 transition(edgeName="t06",targetState="explorationDone",cond=whenDispatch("terminated"))
-					transition(edgeName="t07",targetState="tableFound",cond=whenDispatch("stepFail"))
-					transition(edgeName="t08",targetState="exploreRoom",cond=whenDispatch("stepOk"))
+					 transition(edgeName="t010",targetState="explorationDone",cond=whenDispatch("terminated"))
+					transition(edgeName="t011",targetState="tableFound",cond=whenDispatch("stepFail"))
+					transition(edgeName="t012",targetState="exploreRoom",cond=whenDispatch("stepOk"))
 				}	 
 				state("tableFound") { //this:State
 					action { //it:State
@@ -148,28 +164,28 @@ class Roomexplorationvirtual ( name: String, scope: CoroutineScope ) : ActorBasi
 				state("rightDir") { //this:State
 					action { //it:State
 						itunibo.planner.moveUtils.setObstacleOnCurrentDirection(myself)
-						itunibo.planner.moveUtils.rotateRight2(myself)
+						itunibo.planner.moveUtils.rotateRight(myself)
 						itunibo.planner.moveUtils.moveAhead(myself ,FORWARDTIME )
-						itunibo.planner.moveUtils.rotateLeft2(myself)
+						itunibo.planner.moveUtils.rotateLeft(myself)
 						forward("onestep", "onestep($FORWARDTIME)" ,"onestep" ) 
 					}
-					 transition(edgeName="t09",targetState="rightDir",cond=whenDispatch("stepFail"))
-					transition(edgeName="t010",targetState="underTableRd",cond=whenDispatch("stepOk"))
+					 transition(edgeName="t013",targetState="rightDir",cond=whenDispatch("stepFail"))
+					transition(edgeName="t014",targetState="underTableRd",cond=whenDispatch("stepOk"))
 				}	 
 				state("leftDir") { //this:State
 					action { //it:State
 						itunibo.planner.moveUtils.setObstacleOnCurrentDirection(myself)
-						itunibo.planner.moveUtils.rotateLeft2(myself)
+						itunibo.planner.moveUtils.rotateLeft(myself)
 						itunibo.planner.moveUtils.moveAhead(myself ,FORWARDTIME )
-						itunibo.planner.moveUtils.rotateRight2(myself)
+						itunibo.planner.moveUtils.rotateRight(myself)
 						forward("onestep", "onestep($FORWARDTIME)" ,"onestep" ) 
 					}
-					 transition(edgeName="t011",targetState="leftDir",cond=whenDispatch("stepFail"))
-					transition(edgeName="t012",targetState="underTableLd",cond=whenDispatch("stepOk"))
+					 transition(edgeName="t015",targetState="leftDir",cond=whenDispatch("stepFail"))
+					transition(edgeName="t016",targetState="underTableLd",cond=whenDispatch("stepOk"))
 				}	 
 				state("underTableLd") { //this:State
 					action { //it:State
-						if( checkMsgContent( Term.createTerm("stepOk(S)"), Term.createTerm("stepOk"), 
+						if( checkMsgContent( Term.createTerm("stepOk(S)"), Term.createTerm("stepOk(S)"), 
 						                        currentMsg.msgContent()) ) { //set msgArgList
 								itunibo.planner.moveUtils.doPlannedMove(myself ,"w" )
 								itunibo.planner.moveUtils.showCurrentRobotState(  )
@@ -180,17 +196,17 @@ class Roomexplorationvirtual ( name: String, scope: CoroutineScope ) : ActorBasi
 						forward("terminated", "terminated" ,"roomexplorationvirtual" ) 
 						 }
 						else
-						 { itunibo.planner.moveUtils.rotateRight2(myself)
+						 { itunibo.planner.moveUtils.rotateRight(myself)
 						 forward("onestep", "onestep($FORWARDTIME)" ,"onestep" ) 
 						  }
 					}
-					 transition(edgeName="t013",targetState="explorationDone",cond=whenDispatch("terminated"))
-					transition(edgeName="t014",targetState="continueExplLD",cond=whenDispatch("stepFail"))
-					transition(edgeName="t015",targetState="underTableLd",cond=whenDispatch("stepOk"))
+					 transition(edgeName="t017",targetState="explorationDone",cond=whenDispatch("terminated"))
+					transition(edgeName="t018",targetState="continueExplLD",cond=whenDispatch("stepFail"))
+					transition(edgeName="t019",targetState="underTableLd",cond=whenDispatch("stepOk"))
 				}	 
 				state("underTableRd") { //this:State
 					action { //it:State
-						if( checkMsgContent( Term.createTerm("stepOk(S)"), Term.createTerm("stepOk"), 
+						if( checkMsgContent( Term.createTerm("stepOk(S)"), Term.createTerm("stepOk(S)"), 
 						                        currentMsg.msgContent()) ) { //set msgArgList
 								itunibo.planner.moveUtils.doPlannedMove(myself ,"w" )
 								itunibo.planner.moveUtils.showCurrentRobotState(  )
@@ -201,19 +217,19 @@ class Roomexplorationvirtual ( name: String, scope: CoroutineScope ) : ActorBasi
 						forward("terminated", "terminated" ,"roomexplorationvirtual" ) 
 						 }
 						else
-						 { itunibo.planner.moveUtils.rotateLeft2(myself)
-						 delay(1000) 
+						 { itunibo.planner.moveUtils.rotateLeft(myself)
+						 delay(500) 
 						 forward("onestep", "onestep($FORWARDTIME)" ,"onestep" ) 
 						  }
 					}
-					 transition(edgeName="t016",targetState="explorationDone",cond=whenDispatch("terminated"))
-					transition(edgeName="t017",targetState="continueExplRD",cond=whenDispatch("stepFail"))
-					transition(edgeName="t018",targetState="underTableRd",cond=whenDispatch("stepOk"))
+					 transition(edgeName="t020",targetState="explorationDone",cond=whenDispatch("terminated"))
+					transition(edgeName="t021",targetState="continueExplRD",cond=whenDispatch("stepFail"))
+					transition(edgeName="t022",targetState="underTableRd",cond=whenDispatch("stepOk"))
 				}	 
 				state("continueExplRD") { //this:State
 					action { //it:State
 						itunibo.planner.moveUtils.setObstacleOnCurrentDirection(myself)
-						itunibo.planner.moveUtils.rotateRight2(myself)
+						itunibo.planner.moveUtils.rotateRight(myself)
 						itunibo.planner.moveUtils.moveAhead(myself ,FORWARDTIME )
 					}
 					 transition( edgeName="goto",targetState="underTableRd", cond=doswitch() )
@@ -221,7 +237,7 @@ class Roomexplorationvirtual ( name: String, scope: CoroutineScope ) : ActorBasi
 				state("continueExplLD") { //this:State
 					action { //it:State
 						itunibo.planner.moveUtils.setObstacleOnCurrentDirection(myself)
-						itunibo.planner.moveUtils.rotateLeft2(myself)
+						itunibo.planner.moveUtils.rotateLeft(myself)
 						itunibo.planner.moveUtils.moveAhead(myself ,FORWARDTIME )
 					}
 					 transition( edgeName="goto",targetState="underTableLd", cond=doswitch() )

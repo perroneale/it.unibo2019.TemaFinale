@@ -30,7 +30,7 @@ class Butlermind ( name: String, scope: CoroutineScope ) : ActorBasicFsm( name, 
 						Task = "";
 						forward("modelChangeTask", "modelChangeTask(robot,waiting)" ,"butlerresourcemodel" ) 
 					}
-					 transition(edgeName="t05",targetState="preparing",cond=whenDispatch("modelChangedpreparing"))
+					 transition(edgeName="t07",targetState="preparing",cond=whenEvent("modelChangedpreparing"))
 				}	 
 				state("preparing") { //this:State
 					action { //it:State
@@ -47,17 +47,17 @@ class Butlermind ( name: String, scope: CoroutineScope ) : ActorBasicFsm( name, 
 						println("task = $Task")
 						 }
 					}
-					 transition(edgeName="t06",targetState="waitCmd2",cond=whenDispatchGuarded("completedTask",{Task.equals("preparing")}))
-					transition(edgeName="t07",targetState="waitCmd1",cond=whenDispatchGuarded("completedTask",{Task.equals("cleaning")}))
-					transition(edgeName="t08",targetState="waitCmd2",cond=whenDispatchGuarded("completedTask",{Task.equals("adding")}))
+					 transition(edgeName="t08",targetState="waitCmd2",cond=whenDispatchGuarded("completedTask",{Task.equals("preparing")}))
+					transition(edgeName="t09",targetState="waitCmd1",cond=whenDispatchGuarded("completedTask",{Task.equals("cleaning")}))
+					transition(edgeName="t010",targetState="waitCmd2",cond=whenDispatchGuarded("completedTask",{Task.equals("adding")}))
 				}	 
 				state("waitCmd2") { //this:State
 					action { //it:State
 						Task = "";
 						forward("modelChangeTask", "modelChangeTask(robot,waiting)" ,"butlerresourcemodel" ) 
 					}
-					 transition(edgeName="t09",targetState="adding",cond=whenDispatch("modelChangedadding"))
-					transition(edgeName="t010",targetState="cleaning",cond=whenDispatch("modelChangedcleaning"))
+					 transition(edgeName="t011",targetState="adding",cond=whenEvent("modelChangedadding"))
+					transition(edgeName="t012",targetState="cleaning",cond=whenEvent("modelChangedcleaning"))
 				}	 
 				state("cleaning") { //this:State
 					action { //it:State
@@ -74,8 +74,8 @@ class Butlermind ( name: String, scope: CoroutineScope ) : ActorBasicFsm( name, 
 								forward("foodAvailability", "foodAvailability(${payloadArg(0)},${payloadArg(1)})" ,"fridge" ) 
 						}
 					}
-					 transition(edgeName="t011",targetState="nextStep",cond=whenDispatch("positiveResponse"))
-					transition(edgeName="t012",targetState="sendWarning",cond=whenDispatch("negativeResponse"))
+					 transition(edgeName="t013",targetState="nextStep",cond=whenDispatch("positiveResponse"))
+					transition(edgeName="t014",targetState="sendWarning",cond=whenDispatch("negativeResponse"))
 				}	 
 				state("nextStep") { //this:State
 					action { //it:State

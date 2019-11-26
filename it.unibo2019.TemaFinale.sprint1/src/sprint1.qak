@@ -1,24 +1,24 @@
 System sprint1
        
-mqttBroker "192.168.43.101" : 1883
+mqttBroker "localhost" : 1883
 //from maitre to butler
-Dispatch prepare : prepare
+Dispatch prepare : prepare(P)
 Dispatch addFood : addFood(C,Q) //C = food code, Q = quantity
-Dispatch clean : clean
-Dispatch stop : stop
-Dispatch reactivate : reactivate
+Dispatch clean : clean(C)
+Dispatch stop : stop(S)
+Dispatch reactivate : reactivate(R)
 
 //from butler to butler
-Dispatch terminatedTask : terminatedTask
-Dispatch nearPantry : nearPantry
-Dispatch nearTable : nearTable
-Dispatch nearFridge : nearFridge
-Dispatch nearTableP : nearTableP
-Dispatch inRH : inRH
+Dispatch terminatedTask : terminatedTask(TASK)
+Dispatch nearPantry : nearPantry(N)
+Dispatch nearTable : nearTable(N)
+Dispatch nearFridge : nearFridge(N)
+Dispatch nearTableP : nearTableP(P)
+Dispatch inRH : inRH(I)
 
-Dispatch check: check
-Dispatch nextMove : nextMove
-Dispatch exec : exec
+Dispatch check: check(C)
+Dispatch nextMove : nextMove(N)
+Dispatch exec : exec(E)
 Dispatch calculateRoute : calculateRoute(X) //X = Goal
 Dispatch nearPrepare : nearPrepare(X) //X posizione
 Dispatch nearAdd : nearAdd(X) //X posizione
@@ -26,8 +26,8 @@ Dispatch nearClean : nearClean(X) //X posizione
 Dispatch near : near(X)
 
 //from maitre to maitre
-Dispatch add : add
-Dispatch cl : cl
+Dispatch add : add(A)
+Dispatch cl : cl(C)
 
 //from butler to maitre
 Dispatch completedTask : completedTask(X)
@@ -39,14 +39,17 @@ Dispatch foodTaken : foodTaken(C,Q) //C = food code, Q = quantity
 Dispatch foodPutted : foodPutted(C,Q)   //C = food code, Q = quantity
 
 //from butler to pantry
-Dispatch retrieveStateP : retrieveStateP
-Dispatch takeDishesP : takeDishesP
-Dispatch putDishesP : putDishesP
+Dispatch takeDishesP : takeDishesP(D,P,B)
+Dispatch putDishesP : putDishesP(D,P,B)
 
 //from butler to dishwasher
-Dispatch retrieveStateD : retrieveStateD
-Dispatch takeDishesD : takeDishesD
-Dispatch putDishesD : putDishesD
+Dispatch takeDishesD : takeDishes(D)
+Dispatch putDishesD : putDishesD(D,P,B)
+
+Dispatch takeDishesT : takeDishesT(D,P,B)
+Dispatch putDishesT : putDishesT(D,P,B)
+Dispatch takeFoodT : takeFoodT(LIST)
+Dispatch putFoodT : putFoodT(LIST)
 
 //from pantry to butler
 Dispatch returnStateP : returnStateP(X)
@@ -69,31 +72,26 @@ Dispatch modelUpdateAction : modelUpdateAction(DEST, ACTION)
 
 Dispatch robotAction : robotAction(X) //X = w,a,s,d,h
 
-Dispatch obstacleDetected : obstacleDetected
-
-Dispatch explore : explore
+Dispatch explore : explore(E)
 
 Dispatch userCmd   : userCmd(X)		
 
-Dispatch isObstacle : isObstacle
-Dispatch notObstacle : notObstacle
-Dispatch obstacle : obstacle
+Dispatch isObstacle : isObstacle(I)
+Dispatch notObstacle : notObstacle(N)
+Dispatch obstacle : obstacle(O)
 //from resourcemodelbutler
 Event modelChangedpreparing : modelChangedpreparing(DEST, TASK)
 Event modelChangedadding : modelChangedadding(DEST, TASK)
 Event modelChangedcleaning : modelChangedcleaning(DEST, TASK)
 Event modelChangedAction : modelChangedAction(DEST, ACTION) //ACTION = w,a,s,d,h
 Event sonarRobot : sonarRobot(DISTANCE)
-Event obstacleDetected : obstacleDetected
-Event obstacleExploration : obstacleExploration
 Event map : map(MAPSTRING, MAPNAME)
 
-Context ctxButler ip[host="localhost" port=8080] -mqtt
-Context ctxMaitre ip[host="localhost" port=8081] -mqtt
-Context ctxFridge ip[host="localhost" port=8082] -mqtt
-Context ctxExploration ip[host="192.168.43.102" port=8086] -mqtt
-
-//ExternalQActor explorationroommind context ctxExploration
+Context ctxButler ip[host="localhost" port=8080] +mqtt
+Context ctxMaitre ip[host="localhost" port=8081] +mqtt
+Context ctxFridge ip[host="localhost" port=8082] +mqtt
+Context ctxExploration ip[host="notcarehost" port=8086] +mqtt
+   
 ExternalQActor roomexploration context ctxExploration
 
 QActor butlerresourcemodel context ctxButler{
@@ -115,6 +113,7 @@ QActor butlerresourcemodel context ctxButler{
 			run itunibo.robot.resourceModelSupport.updateModelTask(myself, payloadArg(1), payloadArg(2), payloadArg(3))
 		}
 		onMsg(modelChangeAction : modelChangeAction(robot, ACTION)){
+			println("#### ${payloadArg(1)}")
 			run itunibo.robot.resourceModelSupport.updateModelAction(myself, payloadArg(1))
 		}
 		onMsg(modelChangePos : modelChangePos(robot, POS)){
@@ -156,16 +155,16 @@ QActor mind context ctxButler{
 	State handleAction{
 		onMsg(modelChangedAction : modelChangedAction(robot, ACTION)){
 			printCurrentMessage
-			forward butler -m robotAction : robotAction($payloadArg(1))
+			//forward butler -m robotAction : robotAction($payloadArg(1))
 			["forward = (payloadArg(1) == \"w\")"]
-			if "payloadArg(1).equals(\"a\")"{
+			/*if "payloadArg(1).equals(\"a\")"{
 				delay 160
 				forward butlerresourcemodel -m modelChangeAction : modelChangeAction(robot,h)
 			}
 			if "payloadArg(1).equals(\"d\")"{
 				delay 180
 				forward butlerresourcemodel -m modelChangeAction : modelChangeAction(robot,h)
-			}
+			}*/
 			/*if "payloadArg(1).equals(\"w\")"{
 				run itunibo.robot.robotSupport.calibrate(myself)
 			}*/
@@ -179,7 +178,7 @@ QActor mind context ctxButler{
 				println("###Mind, Obstacle at $Distance")
 				//aggiorno il modello
 				forward butlerresourcemodel -m modelChangeAction : modelChangeAction(robot, h)
-				emit obstacleDetected : obstacleDetected
+				//emit obstacleDetected : obstacleDetected
 			}
 			if "Distance <= 22"{
 				println("###MIND PER EXPLORATION OBSTACLE")
@@ -203,7 +202,6 @@ QActor butlermind context ctxButler{
 	State waitCmd1{
 		["Task = \"\";"]
 		//aggiorno il modello perchè il robot è in attesa di un messaggio
-		forward butlerresourcemodel -m modelChangeTask : modelChangeTask(robot, waiting)
 	}Transition t0 whenEvent modelChangedpreparing -> preparing
 	
 	//PREPARE ACTION
@@ -220,16 +218,15 @@ QActor butlermind context ctxButler{
 		 	["Task = getCurSol(\"T\").toString()"]
 		 	println("task = $Task")
 		 }
-	}Transition t0 whenMsg completedTask and "Task.equals(\"preparing\")" -> waitCmd2
-				   whenMsg completedTask and "Task.equals(\"cleaning\")" -> waitCmd1
-				   whenMsg completedTask and "Task.equals(\"adding\")" -> waitCmd2
+	}Transition t0 whenMsg completedTask and "(Task.equals(\"preparing\"))" -> waitCmd2
+				   whenMsg completedTask and "(Task.equals(\"cleaning\"))" -> waitCmd1
+				   whenMsg completedTask and "(Task.equals(\"adding\"))" -> waitCmd2
 	
 	State waitCmd2{
 		["Task = \"\";"]
 		//aggiorno il modello perchè il robot è in attesa di un messaggio
-		forward butlerresourcemodel -m modelChangeTask : modelChangeTask(robot, waiting)
-	}Transition t0 whenMsg modelChangedadding -> adding
-				   whenMsg modelChangedcleaning -> cleaning
+	}Transition t0 whenEvent modelChangedadding -> adding
+				   whenEvent modelChangedcleaning -> cleaning
 	
 	State cleaning{
 		["Task = \"cleaning\";"]
@@ -268,7 +265,7 @@ QActor planningroute context ctxButler {
 		onMsg(calculateRoute : calculateRoute(GOAL)){
 			//lancio il planning che calcola la strada e la salva in una KB
 			println("###PLANNINGROUTE calculate route to ${payloadArg(0)}")
-			forward execroute -m exec : exec
+			//forward execroute -m exec : exec
 		}
 	}Goto waitGoal
 }
@@ -456,7 +453,7 @@ QActor maitre context ctxMaitre{
 	State sendingP{
 		delay 2000
 		println("----Maitre send prepare message")
-		forward butler -m prepare : prepare
+		//forward butlerresourcemodel -m modelChangeTask : modelChangeTask(robot, preparing, 0,0)
 	}Goto waitingPAck
 	
 	State waitingPAck{
@@ -464,11 +461,11 @@ QActor maitre context ctxMaitre{
 		onMsg(completedTask : completedTask(T)){
 			println("Butler finito ${payloadArg(0)} task")
 		}
-	}/*Transition t0 whenMsg completedTask -> sendingAC
-				   whenMsg currentFood -> updateFP*/
+	}Transition t0 whenMsg completedTask -> sendingAC
+				   whenMsg currentFood -> updateFP
 	
 	State sendingAC{
-		forward butler -m addFood : addFood(2,2)
+		forward butlerresourcemodel -m modelChangeTask : modelChangeTask(robot, adding, 2,2)
 		forward maitre -m add : add
 		/*forward butler -m clear : clear
 		forward maitre -m cl : cl*/
@@ -521,9 +518,9 @@ QActor fridge context ctxFridge{
 				["Quantity = getCurSol(\"Q\").toString().toInt()"]
 			}
 			if "Quantity <= payloadArg(1).toString().toInt()"{
-				forward butler -m positiveResponse : positiveResponse
+				forward butlermind -m positiveResponse : positiveResponse
 			}else{
-				forward butler -m negativeResponse : negativeResponse($payloadArg(0),$payloadArg(1),$Quantity)
+				forward butlermind -m negativeResponse : negativeResponse($payloadArg(0),$payloadArg(1),$Quantity)
 			}
 		}
 	}Goto waitCmd
@@ -570,8 +567,7 @@ QActor pantry context ctxButler{
 	
 	State waitCmd{
 		
-	}Transition t0 whenMsg retrieveStateP -> retrieving
-				   whenMsg takeDishesP -> taking
+	}Transition t0 whenMsg takeDishesP -> taking
 				   whenMsg putDishesP -> putting
 	
 	State retrieving{
@@ -594,8 +590,7 @@ QActor dishwasher context ctxButler{
 	
 	State waitCmd{
 		
-	}Transition t0 whenMsg retrieveStateD -> retrieving
-				   whenMsg takeDishesD -> taking
+	}Transition t0 whenMsg takeDishesD -> taking
 				   whenMsg putDishesD -> putting
 	
 	State retrieving{
@@ -608,5 +603,33 @@ QActor dishwasher context ctxButler{
 	
 	State putting{
 		//richiamo il metodo per inserire i piatti
+	}Goto waitCmd
+}
+QActor table context ctxButler{
+	State s0 initial{
+		println("Table STARTED")
+	}Goto waitCmd
+	
+	State waitCmd{
+		
+	}Transition t0 whenMsg takeDishesT -> taking
+				   whenMsg putDishesT -> putting
+				   whenMsg takeFoodT -> takeFood
+				   whenMsg putFoodT -> putFood
+	
+	State taking{
+		//richiamo il metodo per prelevare i piatti
+	}Goto waitCmd
+	
+	State putting{
+		//richiamo il metodo per inserire i piatti
+	}Goto waitCmd
+	
+	State takeFood{
+		
+	}Goto waitCmd
+
+	State putFood{
+		
 	}Goto waitCmd
 }

@@ -1,11 +1,11 @@
 %====================================================================================
 % sprint3 description   
 %====================================================================================
-mqttBroker("192.168.43.139", "1883").
-context(ctxbutler, "localhost",  "MQTT", "0" ).
-context(ctxmaitre, "localhost",  "MQTT", "0" ).
-context(ctxfridge, "localhost",  "MQTT", "0" ).
-context(ctxexploration, "192.168.43.102",  "MQTT", "0" ).
+mqttBroker("localhost", "1883").
+context(ctxbutler, "localhost",  "MQTT", "0").
+context(ctxmaitre, "localhost",  "MQTT", "0").
+context(ctxfridge, "localhost",  "MQTT", "0").
+context(ctxexploration, "192.168.43.102",  "MQTT", "0").
  qactor( roomexploration, ctxexploration, "external").
   qactor( butlerresourcemodel, ctxbutler, "it.unibo.butlerresourcemodel.Butlerresourcemodel").
   qactor( mind, ctxbutler, "it.unibo.mind.Mind").

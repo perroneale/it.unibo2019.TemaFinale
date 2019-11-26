@@ -1,24 +1,24 @@
 System sprint3
      
-mqttBroker "192.168.43.139" : 1883
+mqttBroker "localhost" : 1883
 //from maitre to butler
-Dispatch prepare : prepare
+Dispatch prepare : prepare(P)
 Dispatch addFood : addFood(C,Q) //C = food code, Q = quantity
-Dispatch clean : clean
-Dispatch stop : stop
-Dispatch reactivate : reactivate
+Dispatch clean : clean(C)
+Dispatch stop : stop(S)
+Dispatch reactivate : reactivate(R)
 
 //from butler to butler
-Dispatch terminatedTask : terminatedTask
-Dispatch nearPantry : nearPantry
-Dispatch nearTable : nearTable
-Dispatch nearFridge : nearFridge
-Dispatch nearTableP : nearTableP
-Dispatch inRH : inRH
+Dispatch terminatedTask : terminatedTask(TASK)
+Dispatch nearPantry : nearPantry(N)
+Dispatch nearTable : nearTable(N)
+Dispatch nearFridge : nearFridge(N)
+Dispatch nearTableP : nearTableP(P)
+Dispatch inRH : inRH(I)
 
-Dispatch check: check
-Dispatch nextMove : nextMove
-Dispatch exec : exec
+Dispatch check: check(C)
+Dispatch nextMove : nextMove(N)
+Dispatch exec : exec(E)
 Dispatch calculateRoute : calculateRoute(X) //X = Goal
 Dispatch nearPrepare : nearPrepare(X) //X posizione
 Dispatch nearAdd : nearAdd(X) //X posizione
@@ -26,8 +26,8 @@ Dispatch nearClean : nearClean(X) //X posizione
 Dispatch near : near(X)
 Dispatch updateKBbm : updateKBbm(LIST)
 //from maitre to maitre
-Dispatch add : add
-Dispatch cl : cl
+Dispatch add : add(A)
+Dispatch cl : cl(C)
 
 //from butler to maitre
 Dispatch completedTask : completedTask(TASK)
@@ -39,20 +39,17 @@ Dispatch foodTaken : foodTaken(C,Q) //C = food code, Q = quantity
 Dispatch foodPutted : foodPutted(C,Q)   //C = food code, Q = quantity
 
 //from butler to pantry
-Dispatch retrieveStateP : retrieveStateP
-Dispatch takeDishesP : takeDishesP
-Dispatch putDishesP : putDishesP
+Dispatch takeDishesP : takeDishesP(D,P,B)
+Dispatch putDishesP : putDishesP(D,P,B)
 
 //from butler to dishwasher
-Dispatch retrieveStateD : retrieveStateD
-Dispatch takeDishesD : takeDishesD
-Dispatch putDishesD : putDishesD
+Dispatch takeDishesD : takeDishes(D)
+Dispatch putDishesD : putDishesD(D,P,B)
 
-//from pantry to butler
-Dispatch returnStateP : returnStateP(X)
-
-//from dishwasher to butler
-Dispatch returnStateD : returnStateD(X)
+Dispatch takeDishesT : takeDishesT(D,P,B)
+Dispatch putDishesT : putDishesT(D,P,B)
+Dispatch takeFoodT : takeFoodT(LIST)
+Dispatch putFoodT : putFoodT(LIST)
 
 //from fridge to butler
 Dispatch positiveResponse : positiveResponse(C,Q)    //C = food code, Q = quantity
@@ -69,18 +66,14 @@ Dispatch modelUpdateAction : modelUpdateAction(DEST, ACTION)
 
 Dispatch robotAction : robotAction(X) //X = w,a,s,d,h
 
-Dispatch obstacleDetected : obstacleDetected
-
-Dispatch explore : explore
-
 Dispatch userCmd   : userCmd(X)		
 
-Dispatch isObstacle : isObstacle
-Dispatch notObstacle : notObstacle
-Dispatch obstacle : obstacle
+Dispatch isObstacle : isObstacle(I)
+Dispatch notObstacle : notObstacle(N)
+Dispatch obstacle : obstacle(O)
 Dispatch updatePos : updatePos(X, Y)
 Dispatch destinationReached : destinationReached(X, Y)
-Dispatch startExploration : startExploration
+Dispatch startExploration : startExploration(R)
 
 
 //sprint3
@@ -88,7 +81,6 @@ Dispatch getDishesPantry : getDishesPantry(ND, NB, NP)
 Dispatch putDishesPantry : putDishes(ND, NB, NP)
 Dispatch putDishesTable  : putDishes(ND, NB, NP)
 Dispatch getDishesTable  : getDishes(ND, NB, NP)
-Dispatch getFoodTable    : getFood()
 Dispatch putFoodTable    : putFood(CODE, NAME, QUANTITY)
 Dispatch putDishesDish   : putDishes(ND, NB, NP)
 Dispatch getDishesDish   : getDishes(ND, NB, NP)   
@@ -100,17 +92,15 @@ Event modelChangedcleaning : modelChangedcleaning(DEST, TASK)
 Event modelChangedAction : modelChangedAction(DEST, ACTION) //ACTION = w,a,s,d,h
 Event modelChangedPosition : modelChangedPosition(X, Y)
 Event sonarRobot : sonarRobot(DISTANCE)
-Event obstacleDetected : obstacleDetected
-Event obstacleExploration : obstacleExploration
+Event obstacleDetected : obstacleDetected(D)
 Event map : map(MAPSTRING, MAPNAME)
-Event mapSetted : mapSetted
 Event rotatoryCounter : rotatoryCounter(COUNTER)
+Dispatch robotType : robotType(TYPE)
 
-
-Context ctxButler ip[host="localhost" port=8080] -mqtt
-Context ctxMaitre ip[host="localhost" port=8081] -mqtt
-Context ctxFridge ip[host="localhost" port=8082] -mqtt
-Context ctxExploration ip[host="192.168.43.102" port=8086] -mqtt
+Context ctxButler ip[host="localhost" port=8080] +mqtt
+Context ctxMaitre ip[host="localhost" port=8081] +mqtt
+Context ctxFridge ip[host="localhost" port=8082] +mqtt
+Context ctxExploration ip[host="192.168.43.102" port=8086] +mqtt
 ExternalQActor roomexploration context ctxExploration
 
 QActor butlerresourcemodel context ctxButler{
@@ -123,34 +113,47 @@ QActor butlerresourcemodel context ctxButler{
 	
 	State waitModelChange{
 		
-	}Transition t0 whenMsg modelChangeTask -> handleModelChangeTask
+	}Transition t0 whenMsg robotType -> updateRobotType
+				   whenMsg modelChangeTask -> handleModelChangeTask
 				   whenMsg modelChangeAction -> handleModelChangeAction
 				   whenMsg modelChangePos -> handleModelChangePos
 				   whenMsg modelUpdateAction -> updateModel
+				   
 	
 	State updateModel{
-		onMsg(modelUpdateAction : modelUpdateAction(robot, ACTION)){
+		onMsg(modelUpdateAction : modelUpdateAction(DEST, ACTION)){
 			run itunibo.robot.resourceModelSupport.updateModel(myself, payloadArg(1))
 		}	
 	}Goto waitModelChange
 	
 	State handleModelChangeTask{
-		onMsg(modelChangeTask : modelChangeTask(robot, TASK, IDCIBO, QUANTITY)){
+		onMsg(modelChangeTask : modelChangeTask(DEST, TASK, IDCIBO, QUANTITY)){
 			run itunibo.robot.resourceModelSupport.updateModelTask(myself, payloadArg(1), payloadArg(2), payloadArg(3))
 		}
 	} Goto waitModelChange
 	
 	State handleModelChangeAction{
-		onMsg(modelChangeAction : modelChangeAction(robot, ACTION)){
+		onMsg(modelChangeAction : modelChangeAction(DEST, ACTION)){
 			run itunibo.robot.resourceModelSupport.updateModelAction(myself, payloadArg(1))
 		}
 	} Goto waitModelChange
 	
 	State handleModelChangePos{
-		onMsg(modelChangePos : modelChangePos(robot, X, Y)){
+		onMsg(modelChangePos : modelChangePos(DEST, X, Y)){
 			run itunibo.robot.resourceModelSupport.updateModelPosition(myself, payloadArg(1), payloadArg(2))
 		}
 	} Goto waitModelChange
+	
+	State updateRobotType{
+		onMsg(robotType : robotType(ROBOT)){
+			["var Robot = \"\" 
+			Robot = payloadArg(0)"]
+			println("add robottype")
+			solve(assert(robotType($Robot)))
+			solve(robotType(R))
+			println("${getCurSol(\"R\").toString()}")
+		}
+	}Goto waitModelChange
 }
 
 QActor mind context ctxButler{
@@ -160,6 +163,7 @@ QActor mind context ctxButler{
 	  var rotatory = 0"]
 	State s0 initial{
 		println("###MIND STARTED ")
+		//run itunibo.test.arduinoConnection.resetCont()
 	}Goto waitCmd
 	
 	State waitCmd{
@@ -178,7 +182,7 @@ QActor mind context ctxButler{
 			if"rotatory < 0"{
 				["rotatory = -rotatory"]
 			}
-			if"rotatory >= 40 && rotation "{
+			if"rotatory >= 58 && rotation "{
 				forward butler -m robotAction : robotAction(h)
 				run itunibo.test.arduinoConnection.resetCont()
 				forward butlerresourcemodel -m modelUpdateAction : modelUpdateAction(robot, h)
@@ -196,7 +200,7 @@ QActor mind context ctxButler{
 	}Goto waitCmd
 				   
 	State handleAction{
-		onMsg(modelChangedAction : modelChangedAction(robot, ACTION)){
+		onMsg(modelChangedAction : modelChangedAction(DEST, ACTION)){
 			printCurrentMessage
 			forward butler -m robotAction : robotAction($payloadArg(1))
 			["forward = (payloadArg(1) == \"w\")
@@ -222,11 +226,10 @@ QActor mind context ctxButler{
 				//aggiorno il modello
 				forward butler -m robotAction : robotAction(h)
 				forward butlerresourcemodel -m modelUpdateAction : modelUpdateAction(robot, h)
-				emit obstacleDetected : obstacleDetected
+				emit obstacleDetected : obstacleDetected($Distance)
 			}
 			if "Distance <= 22"{
 				println("###MIND PER EXPLORATION OBSTACLE")
-				//emit obstacleExploration : obstacleExploration
 				["obstacle = true"]
 			}else{
 				["obstacle = false"]
@@ -412,7 +415,7 @@ QActor butlermind context ctxButler{
 			forward planningroute -m calculateRoute : calculateRoute(table)
 		}
 		if"position == \"rh\""{
-			forward butlermind -m completedTask : completedTask()
+			forward butlermind -m completedTask : completedTask(adding)
 		}
 	}Transition t0 whenMsg destinationReached -> actionClean
 				   whenMsg completedTask -> waitCmd2
@@ -603,16 +606,20 @@ QActor execroute context ctxButler{
 }
    
 QActor butler context ctxButler{
-	
+	["var Robot = \"\""]
 	State s0 initial{
 		solve(consult("basicRobotConfig.pl"))
 		solve(robot(R,PORT)) //R = virtual | realnano
 		println("###Butler STARTED")
 		ifSolved {
-			println("###USING ROBOT : ${getCurSol(\"R\")}, port = ${getCurSol(\"PORT\")}")
-			//include l'esecuzione del sonar
-			run itunibo.robot.robotSupport.create(myself, @R, @PORT)   
-			run itunibo.test.arduinoConnection.connect(myself)
+			["Robot = getCurSol(\"R\").toString() "]
+			forward butlerresourcemodel -m  robotType : robotType($Robot)
+			println("###USING ROBOT : ${Robot}, port = ${getCurSol(\"PORT\")}")
+			run itunibo.robot.robotSupport.create(myself, @R, @PORT)
+			if"(Robot == \"realnano\")" {
+				run itunibo.test.arduinoConnection.connect(myself)
+			} 
+			
 		}else{
 			println("No Robot")
 			 
@@ -637,9 +644,7 @@ QActor maitre context ctxMaitre{
 	}//Goto sendingP
 	
 	State sendingP{
-		delay 2000
-		println("----Maitre send prepare message")
-		forward butlerresourcemodel -m modelChangeTask : modelChangeTask(robot, preparing, 0, 0)
+		
 	}Transition t0 whenMsg completedTask -> sendingAC
 	
 	State sendingAC{
@@ -809,6 +814,44 @@ QActor dishwasher context ctxButler{
 
 QActor table context ctxButler{
 	State s0 initial{
+		println("Table STARTED")
+	}Goto waitCmd
+	
+	State waitCmd{
 		
-	}
+	}Transition t0 whenMsg takeDishesT -> taking
+				   whenMsg putDishesT -> putting
+				   whenMsg takeFoodT -> takeFood
+				   whenMsg putFoodT -> putFood
+	//D,B,P
+	State taking{
+		onMsg(takeDishesT : takeDishesT(D,B,P)){
+			["var Dishes = payloadArg(0).toString().toInt()
+			  var Bicc = payloadArg(1).toString().toInt()
+			  var Posate = payloadArg(2).toString().toInt()
+			itunibo.appliance.Table.getTable().take(Dishes,Bicc,Posate)"]
+			  
+		}
+	}Goto waitCmd
+	
+	State putting{
+		onMsg(putDishesT : putDishesT(D,B,P)){
+			["var Dishes = payloadArg(0).toString().toInt()
+			  var Bicc = payloadArg(1).toString().toInt()
+			  var Posate = payloadArg(2).toString().toInt()
+			itunibo.appliance.Table.getTable().add(Dishes,Bicc,Posate)"]
+			  
+		}
+	}Goto waitCmd
+	
+	State takeFood{
+		["var foodOnTable = itunibo.appliance.Table.getTable().getFoodOnTable()"]
+	}Goto waitCmd
+
+	State putFood{
+		onMsg(putFoodT : putFoodT(LIST)){
+			//["itunibo.appliance.Table.getTable().addFood()"]
+		}
+		
+	}Goto waitCmd
 }

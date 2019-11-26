@@ -1,0 +1,38 @@
+doctype html
+html
+  head
+    script(src="/script.js")
+    title Controller
+    link(rel='stylesheet', href='/stylesheets/style.css')
+  
+  body
+  h1 Controller  
+  p#fridgecont
+  table
+    tr
+      td
+        form(action="/prepare", method="POST")
+          button(type="submit") Prepare
+    tr
+      td
+        form(action="/add", method="POST")
+          input(name="foodName", type="text", placeholder="Insert food name")
+          input(name="foodQuantity", type="number", min="0")
+          button(type="submit") Add
+    tr
+      td
+        form(action="/clean", method="POST")
+          button(type="submit" disabled) CLEAN
+    tr
+      td
+        form(action="/stop", method="POST")
+          button(type="submit") Stop
+    tr
+      td
+        form(action="/reactivate", method="POST")
+          button(type="submit" disabled) Reactivate
+    tr
+      td
+        form(action="/test", method="get")
+          button(type="submit") coapTest
+  

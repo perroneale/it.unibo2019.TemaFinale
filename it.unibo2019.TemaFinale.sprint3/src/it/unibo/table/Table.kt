@@ -18,7 +18,55 @@ class Table ( name: String, scope: CoroutineScope ) : ActorBasicFsm( name, scope
 		return { //this:ActionBasciFsm
 				state("s0") { //this:State
 					action { //it:State
+						println("Table STARTED")
 					}
+					 transition( edgeName="goto",targetState="waitCmd", cond=doswitch() )
+				}	 
+				state("waitCmd") { //this:State
+					action { //it:State
+					}
+					 transition(edgeName="t049",targetState="taking",cond=whenDispatch("takeDishesT"))
+					transition(edgeName="t050",targetState="putting",cond=whenDispatch("putDishesT"))
+					transition(edgeName="t051",targetState="takeFood",cond=whenDispatch("takeFoodT"))
+					transition(edgeName="t052",targetState="putFood",cond=whenDispatch("putFoodT"))
+				}	 
+				state("taking") { //this:State
+					action { //it:State
+						if( checkMsgContent( Term.createTerm("takeDishesT(D,P,B)"), Term.createTerm("takeDishesT(D,B,P)"), 
+						                        currentMsg.msgContent()) ) { //set msgArgList
+								var Dishes = payloadArg(0).toString().toInt()
+											  var Bicc = payloadArg(1).toString().toInt()
+											  var Posate = payloadArg(2).toString().toInt()
+											itunibo.appliance.Table.getTable().take(Dishes,Bicc,Posate)
+						}
+					}
+					 transition( edgeName="goto",targetState="waitCmd", cond=doswitch() )
+				}	 
+				state("putting") { //this:State
+					action { //it:State
+						if( checkMsgContent( Term.createTerm("putDishesT(D,P,B)"), Term.createTerm("putDishesT(D,B,P)"), 
+						                        currentMsg.msgContent()) ) { //set msgArgList
+								var Dishes = payloadArg(0).toString().toInt()
+											  var Bicc = payloadArg(1).toString().toInt()
+											  var Posate = payloadArg(2).toString().toInt()
+											itunibo.appliance.Table.getTable().add(Dishes,Bicc,Posate)
+						}
+					}
+					 transition( edgeName="goto",targetState="waitCmd", cond=doswitch() )
+				}	 
+				state("takeFood") { //this:State
+					action { //it:State
+						var foodOnTable = itunibo.appliance.Table.getTable().getFoodOnTable()
+					}
+					 transition( edgeName="goto",targetState="waitCmd", cond=doswitch() )
+				}	 
+				state("putFood") { //this:State
+					action { //it:State
+						if( checkMsgContent( Term.createTerm("putFoodT(LIST)"), Term.createTerm("putFoodT(LIST)"), 
+						                        currentMsg.msgContent()) ) { //set msgArgList
+						}
+					}
+					 transition( edgeName="goto",targetState="waitCmd", cond=doswitch() )
 				}	 
 			}
 		}

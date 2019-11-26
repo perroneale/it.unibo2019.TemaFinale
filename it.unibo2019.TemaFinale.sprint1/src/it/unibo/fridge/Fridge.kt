@@ -19,19 +19,14 @@ class Fridge ( name: String, scope: CoroutineScope ) : ActorBasicFsm( name, scop
 		return { //this:ActionBasciFsm
 				state("s0") { //this:State
 					action { //it:State
-						println("Fridge STARTED")
-						solve("consult('sysRules.pl')","") //set resVar	
-						solve("consult('fridgeContent.pl')","") //set resVar	
-						println("----FRIDGE : comunico al maitre il mio contenuto")
 					}
-					 transition( edgeName="goto",targetState="waitCmd", cond=doswitch() )
 				}	 
 				state("waitCmd") { //this:State
 					action { //it:State
 					}
-					 transition(edgeName="t031",targetState="checking",cond=whenDispatch("foodAvailability"))
-					transition(edgeName="t032",targetState="updatingTf",cond=whenDispatch("foodTaken"))
-					transition(edgeName="t033",targetState="updatingPf",cond=whenDispatch("foodPutted"))
+					 transition(edgeName="t033",targetState="checking",cond=whenDispatch("foodAvailability"))
+					transition(edgeName="t034",targetState="updatingTf",cond=whenDispatch("foodTaken"))
+					transition(edgeName="t035",targetState="updatingPf",cond=whenDispatch("foodPutted"))
 				}	 
 				state("checking") { //this:State
 					action { //it:State

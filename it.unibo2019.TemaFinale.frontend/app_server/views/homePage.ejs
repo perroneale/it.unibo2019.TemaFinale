@@ -1,0 +1,117 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <title>Controller</title>
+    <link rel="stylesheet" href="/stylesheets/style.css">
+  </head>
+  <body>
+    <h1>Controller  </h1>
+    <p id="fridgecont">Test</p>
+    <table>
+      <tr>
+        <td>
+          <form action="/prepare" method="POST">
+            <button type="submit">Prepare</button>
+          </form>
+        </td>
+      </tr>
+      <tr>
+        <td>
+          <form action="/add" method="POST">
+            <input name="foodName" type="text" placeholder="Insert food name">
+            <input name="foodQuantity" type="number" min="0">
+            <button type="submit">Add</button>
+          </form>
+        </td>
+      </tr>
+      <tr>
+        <td>
+          <form action="/clean" method="POST">
+            <button type="submit" disabled>CLEAN</button>
+          </form>
+        </td>
+      </tr>
+      <tr>
+        <td>
+          <form action="/stop" method="POST">
+            <button type="submit">Stop</button>
+          </form>
+        </td>
+      </tr>
+      <tr>
+        <td>
+          <form action="/reactivate" method="POST">
+            <button type="submit" disabled>Reactivate</button>
+          </form>
+        </td>
+      </tr>
+      <tr>
+        <td>
+          <form action="/test" method="get">
+            <button type="submit">coapTest</button>
+          </form>
+        </td>
+      </tr>
+    </table>
+    <script src="/socket.io/socket.io.js"></script>
+    <script>
+
+        const http = new XMLHttpRequest();
+        const url = 'http://localhost:3000/getCont';
+        http.open('GET', url, true);
+        http.send();
+  
+        http.onreadystatechange = function(e){
+          if(http.readyState==4 && http.status==200){
+            var response = JSON.parse(http.responseText)
+            console.log(response.content);
+            var replace = response.replace(/@/g,"<br />");
+            document.getElementById('fridgecont').innerHTML = replace;
+          }
+        }
+
+
+
+        var decoder = new TextDecoder("utf-8");
+
+        function ab2str(buf) {
+            return decoder.decode(new Uint8Array(buf));
+        }
+        /*window.onload = function(){
+          console.log("page loaded");
+          var socket = io('http://localhost');
+          test();
+        }*/
+        var socket =  io('http://localhost:3000');
+        /*document.addEventListener("DOMContentLoaded", function(event){
+          console.log("page loaded");
+          test();
+        });*/
+
+        //test();
+        socket.on('connect', function(){
+            console.log("HTML CONNECTED!!");
+        });
+
+        socket.on('update', function(v){
+            var string = ab2str(v);
+            console.log("RECEIVED "+ string);
+            var replace = string.replace(/@/g,"<br />");
+            document.getElementById('fridgecont').innerHTML = replace;
+        });
+        
+
+        socket.on('disconnect', function(){console.log('disconnected')});
+
+        /*function test() {
+          socket.on('connect', function(){
+            console.log("HTML CONNECTED!!");
+          });
+        }*/
+    </script>
+
+
+   
+    
+  </body>
+</html>

@@ -16,9 +16,9 @@ class Onestep ( name: String, scope: CoroutineScope ) : ActorBasicFsm( name, sco
 		
 	override fun getBody() : (ActorBasicFsm.() -> Unit){
 		 
-		var foundObstacle = false; 
-		var StepTime = 0L; 
-		var Duration=0 
+				var foundObstacle = false; 
+				var StepTime = 0L; 
+				var Duration=0 
 		return { //this:ActionBasciFsm
 				state("s0") { //this:State
 					action { //it:State
@@ -29,15 +29,16 @@ class Onestep ( name: String, scope: CoroutineScope ) : ActorBasicFsm( name, sco
 				state("waitCmd") { //this:State
 					action { //it:State
 						foundObstacle = false 
+						println("IN WAITCMD")
 					}
 					 transition(edgeName="t00",targetState="doMoveForward",cond=whenDispatch("onestep"))
 				}	 
 				state("doMoveForward") { //this:State
 					action { //it:State
-						storeCurrentMessageForReply()
 						if( checkMsgContent( Term.createTerm("onestep(DURATION)"), Term.createTerm("onestep(TIME)"), 
 						                        currentMsg.msgContent()) ) { //set msgArgList
-								StepTime = payloadArg(0).toString().toLong()
+								StepTime = payloadArg(0).toLong()
+								println("STEP TIME $StepTime")
 								forward("modelChangeAction", "modelChangeAction(robot,w)" ,"butlerresourcemodel" ) 
 								startTimer()
 						}
@@ -49,8 +50,9 @@ class Onestep ( name: String, scope: CoroutineScope ) : ActorBasicFsm( name, sco
 				}	 
 				state("endDoMoveForward") { //this:State
 					action { //it:State
+						println("STEPDONE")
 						forward("modelChangeAction", "modelChangeAction(robot,h)" ,"butlerresourcemodel" ) 
-						forward("stepOk", "stepOk" ,"roomexplorationvirtual" ) 
+						forward("stepOk", "stepOk(a)" ,"roomexplorationvirtual" ) 
 					}
 					 transition( edgeName="goto",targetState="waitCmd", cond=doswitch() )
 				}	 
@@ -61,7 +63,7 @@ class Onestep ( name: String, scope: CoroutineScope ) : ActorBasicFsm( name, sco
 						forward("modelChangeAction", "modelChangeAction(robot,s)" ,"butlerresourcemodel" ) 
 						Thread.sleep(Duration.toLong())
 						forward("modelChangeAction", "modelChangeAction(robot,h)" ,"butlerresourcemodel" ) 
-						forward("stepFail", "stepFail" ,"roomexplorationvirtual" ) 
+						forward("stepFail", "stepFail(b)" ,"roomexplorationvirtual" ) 
 					}
 					 transition( edgeName="goto",targetState="waitCmd", cond=doswitch() )
 				}	 

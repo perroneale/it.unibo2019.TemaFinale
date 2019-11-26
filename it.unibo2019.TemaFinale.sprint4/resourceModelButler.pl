@@ -30,6 +30,8 @@ cmd(robot, task(preparing)) :- changeTask(robot, preparing).
 cmd(robot, task(cleaning)) :- changeTask(robot, cleaning).
 cmd(robot, task(adding)) :- changeTask(robot, adding).
 cmd(robot, task(waiting)) :- changeTask(robot, waiting).
+cmd(robot, task(stop)) :- changeTask(robot, stop).
+cmd(robot, task(reactivate)) :- changeTask(robot, reactivate).
 
 updatePosition(robot, X, Y) :- replaceRule( currentPosition(NAME, _, _ ), currentPosition(NAME, X, Y)). 
 

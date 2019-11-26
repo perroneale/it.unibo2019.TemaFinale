@@ -28,6 +28,7 @@ class Planningroute ( name: String, scope: CoroutineScope ) : ActorBasicFsm( nam
 						solve("consult('planningRouteKB.pl')","") //set resVar	
 						solve("consult('nearTable.pl')","") //set resVar	
 						solve("consult('basicRobotConfig.pl')","") //set resVar	
+						solve("consult('config.pl')","") //set resVar	
 						solve("robot(R,PORT)","") //set resVar	
 						println("###Butler STARTED")
 						if(currentSolution.isSuccess()) { Robot = getCurSol("R").toString()
@@ -68,17 +69,17 @@ class Planningroute ( name: String, scope: CoroutineScope ) : ActorBasicFsm( nam
 				}	 
 				state("doExploration") { //this:State
 					action { //it:State
-						if(Robot == "virtual"){ solve("'timeVirtual(TIME)'","") //set resVar	
+						if(Robot == "virtual"){ solve("timeVirtual(TIME)","") //set resVar	
 						StepTime = getCurSol("TIME").toString()
-						forward("startExplorationVirtual", "startExplorationVirtual(StepTime)" ,"roomexplorationvirtual" ) 
+						forward("startExplorationVirtual", "startExplorationVirtual($StepTime)" ,"roomexplorationvirtual" ) 
 						 }
 						else
-						 { solve("'timeForward(TIME)'","") //set resVar	
+						 { solve("timeForward(TIME)","") //set resVar	
 						 StepTime = getCurSol("TIME").toString()
-						 forward("startExploration", "startExploration(StepTime)" ,"roomexploration" ) 
+						 forward("startExploration", "startExploration($StepTime)" ,"roomexploration" ) 
 						  }
 					}
-					 transition(edgeName="t027",targetState="createMap",cond=whenEventGuarded("map",{(set == false)}))
+					 transition(edgeName="t032",targetState="createMap",cond=whenEventGuarded("map",{(set == false)}))
 				}	 
 				state("createMap") { //this:State
 					action { //it:State
@@ -102,8 +103,8 @@ class Planningroute ( name: String, scope: CoroutineScope ) : ActorBasicFsm( nam
 				state("waitCmd") { //this:State
 					action { //it:State
 					}
-					 transition(edgeName="t028",targetState="planningRoute",cond=whenDispatch("calculateRoute"))
-					transition(edgeName="t029",targetState="updating",cond=whenEvent("modelChangedPosition"))
+					 transition(edgeName="t033",targetState="planningRoute",cond=whenDispatch("calculateRoute"))
+					transition(edgeName="t034",targetState="updating",cond=whenEvent("modelChangedPosition"))
 				}	 
 				state("updating") { //this:State
 					action { //it:State

@@ -6,7 +6,8 @@ import kotlinx.coroutines.launch
 object robotSupport{
 	lateinit var robotKind : String
 	var time = 0L
-	fun create( actor: ActorBasic, robot : String, port: String ){
+	
+	fun create( actor: ActorBasic, robot : String = "no", port: String ){
 		robotKind = robot
 		when( robotKind ){
 			"virtual"    ->  { itunibo.robotVirtual.clientWenvObjTcp.initClientConn( actor, "localhost" ) }

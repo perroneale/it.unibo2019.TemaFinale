@@ -31,7 +31,7 @@ class Execroute ( name: String, scope: CoroutineScope ) : ActorBasicFsm( name, s
 				state("waitCmd") { //this:State
 					action { //it:State
 					}
-					 transition(edgeName="t014",targetState="execRoute",cond=whenDispatch("exec"))
+					 transition(edgeName="t016",targetState="execRoute",cond=whenDispatch("exec"))
 				}	 
 				state("execRoute") { //this:State
 					action { //it:State
@@ -49,10 +49,10 @@ class Execroute ( name: String, scope: CoroutineScope ) : ActorBasicFsm( name, s
 						 { forward("check", "check" ,"execroute" ) 
 						  }
 					}
-					 transition(edgeName="t015",targetState="stopApplication",cond=whenDispatch("stop"))
-					transition(edgeName="t016",targetState="execRoute",cond=whenDispatch("nextMove"))
-					transition(edgeName="t017",targetState="checkPosition",cond=whenDispatch("check"))
-					transition(edgeName="t018",targetState="handleObstacle",cond=whenEvent("sonarRobot"))
+					 transition(edgeName="t017",targetState="stopApplication",cond=whenDispatch("stop"))
+					transition(edgeName="t018",targetState="execRoute",cond=whenDispatch("nextMove"))
+					transition(edgeName="t019",targetState="checkPosition",cond=whenDispatch("check"))
+					transition(edgeName="t020",targetState="handleObstacle",cond=whenEvent("sonarRobot"))
 				}	 
 				state("checkPosition") { //this:State
 					action { //it:State
@@ -74,10 +74,10 @@ class Execroute ( name: String, scope: CoroutineScope ) : ActorBasicFsm( name, s
 						   }
 						  }
 					}
-					 transition(edgeName="t019",targetState="execTaskPrepare",cond=whenDispatchGuarded("near",{Task.equals("preparing")}))
-					transition(edgeName="t020",targetState="execTaskAdd",cond=whenDispatchGuarded("near",{Task.equals("adding")}))
-					transition(edgeName="t021",targetState="execTaskClean",cond=whenDispatchGuarded("near",{Task.equals("cleaning")}))
-					transition(edgeName="t022",targetState="sendAck",cond=whenDispatch("inRH"))
+					 transition(edgeName="t021",targetState="execTaskPrepare",cond=whenDispatchGuarded("near",{Task.equals("preparing")}))
+					transition(edgeName="t022",targetState="execTaskAdd",cond=whenDispatchGuarded("near",{Task.equals("adding")}))
+					transition(edgeName="t023",targetState="execTaskClean",cond=whenDispatchGuarded("near",{Task.equals("cleaning")}))
+					transition(edgeName="t024",targetState="sendAck",cond=whenDispatch("inRH"))
 				}	 
 				state("handleObstacle") { //this:State
 					action { //it:State
@@ -122,7 +122,7 @@ class Execroute ( name: String, scope: CoroutineScope ) : ActorBasicFsm( name, s
 					action { //it:State
 						println("###EXECROUTE stopped")
 					}
-					 transition(edgeName="t023",targetState="execRoute",cond=whenDispatch("reactivate"))
+					 transition(edgeName="t025",targetState="execRoute",cond=whenDispatch("reactivate"))
 				}	 
 				state("execTaskClean") { //this:State
 					action { //it:State

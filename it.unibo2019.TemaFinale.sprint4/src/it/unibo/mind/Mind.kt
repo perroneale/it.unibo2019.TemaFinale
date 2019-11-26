@@ -21,6 +21,8 @@ class Mind ( name: String, scope: CoroutineScope ) : ActorBasicFsm( name, scope)
 			  var rotatory = 0
 			  var NumRot = 0
 			  var TimeVirtual = 0L
+			  //var Test = false
+			  var Distance = 0
 		return { //this:ActionBasciFsm
 				state("s0") { //this:State
 					action { //it:State
@@ -39,10 +41,10 @@ class Mind ( name: String, scope: CoroutineScope ) : ActorBasicFsm( name, scope)
 				state("waitCmd") { //this:State
 					action { //it:State
 					}
-					 transition(edgeName="t08",targetState="handleAction",cond=whenDispatch("modelChangedAction"))
-					transition(edgeName="t09",targetState="handleSonar",cond=whenEvent("sonarRobot"))
-					transition(edgeName="t010",targetState="handleRotatory",cond=whenEvent("rotatoryCounter"))
-					transition(edgeName="t011",targetState="reply",cond=whenDispatch("isObstacle"))
+					 transition(edgeName="t013",targetState="handleAction",cond=whenEvent("modelChangedAction"))
+					transition(edgeName="t014",targetState="handleSonar",cond=whenEvent("sonarRobot"))
+					transition(edgeName="t015",targetState="handleRotatory",cond=whenEvent("rotatoryCounter"))
+					transition(edgeName="t016",targetState="reply",cond=whenDispatch("isObstacle"))
 				}	 
 				state("handleRotatory") { //this:State
 					action { //it:State
@@ -62,10 +64,11 @@ class Mind ( name: String, scope: CoroutineScope ) : ActorBasicFsm( name, scope)
 				}	 
 				state("reply") { //this:State
 					action { //it:State
-						if(obstacle){ forward("obstacle", "obstacle" ,"roomexploration" ) 
+						storeCurrentMessageForReply()
+						if(obstacle){ replyToCaller("obstacle", "obstacle($Distance)")
 						 }
 						else
-						 { forward("notObstacle", "notObstacle" ,"roomexploration" ) 
+						 { replyToCaller("notObstacle", "notObstacle($Distance)")
 						  }
 					}
 					 transition( edgeName="goto",targetState="waitCmd", cond=doswitch() )
@@ -95,11 +98,11 @@ class Mind ( name: String, scope: CoroutineScope ) : ActorBasicFsm( name, scope)
 					action { //it:State
 						if( checkMsgContent( Term.createTerm("sonarRobot(DISTANCE)"), Term.createTerm("sonarRobot(Distance)"), 
 						                        currentMsg.msgContent()) ) { //set msgArgList
-								val Distance = Integer.parseInt(payloadArg(0));
-								if(Distance <= 10 && forward){ println("###Mind, Obstacle at $Distance")
+								Distance = Integer.parseInt(payloadArg(0));
+								if(Distance <= 15 && forward){ println("###Mind, Obstacle at $Distance")
 								forward("robotAction", "robotAction(h)" ,"butler" ) 
 								forward("modelUpdateAction", "modelUpdateAction(robot,h)" ,"butlerresourcemodel" ) 
-								emit("obstacleDetected", "obstacleDetected(Distance)" ) 
+								emit("obstacleDetected", "obstacleDetected($Distance)" ) 
 								 }
 								if(Distance <= 22){ println("###MIND PER EXPLORATION OBSTACLE")
 								obstacle = true

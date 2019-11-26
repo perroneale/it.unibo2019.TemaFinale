@@ -1,28 +1,23 @@
 System roomexploration
    
-mqttBroker "192.168.43.101" : 1883
+mqttBroker "localhost" : 1883
 
-Dispatch execOneStep : execOneStep
-Dispatch stepFail : stepFail(DURATION)
-Dispatch stepOk : stepOk
 Dispatch modelChangeAction : modelChangeAction(DEST, ACTION)
-Dispatch tableFound : tableFound
-Dispatch explore : explore
-Dispatch edgeExplorationComplete : edgeExplorationComplete
-Dispatch start : start
-Dispatch isObstacle : isObstacle
-Dispatch notObstacle : notObstacle
-Dispatch obstacle : obstacle
-Dispatch terminated : terminated
+Dispatch tableFound : tableFound(T)
+Dispatch explore : explore(E)
+Dispatch edgeExplorationComplete : edgeExplorationComplete(E)
+Dispatch start : start(S)
+Dispatch isObstacle : isObstacle(I)
+Dispatch notObstacle : notObstacle(N)
+Dispatch obstacle : obstacle(O)
+Dispatch terminated : terminated(T)
 
 Event sonarRobot : sonarRobot(DISTANCE)
-Event obstacleDetected : obstacleDetected
 Event propagateMap : propagateMap(MAPTOSTRING)
-Event obstacleExploration : obstacleExploration
 Event map : map(MAPSTRING, MAPNAME)
 
-Context ctxRoomExpl ip[host="localhost" port=8086] -mqtt
-Context ctxResourceModel ip[host="192.168.43.100" port=8080] -mqtt
+Context ctxRoomExpl ip[host="localhost" port=8086] +mqtt
+Context ctxResourceModel ip[host="localhost" port=8080] +mqtt
 
 ExternalQActor mind context ctxResourceModel
 ExternalQActor butlerresourcemodel context ctxResourceModel 

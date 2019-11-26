@@ -29,9 +29,9 @@ class Fridge ( name: String, scope: CoroutineScope ) : ActorBasicFsm( name, scop
 				state("waitCmd") { //this:State
 					action { //it:State
 					}
-					 transition(edgeName="t024",targetState="checking",cond=whenDispatch("foodAvailability"))
-					transition(edgeName="t025",targetState="updatingTf",cond=whenDispatch("foodTaken"))
-					transition(edgeName="t026",targetState="updatingPf",cond=whenDispatch("foodPutted"))
+					 transition(edgeName="t027",targetState="checking",cond=whenDispatch("foodAvailability"))
+					transition(edgeName="t028",targetState="updatingTf",cond=whenDispatch("foodTaken"))
+					transition(edgeName="t029",targetState="updatingPf",cond=whenDispatch("foodPutted"))
 				}	 
 				state("checking") { //this:State
 					action { //it:State

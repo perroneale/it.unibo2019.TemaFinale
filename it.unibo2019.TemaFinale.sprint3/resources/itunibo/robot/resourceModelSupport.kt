@@ -31,11 +31,18 @@ object resourceModelSupport{
 	fun updateModelAction(actor: ActorBasic, content: String){
 		actor.solve("action(robot, move($content))");
 		actor.solve("model(actuator, robot, state(S))");
-		val currentAction = actor.getCurSol("S");
+		val currentAction = actor.getCurSol("S").toString();
 		println("###CurrentAction : $currentAction");
-		//emetto un evento per la mind
+		actor.solve("robotType(R)")
+		println("RRRRR" +actor.getCurSol("R").toString())
 		actor.scope.launch{
 			actor.emit("modelChangedAction", "modelChangedAction(robot, $content)");
+		}
+		if(actor.getCurSol("R").toString() == "realnano"){
+			if(content == "h"){
+				itunibo.test.arduinoConnection.resetCont()
+				itunibo.test.arduinoConnection.resetCont()
+			}
 		}
 	}
 	
@@ -56,6 +63,14 @@ object resourceModelSupport{
 		actor.solve("model(actuator, robot, state(S))");
 		val currentAction = actor.getCurSol("S");
 		println("###CurrentAction : $currentAction");
+		actor.solve("robotType(R)")
+		if(actor.getCurSol("R").toString() == "realnano"){
+			if(action == "h"){
+				itunibo.test.arduinoConnection.resetCont()
+				itunibo.test.arduinoConnection.resetCont()
+			}
+		}
+
 	}
 }
 

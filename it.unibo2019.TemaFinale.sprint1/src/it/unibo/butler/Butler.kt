@@ -33,11 +33,10 @@ class Butler ( name: String, scope: CoroutineScope ) : ActorBasicFsm( name, scop
 				state("waitCmd") { //this:State
 					action { //it:State
 					}
-					 transition(edgeName="t024",targetState="handleRobotAction",cond=whenDispatch("robotAction"))
+					 transition(edgeName="t026",targetState="handleRobotAction",cond=whenDispatch("robotAction"))
 				}	 
 				state("handleRobotAction") { //this:State
 					action { //it:State
-						println("$name in ${currentState.stateName} | $currentMsg")
 						if( checkMsgContent( Term.createTerm("robotAction(X)"), Term.createTerm("robotAction(ACTION)"), 
 						                        currentMsg.msgContent()) ) { //set msgArgList
 								itunibo.robot.robotSupport.move( "msg(${payloadArg(0)})"  )

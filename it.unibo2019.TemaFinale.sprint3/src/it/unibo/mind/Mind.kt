@@ -23,6 +23,8 @@ class Mind ( name: String, scope: CoroutineScope ) : ActorBasicFsm( name, scope)
 				state("s0") { //this:State
 					action { //it:State
 						println("###MIND STARTED ")
+						delay(1000) 
+						itunibo.test.arduinoConnection.resetCont(  )
 					}
 					 transition( edgeName="goto",targetState="waitCmd", cond=doswitch() )
 				}	 
@@ -42,8 +44,7 @@ class Mind ( name: String, scope: CoroutineScope ) : ActorBasicFsm( name, scope)
 								rotatory = Integer.parseInt(payloadArg(0))
 								if(rotatory < 0){ rotatory = -rotatory
 								 }
-								if(rotatory >= 40 && rotation ){ forward("robotAction", "robotAction(h)" ,"butler" ) 
-								itunibo.test.arduinoConnection.resetCont(  )
+								if(rotatory >= 58 && rotation ){ forward("robotAction", "robotAction(h)" ,"butler" ) 
 								forward("modelUpdateAction", "modelUpdateAction(robot,h)" ,"butlerresourcemodel" ) 
 								 }
 						}
@@ -80,7 +81,7 @@ class Mind ( name: String, scope: CoroutineScope ) : ActorBasicFsm( name, scope)
 								if(Distance <= 10 && forward){ println("###Mind, Obstacle at $Distance")
 								forward("robotAction", "robotAction(h)" ,"butler" ) 
 								forward("modelUpdateAction", "modelUpdateAction(robot,h)" ,"butlerresourcemodel" ) 
-								emit("obstacleDetected", "obstacleDetected" ) 
+								emit("obstacleDetected", "obstacleDetected($Distance)" ) 
 								 }
 								if(Distance <= 22){ println("###MIND PER EXPLORATION OBSTACLE")
 								obstacle = true

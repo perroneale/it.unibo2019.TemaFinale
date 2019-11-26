@@ -26,7 +26,7 @@ class Maitre ( name: String, scope: CoroutineScope ) : ActorBasicFsm( name, scop
 					action { //it:State
 						delay(2000) 
 						println("----Maitre send prepare message")
-						forward("prepare", "prepare" ,"butler" ) 
+						forward("modelChangeTask", "modelChangeTask(robot,preparing,0,0)" ,"butlerresourcemodel" ) 
 					}
 					 transition( edgeName="goto",targetState="waitingPAck", cond=doswitch() )
 				}	 
@@ -43,22 +43,22 @@ class Maitre ( name: String, scope: CoroutineScope ) : ActorBasicFsm( name, scop
 						forward("addFood", "addFood(2,2)" ,"butler" ) 
 						forward("add", "add" ,"maitre" ) 
 					}
-					 transition(edgeName="t018",targetState="waitingAfAck",cond=whenDispatch("add"))
-					transition(edgeName="t019",targetState="waitingClAck",cond=whenDispatch("cl"))
+					 transition(edgeName="t021",targetState="waitingAfAck",cond=whenDispatch("add"))
+					transition(edgeName="t022",targetState="waitingClAck",cond=whenDispatch("cl"))
 				}	 
 				state("waitingAfAck") { //this:State
 					action { //it:State
 						println("$name in ${currentState.stateName} | $currentMsg")
 					}
-					 transition(edgeName="t020",targetState="sendingAC",cond=whenDispatch("completedTask"))
-					transition(edgeName="t021",targetState="updateFA",cond=whenDispatch("currentFood"))
+					 transition(edgeName="t023",targetState="sendingAC",cond=whenDispatch("completedTask"))
+					transition(edgeName="t024",targetState="updateFA",cond=whenDispatch("currentFood"))
 				}	 
 				state("waitingClAck") { //this:State
 					action { //it:State
 						println("$name in ${currentState.stateName} | $currentMsg")
 					}
-					 transition(edgeName="t022",targetState="sendingP",cond=whenDispatch("completedTask"))
-					transition(edgeName="t023",targetState="updateFC",cond=whenDispatch("currentFood"))
+					 transition(edgeName="t025",targetState="sendingP",cond=whenDispatch("completedTask"))
+					transition(edgeName="t026",targetState="updateFC",cond=whenDispatch("currentFood"))
 				}	 
 				state("updateFP") { //this:State
 					action { //it:State
