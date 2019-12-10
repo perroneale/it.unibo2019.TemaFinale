@@ -1,8 +1,10 @@
 const script = require('../public/javascripts/iosocketemitter');
 const coap = require("node-coap-client").CoapClient;
-const coapAddressFridge = "coap://192.168.43.100:5683";
+var ipFridge = "192.168.43.100";
+var ipButler = "192.168.43.100";
+const coapAddressFridge = "coap://"+ipFridge+":5683";
 const coapResourceFridge = "/fridgecontent";
-const coapAddressButler = "coap://192.168.43.100:5684";
+const coapAddressButler = "coap://"+ipButler+":5684";
 const serverFridge = coapAddressFridge+coapResourceFridge;
 const serverButlerPOsition = coapAddressButler+"/position";
 const serverButlerRoomState = coapAddressButler+"/roomstate";
@@ -36,6 +38,17 @@ exports.getmap = function(){
     )
     ;
 }
+
+/*coap
+  .observe(serverButlerMap, "get", function(response){
+    console.log("from observe "+response.payload);
+    string = response.payload;
+    console.log("Emit event");
+    script.setmap(string);
+  })
+  .then(()=>{})
+  .catch(err => {console.log("err");});*/
+
 
 coap
   .observe(serverFridge, "get", function(response){
@@ -78,5 +91,11 @@ exports.coapGet = function(){
 
 exports.getString = function(){
   return string;
+}
+
+exports.setIp = function(ipB, ipF){
+  ipButler = ipB;
+  ipFridge = ipF;
+  console.log("ipsetted")
 }
 

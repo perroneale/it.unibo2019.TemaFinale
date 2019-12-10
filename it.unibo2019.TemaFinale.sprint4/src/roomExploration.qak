@@ -17,13 +17,13 @@ Event sonarRobot : sonarRobot(DISTANCE)
 Event obstacleDetected : obstacleDetected(Distance)
 Event map : map(MAPSTRING, MAPNAME)
 Event explorationCompleted : explorationCompleted(E)
-
+   
 Context ctxRoomExpl ip[host="localhost" port=8086] +mqtt
 Context ctxResourceModel ip[host="192.168.43.100" port=8080] +mqtt
 
 ExternalQActor mind context ctxResourceModel
 ExternalQActor butlerresourcemodel context ctxResourceModel 
-
+  
 QActor roomexploration context ctxRoomExpl{
 	["var RotationCount = 0;
 	  var FORWARDTIME = 770;

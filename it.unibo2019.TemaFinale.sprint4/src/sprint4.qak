@@ -1,7 +1,6 @@
 System sprint4
       
-mqttBroker "192.168.43.102" : 1883
-//mqttBroker "localhost" : 1883
+mqttBroker "localhost" : 1883
 
 Dispatch check: check(C)
 Dispatch nextMove : nextMove(M)
@@ -78,15 +77,14 @@ Event obstacleDetected : obstacleDetected(DISTANCE)
 Event map : map(MAPSTRING, MAPNAME)
 Event rotatoryCounter : rotatoryCounter(COUNTER)
 
-Context ctxButler ip[host="192.168.43.100" port=8080] +mqtt
+Context ctxButler ip[host="localhost" port=8080] +mqtt
 Context ctxMaitre ip[host="localhost" port=8081] +mqtt
-Context ctxFridge ip[host="192.168.43.100" port=8082] +mqtt
+Context ctxFridge ip[host="localhost" port=8082] +mqtt
 Context ctxExploration ip[host="notcarelocalhost2" port=8086] +mqtt
-Context ctxRoomExplVirtual ip[host="notcarelocalhost" port=8087] +mqtt
+Context ctxRoomExplV ip[host="notcarelocalhost" port=8087] +mqtt
+ 
 ExternalQActor roomexploration context ctxExploration
-ExternalQActor roomexplorationvirtual context ctxRoomExplVirtual
-
-
+ExternalQActor roomexplorationvirtual context ctxRoomExplV
 
 QActor pantry context ctxButler{
 	State s0 initial{
@@ -592,7 +590,8 @@ QActor planningroute context ctxButler {
 	  var mapEmpty = true
 	  var Robot = \"\"
 	  var StepTime = \"\"
-	  var guardia = true"]
+	  var guardia = true
+	  lateinit var mapRes : itunibo.coap.resources.mapResource"]
 	State s0 initial{
 		println("###PLANNINGROUTE STARTED")
 		solve(consult("sysRules.pl"))
@@ -626,7 +625,7 @@ QActor planningroute context ctxButler {
 				solve(findall(nearTable(X,Y,table), nearTable(X,Y,_), L ) )
 				["var List = getCurSol(\"L\").toString()"]
 				println(List)
-				["var mapRes = itunibo.coap.resources.mapResource(\"getmap\")
+				["mapRes = itunibo.coap.resources.mapResource(\"getmap\")
 				  itunibo.coap.resources.butlerRoomState.server.add(mapRes)"]
 				forward butlermind -m updateKBbm : updateKBbm($List)
 			}
@@ -678,7 +677,9 @@ QActor planningroute context ctxButler {
 			run itunibo.planner.moveUtils.addTable(myself)
 			["println(\"map\")
 			  println(itunibo.planner.plannerUtil.getMap())
-			  set = true"]
+			  set = true
+			  mapRes = itunibo.coap.resources.mapResource(\"getmap\")
+		      itunibo.coap.resources.butlerRoomState.server.add(mapRes)"]
 			solve(findall(nearTable(X,Y,Pos), nearTable(X,Y,Pos), L ) )
 			["var List = getCurSol(\"L\").toString()"]
 			forward butlermind -m updateKBbm : updateKBbm($List)
@@ -835,7 +836,7 @@ QActor execroute context ctxButler{
 		println("###EXECROUTE stopped")
 		forward butlerresourcemodel -m modelChangeAction : modelChangeAction(robot, h)
 		["Duration = getDuration()"]
-	}Transition t0 whenEvent modelChangedreactivate -> completeStep
+	}Transition t0 whenEvent modelChangedreactivate -> completedStepReactivate
 	
 	State handleObstacle{
 		println("ççççççççççIN HANDLE OBSTACLE StepTime = $StepTime")
@@ -854,7 +855,7 @@ QActor execroute context ctxButler{
 		}
 	}Transition t0 whenTimeVar StepTime -> testState
 				   whenMsg check -> checkObstacle
-				   //whenEvent obstacleDetected -> handleObstacle
+				   whenEvent obstacleDetected and "(Robot == \"virtual\")"-> handleObstacle
 				   
 	State testState{
 		println("££££in teststate")
@@ -873,7 +874,16 @@ QActor execroute context ctxButler{
 		forward mind -m isObstacle : isObstacle
 	}Transition t0 whenMsg obstacle -> checkObstacle
 				   whenMsg notObstacle -> completeStep
-				   
+	
+	
+	State completedStepReactivate{
+		["var StepTime2 = StepTime - Duration"]
+		println("StepTime2 = $StepTime2")
+		//run itunibo.planner.moveUtils.moveAheadWithoutUpdate(myself, StepTime2)
+		forward butlerresourcemodel -m modelChangeAction : modelChangeAction(robot, $Curmove)
+		["startTimer()"]
+	}Transition t0 whenTimeVar StepTime2 -> testState//Goto execRoute
+			   
 	State completeStep{
 		["var StepTime2 = StepTime - Duration"]
 		println("StepTime2 = $StepTime2")

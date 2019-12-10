@@ -66,10 +66,10 @@ class Roomexplorationvirtual ( name: String, scope: CoroutineScope ) : ActorBasi
 					action { //it:State
 						if( checkMsgContent( Term.createTerm("stepOk(S)"), Term.createTerm("stepOk(S)"), 
 						                        currentMsg.msgContent()) ) { //set msgArgList
-								println("STEPOK RECEIVED")
+								println("STEP OK RECEIVED")
 								itunibo.planner.moveUtils.doPlannedMove(myself ,"w" )
 								itunibo.planner.moveUtils.showCurrentRobotState(  )
-								delay(500) 
+								delay(1000) 
 								forward("onestep", "onestep($FORWARDTIME)" ,"onestep" ) 
 						}
 					}

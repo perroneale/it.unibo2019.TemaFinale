@@ -106,7 +106,7 @@ class Execroute ( name: String, scope: CoroutineScope ) : ActorBasicFsm( name, s
 						forward("modelChangeAction", "modelChangeAction(robot,h)" ,"butlerresourcemodel" ) 
 						Duration = getDuration()
 					}
-					 transition(edgeName="t041",targetState="completeStep",cond=whenEvent("modelChangedreactivate"))
+					 transition(edgeName="t041",targetState="completedStepReactivate",cond=whenEvent("modelChangedreactivate"))
 				}	 
 				state("handleObstacle") { //this:State
 					action { //it:State
@@ -127,6 +127,7 @@ class Execroute ( name: String, scope: CoroutineScope ) : ActorBasicFsm( name, s
 					}
 					 transition(edgeName="t042",targetState="testState",cond=whenTimeout("local_tout_execroute_handleObstacle"))   
 					transition(edgeName="t043",targetState="checkObstacle",cond=whenDispatch("check"))
+					transition(edgeName="t044",targetState="handleObstacle",cond=whenEventGuarded("obstacleDetected",{(Robot == "virtual")}))
 				}	 
 				state("testState") { //this:State
 					action { //it:State
@@ -145,8 +146,19 @@ class Execroute ( name: String, scope: CoroutineScope ) : ActorBasicFsm( name, s
 					action { //it:State
 						forward("isObstacle", "isObstacle" ,"mind" ) 
 					}
-					 transition(edgeName="t044",targetState="checkObstacle",cond=whenDispatch("obstacle"))
-					transition(edgeName="t045",targetState="completeStep",cond=whenDispatch("notObstacle"))
+					 transition(edgeName="t045",targetState="checkObstacle",cond=whenDispatch("obstacle"))
+					transition(edgeName="t046",targetState="completeStep",cond=whenDispatch("notObstacle"))
+				}	 
+				state("completedStepReactivate") { //this:State
+					action { //it:State
+						var StepTime2 = StepTime - Duration
+						println("StepTime2 = $StepTime2")
+						forward("modelChangeAction", "modelChangeAction(robot,$Curmove)" ,"butlerresourcemodel" ) 
+						startTimer()
+						stateTimer = TimerActor("timer_completedStepReactivate", 
+							scope, context!!, "local_tout_execroute_completedStepReactivate", StepTime2 )
+					}
+					 transition(edgeName="t047",targetState="testState",cond=whenTimeout("local_tout_execroute_completedStepReactivate"))   
 				}	 
 				state("completeStep") { //this:State
 					action { //it:State
@@ -158,7 +170,7 @@ class Execroute ( name: String, scope: CoroutineScope ) : ActorBasicFsm( name, s
 						stateTimer = TimerActor("timer_completeStep", 
 							scope, context!!, "local_tout_execroute_completeStep", StepTime2 )
 					}
-					 transition(edgeName="t046",targetState="testState",cond=whenTimeout("local_tout_execroute_completeStep"))   
+					 transition(edgeName="t048",targetState="testState",cond=whenTimeout("local_tout_execroute_completeStep"))   
 				}	 
 			}
 		}

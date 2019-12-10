@@ -1,0 +1,394 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01//EN" "http://www.w3.org/TR/html4/strict.dtd">
+<html>
+    <!--
+<link rel="stylesheet" type="text/css" href="../css/issStyle1.css">
+<script type="text/javascript" src="../css/issStyle.js"></script>
+-->
+<style type="text/css">
+<!--
+body
+{
+    margin-left:  30px;
+    margin-right: 30px;
+};
+P
+{
+    font-family: Tahoma;
+    font-size: 10pt;
+};
+a, a:visited, a:active, a:link, a:hover {
+    text-decoration: underline;
+    color: #545454;
+    background-color: transparent;
+}
+a:hover {
+    background-color: #cccccc;
+}
+hr {
+    clear: both;
+    height: 1px;
+    color: #242424;
+    background-color: transparent;
+}
+h1, h2, h3 {
+    color: #242424;
+    clear: left;
+    font: 100% Tahoma, Helvetica, Arial, sans-serif;
+    margin: 10;
+    margin-right: 15px;
+    margin-bottom: 0.5em;
+    padding-top: 0.5em;
+    border-bottom: 1px solid #242424;
+}
+h1 {
+    font-size: 150%;
+    background-color: #b2c0ff;
+}
+h2 {
+    background-color: #d9fbff;
+    font-size: 110%;
+}
+h3 {
+	background-color: #e6ccff;
+    font-size: 80%;
+}
+h4 {
+    background-color: #99ffcc;
+    font-size: 100%;
+	width: 750px;
+}
+#i {
+    color: #ff1010;
+}
+tt{
+	font-family: "Arial";
+    font-size: 80%;
+	color: #006600;
+}
+em{
+	font-family: "Arial";
+    font-size: 80%;
+	font-weight: bold;
+	border-style:solid;
+	border-color: #ccffff;
+    color: #0033cc;
+}
+bc{
+	font-family: "Arial";
+	font-size: 80%;
+	font-weight: bold;
+    color: #990000;
+	background-color: #fcf8c7;
+}
+k{
+	font-family: "Arial";
+	font-weight: bold;
+    color: #990000;
+	 
+}
+ks{
+	font-family: "Arial";
+	font-weight: bold;
+    color: #0000CD	;
+	 
+}
+kc{
+	font-family: "Arial";
+	font-weight: bold;
+    color: #008000	;
+	 
+}
+pre{
+	font-family: "Helvetica";
+	font-size: 60%;
+	background-color: #fcf8c7;
+	border: 1px solid blue;
+}
+m{
+	font-family: "Helvetica";
+	line-height: 100%;
+ 	font-size: 75%;
+}
+div.body{
+	width: 800px;
+    font-size: 18px;
+}    
+div.req{
+	background-color: #d9ffb3;
+    font-size: 18px;
+	width: 700px;
+    border: 3px solid green;
+    padding: 15px;
+    margin: 10px;
+}       
+div.remark{
+	background-color: #FFFC33;     
+    border: 3px solid green;
+    padding: 15px;
+    margin: 10px;
+}  
+table, th, td {
+  border: 1px solid black;
+  border-collapse: collapse;
+}         
+    
+  -->
+</style>
+    
+<head>
+   
+<title>Sprint3</title></head>
+    
+<body>
+<div id="top">
+<h1>LABORATORIO DI SISTEMI SOFTWARE - RELAZIONE <font size="5"></font> </h1>
+</div>  
+<div class="body"> 
+ 
+<h2>Requirements</h2>
+<div class="req">
+Nello SPRINT3 si deve sviluppare il supporto ai device Pantry, Dishwasher e Table.
+<ul>
+    <li>Pantry deve permettere di prelevare ed aggiungere i piatti.</li>
+    <li>Dishwasher deve permettere di prelevare ed aggiungere i piatti.</li>
+    <li>Table deve permettere di prelevare ed aggiungere piatti e cibi.</li>
+</ul>
+</div>
+<h2>Requirement analysis</h2>
+Da requisiti forniti dal committente i tre dispositivi non sono smart.
+<h2>Problem analysis</h2>
+I tre device devono essere sviluppati da zero, inoltre non essendo smart non sono in grado di conoscere il proprio contenuto e di comunicarlo 
+al Butler. Questa osservazione impatta sul requisito secondo il quale il Maitre deve conoscere lo stato della stanza, essendo il Butler l'unico
+attore che interagisce con i tre device è opportuno prevedere che gli aggiornamenti sullo stato della stanza vengano comunicati al Maitre dal Butler.
+La parte relativa all'aggiornamento del Maitre da parte del Butler sarà trattata nello Sprint successivo.<br>
+<img src="architetturas3.jpg">
+
+<h2>Project</h2> 
+<table>
+    <tr>
+        <td style="width: 55%;">
+            <img src="dish.jpg" width="100%" height="40%">
+        </td>
+        <td>
+            <pre>
+                public class Dishwasher {
+                    private static Dishwasher singletonDishwasher;
+                    private boolean state = true; //true libera, false occupata
+                    private int capacita = 60;
+                    private int dishes = 0;
+                    private int bicchieri = 0;
+                    private int posate = 0;
+                    
+                    public static Dishwasher getDishwasher() {
+                        if(singletonDishwasher == null)
+                            singletonDishwasher = new Dishwasher();
+                        return singletonDishwasher;
+                    }
+                    
+                    private Dishwasher() {
+                    }
+                    
+                    public void putDishes(int dishes, int bicchieri, int posate) {
+                        capacita -= (dishes+bicchieri+posate);
+                        this.dishes += dishes;
+                        this.bicchieri += bicchieri;
+                        this.posate += posate;
+                    }
+                    
+                    public void getDishes() {
+                        capacita += (dishes+bicchieri+posate);
+                        this.dishes = 0;
+                        this.posate = 0;
+                        this.bicchieri = 0;
+                        
+                    }
+
+                    @Override
+                    public String toString() {
+                        return "Dishwasher :capacita=" + capacita + ", dishes=" + dishes + ", bicchieri=" + bicchieri + ", posate="
+                                + posate + "";
+                    }
+                }
+            </pre>
+        </td>
+    </tr>
+    <tr >
+        <td style="width: 55%;">
+            <img src="pantry.jpg" width="100%" height="40%">
+        </td>
+        <td>
+            <pre>
+                public class Pantry {
+                    private static Pantry singletonPantry;
+                    private int dishes = 20;
+                    private int posate = 20;
+                    private int bicchieri = 20;
+                    private boolean state = true; //true = pieno false = vuoto
+                    
+                    public static Pantry getPantry() {
+                        if(singletonPantry == null)
+                            singletonPantry = new Pantry();
+                        return singletonPantry;
+                    }
+                    
+                    private Pantry() {
+                        
+                    }
+                    
+                    public int getDishes(){
+                        return dishes;
+                    }
+                    
+                    public void putDishes(int numDishes) {
+                        dishes += numDishes;
+                    }
+                    
+                    public void getDishes(int dishes, int bicchieri,int posate) {
+                        this.dishes -= dishes;
+                        this.posate -= posate;
+                        this.bicchieri -= bicchieri;
+                    }
+                    
+                    public void putDishes(int dishes, int bicchieri,int posate) {
+                        this.dishes += dishes;
+                        this.posate += posate;
+                        this.bicchieri += bicchieri;
+                    }
+                    public int getPosate() {
+                        return posate;
+                    }
+
+                    public void setPosate(int posate) {
+                        this.posate += posate;
+                    }
+
+                    public int getBicchieri() {
+                        return bicchieri;
+                    }
+
+                    public void setBicchieri(int bicchieri) {
+                        this.bicchieri += bicchieri;
+                    }
+
+                    public boolean getState() {
+                        if(dishes == 0 && posate == 0 && bicchieri == 0)
+                            return false;
+                        else
+                            return true;
+                    }
+
+                    public void setState(boolean state) {
+                        this.state = state;
+                    }
+
+                    @Override
+                    public String toString() {
+                        return "Pantry Content : dishes=" + dishes + ", posate=" + posate + ", bicchieri=" + bicchieri + "";
+                    }
+                }
+            </pre>
+        </td>
+    </tr>
+    <tr>
+        <td style="width: 60%;">
+            <img src="table.jpg" width="100%" height="40%">
+        </td>
+        <td>
+            <pre>
+                public class Table {
+                    private static Table singletonTable;
+                    private ArrayList<Food> foodOnTable = new ArrayList();
+                    private int dishes = 0;
+                    private int bicchieri = 0;
+                    private int posate = 0;
+                    
+                    
+                    public static Table getTable() {
+                        if(singletonTable == null)
+                            singletonTable = new Table();
+                        return singletonTable;
+                    }
+                    
+                    private Table() {
+                    }
+                    
+                    public void addFood(int code, String name, int quantity) {
+                        Food food = new Food(code, name, quantity);
+                        foodOnTable.add(food);
+                    }
+                    
+                    public void updateFoodQuantity(int code, int quantity) {
+                        for(int i = 0; i< foodOnTable.size(); i++) {
+                            if(foodOnTable.get(i).getFoodCode() == code) {
+                                foodOnTable.get(i).setQuantity(quantity);
+                            }
+                        }
+                    }
+
+                    public ArrayList<Food> getFoodOnTable() {
+                        return foodOnTable;
+                    }
+
+                    public int getDishes() {
+                        return dishes;
+                    }
+
+                    public void setDishes(int dishes) {
+                        this.dishes = dishes;
+                    }
+
+                    public int getBicchieri() {
+                        return bicchieri;
+                    }
+
+                    public void setBicchieri(int bicchieri) {
+                        this.bicchieri = bicchieri;
+                    }
+
+                    public int getPosate() {
+                        return posate;
+                    }
+
+                    public void setPosate(int posate) {
+                        this.posate = posate;
+                    }
+                    
+                    public void add(int dishes, int bicchieri, int posate) {
+                        this.dishes += dishes;
+                        this.bicchieri += bicchieri;
+                        this.posate += posate;
+                    }
+                    
+                    public void take(int dishes, int bicchieri, int posate) {
+                        this.dishes -= dishes;
+                        this.bicchieri -= bicchieri;
+                        this.posate -= posate;
+                    }
+                }
+
+            </pre>
+        
+        </td>
+    </tr>
+
+</table>
+<h2>Project</h2> 
+Sviluppo degli attori <em>Pantry</em>, <em>Dishwasher</em>, <em>Table</em> e dei relativi POJO che rappresentano i tre device.
+<h2>Testing</h2>
+<h4>Esecuzione testTask</h4>
+<img src="testJunitTestTask.jpg">
+<h4>Esecuzione testAction</h4>
+<img src="testJunitTestAction.jpg">
+<h4>Esecuzione testObstacle</h4>
+<img src="testJunitTestObstacle.jpg">
+<h2>Deployment</h2> 
+Il deployment è avvenuto in un solo contesto, il codice è stato eseguito sul Raspberry, generando un file zip
+contenente l'eseguibile del sistema.
+	      	
+<br/><br/> 	
+</div>  
+<div style="background-color:rgba(86, 56, 253, 0.9); width:60%;text-align:left;font-size:small;color:white">
+By Alessandro Perrone email: alessandro.perrone8@studio.unibo.it  
+</div> 
+</body>
+</html>

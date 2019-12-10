@@ -8,6 +8,7 @@ import itunibo.planner.plannerUtil
 import org.json.JSONArray
 import org.eclipse.californium.core.coap.CoAP.ResponseCode
 import org.eclipse.californium.core.coap.MediaTypeRegistry
+import org.eclipse.californium.core.coap.CoAP.Type
 
 class obstacle(val x : Int, val y :Int){
 	
@@ -19,29 +20,7 @@ class mapResource(name : String) : CoapResource(name){
 	var obstacleList = ArrayList<obstacle>()
 	
 	init{
-		dimX = moveUtils.getMapDimX()
-		dimY = moveUtils.getMapDimY()
-		var map = plannerUtil.getMap();
-		println(map)
-		var newMap = map.replace("\n","").replace(" ","").replace("|","")
-		var list = newMap.split(",")
-		println("list.size = ${list.size}")
-		var cont = 0
-		var col = 0
-		var raw = 0
-		for(i in 0..list.size -2){
-			println("col = $col  raw = $raw")
-			if(list.get(i) == "X"){
-				obstacleList.add(obstacle(raw, col))
-			}
-			col++
-			if(col == dimY){
-				col = 0
-				raw++
-			}
-		}
-		println("$dimX" + "\n" + "$dimY" + obstacleList.toString())
-		
+		updateMap()
 	}
 	
 	override fun handleGET(exchange : CoapExchange?){
@@ -55,5 +34,30 @@ class mapResource(name : String) : CoapResource(name){
 		
 		
 		
+	}
+	
+	fun updateMap(){
+		dimX = moveUtils.getMapDimX()
+		dimY = moveUtils.getMapDimY()
+		var map = plannerUtil.getMap();
+		println(map)
+		var newMap = map.replace("\n","").replace(" ","").replace("|","")
+		var list = newMap.split(",")
+		println("list.size = ${list.size}")
+		var cont = 0
+		var col = 0
+		var row = 0
+		for(i in 0..list.size -2){
+			println("col = $col  row = $row")
+			if(list.get(i) == "X"){
+				obstacleList.add(obstacle(row, col))
+			}
+			col++
+			if(col == dimY){
+				col = 0
+				row++
+			}
+		}
+		println("$dimX" + "\n" + "$dimY" + obstacleList.toString())
 	}
 }

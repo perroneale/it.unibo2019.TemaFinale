@@ -1,0 +1,211 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01//EN" "http://www.w3.org/TR/html4/strict.dtd">
+<html>
+    <!--
+<link rel="stylesheet" type="text/css" href="../css/issStyle1.css">
+<script type="text/javascript" src="../css/issStyle.js"></script>
+-->
+<style type="text/css">
+<!--
+body
+{
+    margin-left:  30px;
+    margin-right: 30px;
+};
+P
+{
+    font-family: Tahoma;
+    font-size: 10pt;
+};
+a, a:visited, a:active, a:link, a:hover {
+    text-decoration: underline;
+    color: #545454;
+    background-color: transparent;
+}
+a:hover {
+    background-color: #cccccc;
+}
+hr {
+    clear: both;
+    height: 1px;
+    color: #242424;
+    background-color: transparent;
+}
+h1, h2, h3 {
+    color: #242424;
+    clear: left;
+    font: 100% Tahoma, Helvetica, Arial, sans-serif;
+    margin: 10;
+    margin-right: 15px;
+    margin-bottom: 0.5em;
+    padding-top: 0.5em;
+    border-bottom: 1px solid #242424;
+}
+h1 {
+    font-size: 150%;
+    background-color: #b2c0ff;
+}
+h2 {
+    background-color: #d9fbff;
+    font-size: 110%;
+}
+h3 {
+	background-color: #e6ccff;
+    font-size: 80%;
+}
+h4 {
+    background-color: #99ffcc;
+    font-size: 100%;
+	width: 750px;
+}
+#i {
+    color: #ff1010;
+}
+tt{
+	font-family: "Arial";
+    font-size: 80%;
+	color: #006600;
+}
+em{
+	font-family: "Arial";
+    font-size: 80%;
+	font-weight: bold;
+	border-style:solid;
+	border-color: #ccffff;
+    color: #0033cc;
+}
+bc{
+	font-family: "Arial";
+	font-size: 80%;
+	font-weight: bold;
+    color: #990000;
+	background-color: #fcf8c7;
+}
+k{
+	font-family: "Arial";
+	font-weight: bold;
+    color: #990000;
+	 
+}
+ks{
+	font-family: "Arial";
+	font-weight: bold;
+    color: #0000CD	;
+	 
+}
+kc{
+	font-family: "Arial";
+	font-weight: bold;
+    color: #008000	;
+	 
+}
+pre{
+	font-family: "Helvetica";
+	font-size: 60%;
+	background-color: #fcf8c7;
+	border: 1px solid blue;
+}
+m{
+	font-family: "Helvetica";
+	line-height: 100%;
+ 	font-size: 75%;
+}
+div.body{
+	width: 800px;
+    font-size: 18px;
+}    
+div.req{
+	background-color: #d9ffb3;
+    font-size: 18px;
+	width: 700px;
+    border: 3px solid green;
+    padding: 15px;
+    margin: 10px;
+}       
+div.remark{
+	background-color: #FFFC33;     
+    border: 3px solid green;
+    padding: 15px;
+    margin: 10px;
+}  
+table, th, td {
+  border: 1px solid black;
+  border-collapse: collapse;
+}         
+    
+  -->
+</style>
+    
+<head>
+   
+<title>StartTheSystem</title></head>
+    
+<body>
+<div id="top">
+<h1>LABORATORIO DI SISTEMI SOFTWARE <font size="5"></font> </h1>
+</div>  
+<div class="body"> 
+<h2>Start the system</h2>
+<h3>Nano</h3>
+Considerare il progetto <em>it.unibo2019.TemaFinale.sprint4</em>
+<ol>
+    <li>Eseguire il comando <bc>gradle   -b build_ctxButler.gradle distZip</bc> </li>
+    <li>Recarsi nella cartella <em>it.unibo2019.TemaFinale.sprint4/buld/distribution</em> e copiare nel Raspberry il file <bc>it.unibo2019.TemaFinale.sprint4-1.0</bc></li>
+    <li>Decomprimere il file</li>
+    <li>Copiare nella cartella <em>it.unibo2019.TemaFinale.sprint4/bin</em> i seguenti file:
+    <ul>
+        <li><bc>basicRobotConfig.pl</bc> decommentare solo la riga <em>robot( realnano, "" ).</em> </li>
+        <li><bc>butlerMindKB.pl</bc></li>
+        <li><bc>config.pl</bc></li>
+        <li><bc>configRoom.pl</bc></li>
+        <li><bc>mappa.bin</bc> e <bc>mappa.txt</bc> se già disponibili, altrimenti lanciare da PC <bc>MainCtxRoomExpl.kt</bc></li>
+        <li><bc>nearTable.pl</bc></li>
+        <li><bc>planningRouteKB.pl</bc></li>
+        <li><bc>resourceModelButler.pl</bc></li>
+        <li><bc>sprint4.pl</bc> modificare indirizzo ip del server MQTT e dei vari contesti</li>
+        <li><bc>sysRules.pl</bc></li>
+        <li><bc>hardwareConfiguration.properties</bc></li>
+        <li><bc>SonarAlone.c</bc> e compilarlo <tt>g++ SonarAlone.c -l wiringPi -o SonarAlone</tt></li>
+        <li><bc>startBuzzer.sh</bc> e <bc>stopBuzzer.sh</bc> modificare le proprietà dei file <tt>chmod 777 startBuzzer.sh</tt> <tt>chmod 777 stopBuzzer.sh</tt></li>
+    </ul>
+    </li>
+    <li>Sempre nella cartella <em>bin</em> creare la cartella <em>configuration/nano</em> e copiarci dentro il file <bc>iotRobot.properties</bc></li>
+    <li>Nella cartella <em>bin</em> eseguire il comando <bc>sudo bash it.unibo.eclipse.qak.sprint4</bc></li>
+    <li>Sul <tt>PC</tt> eseguire il Frontend:
+        <ol>
+            <li>Modificare i file <bc>mqttUtils.js</bc> e <bc>coapClient.js</bc> inserendo gli ip del server MQTT e dei server CoAP.</li>
+            <li>Nella cartella del frontend eseguire il comando <tt>npm start</tt></li>
+            <li>Nel browser recarsi alla pagina <bc>localhost:3000</bc></li>
+        </ol>
+    </li>
+</ol>
+
+<h3>Virtual</h3>
+Considerare il progetto <em>it.unibo2019.TemaFinale.sprint4</em>
+Avviare l'ambiente virtuale.
+<ol>
+<li>Installare <bc>Node.js</bc></tt>
+<li>Aprire un ternimare in <bc>node\WEnv\server</bc> ed eseguire <pre>npm install</tt></pre></li>
+<li>Nella cartella <bc>node\WEnv\WebGLScene</bc>  eseguire <pre>npm install</tt></pre></li>
+<li>Nella cartella  <bc>node\WEnv\server\src</bc>  eseguire <pre>node main 8999</tt></pre></li>
+<li>Aprire un browser e recarsi alla pagina <pre>localhost:8090</pre></li>
+</ol>
+Avviare il sistema:
+<ol>
+    <li>Modificare il file <bc>basicRobotConfig.pl</bc> decommentando solo la riga  <em>robot(virtual, "8999")</em></li>
+    <li>Modificare il file <bc>sprint4.pl</bc> inserendo gli indirizzi ip</li>
+    <li>Avviare il sistema (su Bash <bc>sudo bash it.unibo.eclipse.qak.sprint4</bc>, su Windows eseguire <bc>it.unibo.eclipse.qak.sprint4.bat</bc> </li>
+    <li>Sul <tt>PC</tt> eseguire il Frontend:
+        <ol>
+            <li>Modificare i file <bc>mqttUtils.js</bc> e <bc>coapClient.js</bc> inserendo gli ip del server MQTT e dei server CoAP.</li>
+            <li>Nella cartella del frontend eseguire il comando <tt>npm start</tt></li>
+            <li>Nel browser recarsi alla pagina <bc>localhost:3000</bc></li>
+        </ol>
+    </li>
+</ol>
+<br/><br/> 	
+</div>  
+<div style="background-color:rgba(86, 56, 253, 0.9); width:60%;text-align:left;font-size:small;color:white">
+By Alessandro Perrone email: alessandro.perrone8@studio.unibo.it  
+</div> 
+</body>
+</html>

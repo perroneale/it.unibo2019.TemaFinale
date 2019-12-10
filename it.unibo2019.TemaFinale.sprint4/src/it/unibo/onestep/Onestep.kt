@@ -18,7 +18,7 @@ class Onestep ( name: String, scope: CoroutineScope ) : ActorBasicFsm( name, sco
 		 
 				var foundObstacle = false; 
 				var StepTime = 0L; 
-				var Duration=0 
+				var Duration=0L 
 		return { //this:ActionBasciFsm
 				state("s0") { //this:State
 					action { //it:State
@@ -51,18 +51,24 @@ class Onestep ( name: String, scope: CoroutineScope ) : ActorBasicFsm( name, sco
 				state("endDoMoveForward") { //this:State
 					action { //it:State
 						println("STEPDONE")
-						forward("modelChangeAction", "modelChangeAction(robot,h)" ,"butlerresourcemodel" ) 
-						forward("stepOk", "stepOk(a)" ,"roomexplorationvirtual" ) 
+						forward("robotAction", "robotAction(h)" ,"butler" ) 
+						forward("modelUpdateAction", "modelUpdateAction(robot,h)" ,"butlerresourcemodel" ) 
+						forward("stepOk", "stepOk(ok)" ,"roomexplorationvirtual" ) 
 					}
 					 transition( edgeName="goto",targetState="waitCmd", cond=doswitch() )
 				}	 
 				state("stepFail") { //this:State
 					action { //it:State
-						Duration=getDuration()
-						println("onestepahead stepFail Duration=$Duration ")
-						forward("modelChangeAction", "modelChangeAction(robot,s)" ,"butlerresourcemodel" ) 
-						Thread.sleep(Duration.toLong())
-						forward("modelChangeAction", "modelChangeAction(robot,h)" ,"butlerresourcemodel" ) 
+						forward("robotAction", "robotAction(h)" ,"butler" ) 
+						forward("modelUpdateAction", "modelUpdateAction(robot,h)" ,"butlerresourcemodel" ) 
+						forward("stepFail", "stepFail(fail)" ,"roomexplorationvirtual" ) 
+					}
+					 transition( edgeName="goto",targetState="waitCmd", cond=doswitch() )
+				}	 
+				state("sendDispatch") { //this:State
+					action { //it:State
+						forward("robotAction", "robotAction(h)" ,"butler" ) 
+						forward("modelUpdateAction", "modelUpdateAction(robot,h)" ,"butlerresourcemodel" ) 
 						forward("stepFail", "stepFail(b)" ,"roomexplorationvirtual" ) 
 					}
 					 transition( edgeName="goto",targetState="waitCmd", cond=doswitch() )

@@ -9,6 +9,7 @@ const prepareRoutes = require('./app_server/routes/prepare');
 const addRoutes = require('./app_server/routes/add');
 const testRoutes = require('./app_server/routes/test');
 const cleanRoutes = require('./app_server/routes/clean');
+const ipPassed = require('./ip.json')
 var mqtt = require("./connection/mqttUtils");
 var coap = require("./connection/coapClient")
 var app = express();
@@ -22,6 +23,8 @@ app.use(express.urlencoded({ extended: false }));
 app.use(cookieParser());
 app.use(express.static(path.join(__dirname, 'public')));
 app.use(express.static(path.join(__dirname, 'app_server', 'views')));
+coap.setIp(ipPassed.ipButler, ipPassed.ipCoapFridge);
+mqtt.setIpBroker(ipPassed.ipMQTT);
 app.use('/', indexRouter);
 app.use('/prepare', prepareRoutes);
 app.use('/clean', cleanRoutes);

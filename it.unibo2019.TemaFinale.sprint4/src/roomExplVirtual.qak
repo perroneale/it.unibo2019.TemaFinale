@@ -6,7 +6,7 @@ Dispatch onestep       : onestep(DURATION)
 Dispatch startExplorationVirtual : startExplorationVirtual(StepTime)
 
 
-
+  
 Dispatch execOneStep : execOneStep(StepTime)
 Dispatch stepFail : stepFail(DURATION)
 Dispatch stepOk : stepOk(S)
@@ -19,7 +19,8 @@ Dispatch isObstacle : isObstacle(I)
 Dispatch notObstacle : notObstacle(N)
 Dispatch obstacle : obstacle(S)
 Dispatch terminated : terminated(T)
-  
+Dispatch robotAction : robotAction(X) //X = w,a,s,d,h  
+Dispatch modelUpdateAction : modelUpdateAction(DEST, ACTION)
 
 Event sonarRobot : sonarRobot(DISTANCE)
 Event obstacleDetected : obstacleDetected(Distance)
@@ -27,16 +28,17 @@ Event map : map(MAPSTRING, MAPNAME)
 Event explorationCompleted : explorationCompleted(E)
 
 Context ctxRoomExplVirtual ip[host="localhost" port=8087] +mqtt
-Context ctxResourceModel ip[host="localhost" port=8080] +mqtt
+Context ctxResourceModelV ip[host="notcarehost" port=8080] +mqtt
       
-ExternalQActor mind context ctxResourceModel
-ExternalQActor butlerresourcemodel context ctxResourceModel 
+ExternalQActor mind context ctxResourceModelV
+ExternalQActor butlerresourcemodel context ctxResourceModelV 
+ExternalQActor butler context ctxResourceModelV
 
 QActor onestep context ctxRoomExplVirtual{
 	[" 
 		var foundObstacle = false; 
 		var StepTime = 0L; 
-		var Duration=0 
+		var Duration=0L 
 "]    
 	State s0 initial {	  
 		println("onestepahead STARTED")  
@@ -54,7 +56,7 @@ QActor onestep context ctxRoomExplVirtual{
 			["StepTime = payloadArg(0).toLong()"]   
 			println("STEP TIME $StepTime")
  			forward butlerresourcemodel -m modelChangeAction : modelChangeAction(robot,w)
-	 		["startTimer()"] //startTimer is built-in in the actor
+	 		["startTimer()"] 
 		}    
 	}          
 	Transition t0 whenTimeVar StepTime  -> endDoMoveForward		
@@ -62,20 +64,27 @@ QActor onestep context ctxRoomExplVirtual{
  		   
 	State endDoMoveForward{
 		println("STEPDONE")
-		forward butlerresourcemodel -m modelChangeAction : modelChangeAction(robot,h)
-		forward roomexplorationvirtual -m stepOk : stepOk(a)
+		forward butler -m robotAction : robotAction(h)
+		forward butlerresourcemodel -m modelUpdateAction : modelUpdateAction(robot, h)
+		forward roomexplorationvirtual -m stepOk : stepOk(ok)
 	}
 	Goto waitCmd
 	
 	State stepFail{ 
-		["Duration=getDuration()"]  //getDuration is built-in in the actor
+		/*["Duration=getDuration().toLong()"]  //getDuration is built-in in the actor
 		println("onestepahead stepFail Duration=$Duration ")
-		forward butlerresourcemodel -m modelChangeAction : modelChangeAction(robot, s)
-		["Thread.sleep(Duration.toLong())"]
-		forward butlerresourcemodel -m modelChangeAction : modelChangeAction(robot, h)
+		forward butlerresourcemodel -m modelChangeAction : modelChangeAction(robot, s)*/
+		forward butler -m robotAction : robotAction(h)
+		forward butlerresourcemodel -m modelUpdateAction : modelUpdateAction(robot, h)
+		forward roomexplorationvirtual -m stepFail : stepFail(fail)
+	}Goto waitCmd//Transition to whenTimeVar Duration -> sendDispatch
+	 
+	
+	State sendDispatch{
+		forward butler -m robotAction : robotAction(h)
+		forward butlerresourcemodel -m modelUpdateAction : modelUpdateAction(robot, h)
 		forward roomexplorationvirtual -m stepFail : stepFail(b)
-	}
-	Goto waitCmd  
+	}Goto waitCmd 
 }  
   
 QActor roomexplorationvirtual context ctxRoomExplVirtual{
@@ -128,14 +137,12 @@ QActor roomexplorationvirtual context ctxRoomExplVirtual{
 	
 	State doExploration{
 		onMsg(stepOk : stepOk(S)){
-			println("STEPOK RECEIVED")
+			println("STEP OK RECEIVED")
 			run itunibo.planner.moveUtils.doPlannedMove(myself, "w")
 			run itunibo.planner.moveUtils.showCurrentRobotState()
-			delay 500
+			delay 1000
 			forward onestep -m onestep : onestep($FORWARDTIME)
 		}
-		
-		
 	}Transition t0 whenMsg stepFail -> wallFound
 				   whenMsg stepOk -> doExploration
 			 	   

@@ -1,0 +1,167 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01//EN" "http://www.w3.org/TR/html4/strict.dtd">
+<html>
+    <!--
+<link rel="stylesheet" type="text/css" href="../css/issStyle1.css">
+<script type="text/javascript" src="../css/issStyle.js"></script>
+-->
+<style type="text/css">
+<!--
+body
+{
+    margin-left:  30px;
+    margin-right: 30px;
+};
+P
+{
+    font-family: Tahoma;
+    font-size: 10pt;
+};
+a, a:visited, a:active, a:link, a:hover {
+    text-decoration: underline;
+    color: #545454;
+    background-color: transparent;
+}
+a:hover {
+    background-color: #cccccc;
+}
+hr {
+    clear: both;
+    height: 1px;
+    color: #242424;
+    background-color: transparent;
+}
+h1, h2, h3 {
+    color: #242424;
+    clear: left;
+    font: 100% Tahoma, Helvetica, Arial, sans-serif;
+    margin: 10;
+    margin-right: 15px;
+    margin-bottom: 0.5em;
+    padding-top: 0.5em;
+    border-bottom: 1px solid #242424;
+}
+h1 {
+    font-size: 150%;
+    background-color: #b2c0ff;
+}
+h2 {
+    background-color: #d9fbff;
+    font-size: 110%;
+}
+h3 {
+	background-color: #e6ccff;
+    font-size: 80%;
+}
+h4 {
+    background-color: #99ffcc;
+    font-size: 100%;
+	width: 750px;
+}
+#i {
+    color: #ff1010;
+}
+tt{
+	font-family: "Arial";
+    font-size: 80%;
+	color: #006600;
+}
+em{
+	font-family: "Arial";
+    font-size: 80%;
+	font-weight: bold;
+	border-style:solid;
+	border-color: #ccffff;
+    color: #0033cc;
+}
+bc{
+	font-family: "Arial";
+	font-size: 80%;
+	font-weight: bold;
+    color: #990000;
+	background-color: #fcf8c7;
+}
+k{
+	font-family: "Arial";
+	font-weight: bold;
+    color: #990000;
+	 
+}
+ks{
+	font-family: "Arial";
+	font-weight: bold;
+    color: #0000CD	;
+	 
+}
+kc{
+	font-family: "Arial";
+	font-weight: bold;
+    color: #008000	;
+	 
+}
+pre{
+	font-family: "Helvetica";
+	font-size: 60%;
+	background-color: #fcf8c7;
+	border: 1px solid blue;
+}
+m{
+	font-family: "Helvetica";
+	line-height: 100%;
+ 	font-size: 75%;
+}
+div.body{
+	width: 800px;
+    font-size: 18px;
+}    
+div.req{
+	background-color: #d9ffb3;
+    font-size: 18px;
+	width: 700px;
+    border: 3px solid green;
+    padding: 15px;
+    margin: 10px;
+}       
+div.remark{
+	background-color: #FFFC33;     
+    border: 3px solid green;
+    padding: 15px;
+    margin: 10px;
+}  
+table, th, td {
+  border: 1px solid black;
+  border-collapse: collapse;
+}         
+    
+  -->
+</style>
+    
+<head>
+   
+<title>Sprint5</title></head>
+    
+<body>
+<div id="top">
+<h1>LABORATORIO DI SISTEMI SOFTWARE - RELAZIONE <font size="5"></font> </h1>
+</div>  
+<div class="body"> 
+<h2>Requirements</h2>
+<div class="req">
+Nello SPRINT5 è stato sviluppato il frontend trmaite il quale 
+il Maitre comanda il Butler.
+<ul>
+    <li>Maitre da smartphone deve poter controllare il Butler</li>
+    <li>Maitre deve conoscere in ogni istante lo stato della sala</li>
+    <li>Maitre deve ricevere un warning se, durante l'azione addFood, il cibo richiesto non è presente nel Fridge</li>
+</ul>
+</div>
+<h2>Requirement analysis</h2>
+Da requisito l'applicazione deve poter essere eseguita su uno smartphone, per evitare di dover implementare 2 applicazioni (una per Android ed una per IOS, che potrebbero diventare tre, nel caso in cui successivamente venga richiesto di controllare il Butler da PC), implemento l'applicazione come una web-app, compatibile con tutti i sistemi.
+Il Maitre deve conoscere lo stato della stanza, per questo il Butler espone un server CoAP tramite il quale comunica al Maitre (CoAP Client), ogni cambiamento che avviene nella stanza.
+
+<br/><br/> 	
+</div>  
+<div style="background-color:rgba(86, 56, 253, 0.9); width:60%;text-align:left;font-size:small;color:white">
+By Alessandro Perrone email: alessandro.perrone8@studio.unibo.it  
+</div> 
+</body>
+</html>

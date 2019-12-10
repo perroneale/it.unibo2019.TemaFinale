@@ -1,0 +1,5 @@
+{
+"ipMQTT": "localhost",
+"ipCoapFridge": "192.168.43.100",
+"ipButler": "192.168.43.100"
+}

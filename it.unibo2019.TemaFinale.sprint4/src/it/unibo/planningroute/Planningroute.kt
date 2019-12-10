@@ -20,6 +20,7 @@ class Planningroute ( name: String, scope: CoroutineScope ) : ActorBasicFsm( nam
 			  var Robot = ""
 			  var StepTime = ""
 			  var guardia = true
+			  lateinit var mapRes : itunibo.coap.resources.mapResource
 		return { //this:ActionBasciFsm
 				state("s0") { //this:State
 					action { //it:State
@@ -55,7 +56,7 @@ class Planningroute ( name: String, scope: CoroutineScope ) : ActorBasicFsm( nam
 						solve("findall(nearTable(X,Y,table),nearTable(X,Y,_),L)","") //set resVar	
 						var List = getCurSol("L").toString()
 						println(List)
-						var mapRes = itunibo.coap.resources.mapResource("getmap")
+						mapRes = itunibo.coap.resources.mapResource("getmap")
 										  itunibo.coap.resources.butlerRoomState.server.add(mapRes)
 						forward("updateKBbm", "updateKBbm($List)" ,"butlermind" ) 
 						 }
@@ -93,6 +94,8 @@ class Planningroute ( name: String, scope: CoroutineScope ) : ActorBasicFsm( nam
 								println("map")
 											  println(itunibo.planner.plannerUtil.getMap())
 											  set = true
+											  mapRes = itunibo.coap.resources.mapResource("getmap")
+										      itunibo.coap.resources.butlerRoomState.server.add(mapRes)
 								solve("findall(nearTable(X,Y,Pos),nearTable(X,Y,Pos),L)","") //set resVar	
 								var List = getCurSol("L").toString()
 								forward("updateKBbm", "updateKBbm($List)" ,"butlermind" ) 

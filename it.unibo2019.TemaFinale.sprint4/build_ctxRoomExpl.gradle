@@ -89,9 +89,10 @@ compileTestKotlin {
 sourceSets {
     main.java.srcDirs += 'src'
     main.java.srcDirs += 'resources'
+    main.java.srcDirs += 'testSrc'
 }
 
-mainClassName = 'it.unibo.ctxRoomExpl.MainCtxRoomExplKT'
+mainClassName = 'it.unibo.ctxRoomExpl.MainCtxRoomExplKt'
 
 jar {
     println("executing jar")

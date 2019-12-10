@@ -1,7 +1,8 @@
 //msg( MSGID, MSGTYPE, SENDER, RECEIVER, CONTENT, SEQNUM )
 const mqtt = require('mqtt');
 const iosocketemitter = require('../public/javascripts/iosocketemitter');
-const mqttBroker = 'mqtt://localhost';
+var ipBroker = "localhost";
+const mqttBroker = 'mqtt://'+ipBroker;
 const topicM = 'unibo/qak/maitre';
 const topicB = "unibo/qak/butlerresourcemodel";
 
@@ -72,4 +73,9 @@ exports.publish = function(topic, msg){
 
 exports.getCompletedTask = function(){
   return completedTask;
+}
+
+exports.setIpBroker = function(ipBr){
+  ipBroker = ipBr;
+  console.log("ipsettedMqtt")
 }

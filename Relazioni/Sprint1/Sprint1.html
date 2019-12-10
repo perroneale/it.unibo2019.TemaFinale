@@ -1,0 +1,216 @@
+﻿<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01//EN" "http://www.w3.org/TR/html4/strict.dtd">
+<html>
+    <!--
+<link rel="stylesheet" type="text/css" href="../css/issStyle1.css">
+<script type="text/javascript" src="../css/issStyle.js"></script>
+-->
+<style type="text/css">
+<!--
+body
+{
+    margin-left:  30px;
+    margin-right: 30px;
+};
+P
+{
+    font-family: Tahoma;
+    font-size: 10pt;
+};
+a, a:visited, a:active, a:link, a:hover {
+    text-decoration: underline;
+    color: #545454;
+    background-color: transparent;
+}
+a:hover {
+    background-color: #cccccc;
+}
+hr {
+    clear: both;
+    height: 1px;
+    color: #242424;
+    background-color: transparent;
+}
+h1, h2, h3 {
+    color: #242424;
+    clear: left;
+    font: 100% Tahoma, Helvetica, Arial, sans-serif;
+    margin: 10;
+    margin-right: 15px;
+    margin-bottom: 0.5em;
+    padding-top: 0.5em;
+    border-bottom: 1px solid #242424;
+}
+h1 {
+    font-size: 150%;
+    background-color: #b2c0ff;
+}
+h2 {
+    background-color: #d9fbff;
+    font-size: 110%;
+}
+h3 {
+	background-color: #e6ccff;
+    font-size: 80%;
+}
+h4 {
+    background-color: #99ffcc;
+    font-size: 100%;
+	width: 750px;
+}
+#i {
+    color: #ff1010;
+}
+tt{
+	font-family: "Arial";
+    font-size: 80%;
+	color: #006600;
+}
+em{
+	font-family: "Arial";
+    font-size: 80%;
+	font-weight: bold;
+	border-style:solid;
+	border-color: #ccffff;
+    color: #0033cc;
+}
+bc{
+	font-family: "Arial";
+	font-size: 80%;
+	font-weight: bold;
+    color: #990000;
+	background-color: #fcf8c7;
+}
+k{
+	font-family: "Arial";
+	font-weight: bold;
+    color: #990000;
+	 
+}
+ks{
+	font-family: "Arial";
+	font-weight: bold;
+    color: #0000CD	;
+	 
+}
+kc{
+	font-family: "Arial";
+	font-weight: bold;
+    color: #008000	;
+	 
+}
+pre{
+	font-family: "Helvetica";
+	font-size: 60%;
+	background-color: #fcf8c7;
+	border: 1px solid blue;
+}
+m{
+	font-family: "Helvetica";
+	line-height: 100%;
+ 	font-size: 75%;
+}
+div.body{
+	width: 800px;
+    font-size: 18px;
+}    
+div.req{
+	background-color: #d9ffb3;
+    font-size: 18px;
+	width: 700px;
+    border: 3px solid green;
+    padding: 15px;
+    margin: 10px;
+}       
+div.remark{
+	background-color: #FFFC33;     
+    border: 3px solid green;
+    padding: 15px;
+    margin: 10px;
+}  
+table, th, td {
+  border: 1px solid black;
+  border-collapse: collapse;
+}         
+    
+  -->
+</style>
+    
+<head>
+   
+<title>Sprint1</title></head>
+    
+<body>
+<div id="top">
+<h1>LABORATORIO DI SISTEMI SOFTWARE - RELAZIONE<font size="5"></font> </h1>
+</div>  
+<div class="body">  
+<h2>Requirements</h2>
+<div class="req">
+Nello SPRINT1 verrano implementati i seguenti punti:<br>
+<ol>
+    <li>Mappatura della stanza</li>
+    <li>Implementazione del planner</li>
+</ol>
+</div>
+<h2>Requirements analysis</h2>
+Il primo requisito da soddisfare in questo sprint, non è esplicitamente espresso tra i requisiti forniti dal committente, va considerato come un requisito funzionale, necessario al funzionamento del sistema. Nulla vieta di tralasciarlo ed assumere che la mappa della stanza venga fornita dall'esterno prima dell'avvio dell'applicazione, ma questo andrebbe a limitare la portabilità del sistema.
+Per soddisfare questo requisito è necessario chiarire vari aspetti:
+    <ol>
+        <li>Rappresentazione della stanza</li>
+        <li>Modalità di esplorazione</li>
+    </ol>
+<h2>Problem analysis</h2>
+Per mappare la stanza è necessario fornire al Butler una rappresentazione della stessa. Questa rappresentazione deve essere fornita
+in modo tale che il Butler sia in grado di muoversi in essa secondo una qualche unità di misura. Come unità di misura è stata scelta la dimensione del
+Butler, quini la stanza viene suddivisa in una matrice in cui ogni cella ha le dimensioni del Butler. <br>
+Sarà necessario successivamente calcolare il tempo che impiega il Butler per passare da una cella ad un'altra, tale tempo sarà sfruttato nell'esecuzione
+delle mosse necessarie al raggiungimento di una data posizione sulla mappa.
+<h4>Metodologia di esplorazione della stanza</h4>
+Da requisiti il tavolo non è attaccato alle pareti, quindi una possibile soluzione nell'esplorazione della stanza potrebbe essere la seguente:
+<ol>
+    <li>Si esplora inizialmente il contorno.</li>
+    <li>Si esplora via via la stanza a "spirale" riducendo ogni volta la dimensione del contorno, una volta incontrato il primo ostacolo, se ne percorre
+    il contorno e si ritorna nella posizione RH una volta terminato.</li>
+</ol>
+Questa strategia è valida, ma non è la più efficiente, in quanto bisogna prevedere 4 possibili direzioni in cui si può incotrare il tavolo, nord, sud, est ed ovest, generando
+quattro comportamenti differenti.<br>
+Una strategia alternativa e più efficiente è la seguente:
+<ol>
+    <li>Si esplora il contorno.</li>
+    <li>Una volta ritornati al punto di partenza, si esplora la stanza in orizzontale.
+    <img src="stanza.jpg" width="40%" height="40%"><br>
+    Appena si incontra l'ostacolo, si salva la posizione, si percorre il perimetro dell'ostacolo e, non appena si raggiunge nuvamente la posizione
+    salvata precedentemente, l'esplorazione termina.</li>
+</ol>
+Con questa seconda modalità, è possibile incontrare il tavolo solo in due direzioni, est, ovest.
+Per l'implementazione del planner, sfrutto il software <b>it.unibo.planner</b> già presente nella nostra software house.
+L'implementazione dell'esplorazione della stanza segue la logica dei microservizi. Non modifico il software precedentemente sviluppato ma aggiungo un
+nuovo servizio che mi permette di aumentarne le capacità.<br>
+L'architettura logica del sistema è la seguente:<br>
+<img src="sprint1Actor.jpg" width="80%" height="60%">
+<h4>FSM ExploreRoom</h4>
+<img src="exploreroom.jpg" width="80%" height="60%">
+<h2>Progettazione</h2> 
+In questo sprint sono stati creati:
+<ul>
+    <li><em>resourceModelButler.pl</em></li>
+    <li>QActor <em>ExplorationRoom</em></li>
+</ul>
+<h2>Testing</h2>
+<h4>Esecuzione testTask</h4>
+<img src="testJunitTestTask.jpg">
+<h4>Esecuzione testAction</h4>
+<img src="testJunitTestAction.jpg">
+<h4>Esecuzione testObstacle</h4>
+<img src="testJunitTestObstacle.jpg">
+<h2>Deployment</h2> 
+Il deployment è avvenuto in due contesti, uno per l'explorationRoom ed uno per il Butler.
+ExplorationRom è stato eseguito sul pc, il Butler è stato eseguito sul Raspberry, generando un file zip
+contenente l'eseguibile del sistema.
+<br/><br/> 	
+</div>  
+<div style="background-color:rgba(86, 56, 253, 0.9); width:60%;text-align:left;font-size:small;color:white">
+By Alessandro Perrone email: alessandro.perrone8@studio.unibo.it  
+</div> 
+</body>
+</html>

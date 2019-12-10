@@ -1,0 +1,630 @@
+﻿<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01//EN" "http://www.w3.org/TR/html4/strict.dtd">
+<html>
+    <!--
+<link rel="stylesheet" type="text/css" href="../css/issStyle1.css">
+<script type="text/javascript" src="../css/issStyle.js"></script>
+-->
+<style type="text/css">
+<!--
+body
+{
+    margin-left:  30px;
+    margin-right: 30px;
+};
+P
+{
+    font-family: Tahoma;
+    font-size: 10pt;
+};
+a, a:visited, a:active, a:link, a:hover {
+    text-decoration: underline;
+    color: #545454;
+    background-color: transparent;
+}
+a:hover {
+    background-color: #cccccc;
+}
+hr {
+    clear: both;
+    height: 1px;
+    color: #242424;
+    background-color: transparent;
+}
+h1, h2, h3 {
+    color: #242424;
+    clear: left;
+    font: 100% Tahoma, Helvetica, Arial, sans-serif;
+    margin: 10;
+    margin-right: 15px;
+    margin-bottom: 0.5em;
+    padding-top: 0.5em;
+    border-bottom: 1px solid #242424;
+}
+h1 {
+    font-size: 150%;
+    background-color: #b2c0ff;
+}
+h2 {
+    background-color: #d9fbff;
+    font-size: 110%;
+}
+h3 {
+	background-color: #e6ccff;
+    font-size: 80%;
+}
+h4 {
+    background-color: #99ffcc;
+    font-size: 100%;
+	width: 750px;
+}
+#i {
+    color: #ff1010;
+}
+tt{
+	font-family: "Arial";
+    font-size: 80%;
+	color: #006600;
+}
+em{
+	font-family: "Arial";
+    font-size: 80%;
+	font-weight: bold;
+	border-style:solid;
+	border-color: #ccffff;
+    color: #0033cc;
+}
+bc{
+	font-family: "Arial";
+	font-size: 80%;
+	font-weight: bold;
+    color: #990000;
+	background-color: #fcf8c7;
+}
+k{
+	font-family: "Arial";
+	font-weight: bold;
+    color: #990000;
+	 
+}
+ks{
+	font-family: "Arial";
+	font-weight: bold;
+    color: #0000CD	;
+	 
+}
+kc{
+	font-family: "Arial";
+	font-weight: bold;
+    color: #008000	;
+	 
+}
+pre{
+	font-family: "Helvetica";
+	font-size: 60%;
+	background-color: #fcf8c7;
+	border: 1px solid blue;
+}
+m{
+	font-family: "Helvetica";
+	line-height: 100%;
+ 	font-size: 75%;
+}
+div.body{
+	width: 800px;
+    font-size: 18px;
+}    
+div.req{
+	background-color: #d9ffb3;
+    font-size: 18px;
+	width: 700px;
+    border: 3px solid green;
+    padding: 15px;
+    margin: 10px;
+}       
+div.remark{
+	background-color: #FFFC33;     
+    border: 3px solid green;
+    padding: 15px;
+    margin: 10px;
+}  
+table, th, td {
+  border: 1px solid black;
+  border-collapse: collapse;
+}    
+img{
+    height: 50%;
+    width: 90%;
+}
+  -->
+</style>
+    
+<head>
+   
+<title>Zooming0</title></head>
+    
+<body>
+<div id="top">
+<h1>LABORATORIO DI SISTEMI SOFTWARE - RELAZIONE <font size="5"></font> </h1>
+</div>  
+<div class="body"> 
+<h2>Introduction</h2>
+Per l'implementazione del software richiesto dal committente, ho utilizzato un approccio incrementale. Inizialmente
+parto da una visione generale e semplificata del sistema, cogliendo solo gli aspetti essenziali della logica del sistema, realizzando di volta in volta un prototipo funzionante che fungerà da base per lo step 
+implementativo successivo.
+Inoltre nello sviluppo del sistema ho seguito un approccio top-down, concentrandomi inizialmente sull'architettura logica del sistema, 
+intesa in termini di struttura, interazione, comportamento. Solo in un secondo momento decido quale tecnologia utilizzare per l'implementazione del sistema.
+
+ 
+<h2>Requirements</h2>
+A room dedicated to support a <kc>Standing Buffet Service</kc> is equipped  with a set of (smart and non-smart) resources including
+a <em>fridge</em>, a <em>dishwasher</em>, a <em>pantry</em>, and a ddr robot able to work as a <em>Room Butler</em> (called from
+now on <bc>RBR</bc> (<tt>Room Butter Robot</tt>).
+
+<br/><br/>
+The <em>fridge</em>, the <em>dishwasher</em> and the <em>pantry</em> are embedded into a wall of the room, 
+so to exclude any protuberance from the wall itself. 
+<br/><br/>
+A <em>Table</em> is put at the center of the room.<br>
+The behavior of the <tt>Buffet Service</tt> is supervised by a <em>Maître de salle</em> (or simply <bc>Maitre</bc>) 
+which can tell the <bc>RBR</bc> to perform a set of  tasks, including:
+
+<ol>
+<li><i>Prepare the room</i>. This task consists in putting on the <em>Table</em> dishes taken from the 
+<em>pantry</em>, and food taken from the <em>fridge</em>. The set of items to put on the table 
+in this phase is fixed and properly described somewhere.</li>
+
+<li><i>Clear the room</i>. This task consists in bringing non-consumed food  again  in the <em>fridge</em> and 
+the dishes in the <em>dishwasher</em>.</li>
+<li><i>Add food</i> on the table. This task consists in bringing some specific food (if it exists)
+from the <em>fridge</em> to the <em>Table</em>.
+</ol>
+
+Thus, the <em>fridge</em> is intended to be a smart device owning explicit knowledge of the food stored in it.
+Moreover, it should be able to answer (via <ks>CoAP</ks>) to questions about its content, asked by humans or machines.
+
+<br/><br/>
+The <em>pantry</em>  and the <em>dishwasher</em> are (at the moment) non-smart resources.
+<div class="req">
+Design and build the software to put on board of the <em>fridge</em> and of the <bc>RBR</bc>. In particular,
+the <bc>RBR</bc> must be able to accept the following commands sent by the <ks>smart-phone</ks> of <bc>Maitre</bc>:
+
+<ul>
+<li><em>prepare</em>: the <bc>RBR</bc> must execute in autonomous way the <i>Prepare the room</i> task.</li>
+<li><em>add food</em>:   the <bc>RBR</bc> must execute in autonomous way  the <i>Add food</i> task.</li>
+<li><em>clear</em>:  the <bc>RBR</bc> must execute in autonomous way the <i>Clear the room</i> task.</li>
+</ul>
+
+These tasks are normally executed in sequence, and the main scenario can be summarized as follows:
+
+<ol>
+<li>At start, the room is empty (i.e. no people is in it, besides the <bc>Maitre</bc>) while the <em>pantry</em>
+and the <em>fridge</em> are filled with a proper set of items. The <bc>RBR</bc> is in its <ks>RH</ks> location
+and the <em>dishwasher</em> is empty.</li>
+<li>The <bc>Maitre</bc> sends to the <bc>RBR</bc> the <em>prepare</em> command and waits for the completion
+of the related task. At the end, the <bc>RBR</bc> is in its <ks>RH</ks> location again. </li>
+<li>The <bc>Maitre</bc> opens the room to people. During the service, the <bc>Maitre</bc> can send to the <bc>RBR</bc>
+the <em>add food</em> command, by specifying a <em>food-code</em>. The <bc>RBR</bc> executes the task only if food
+with the given code is available in the <em>fridge</em>, otherwise it sends a warning to the <bc>Maitre</bc>. After the task completion,
+the <bc>RBR</bc> returns is in its <ks>RH</ks> location.
+</li>
+<li>At the end of the party, the <bc>Maitre</bc> <bc>Maitre</bc> sends to the <bc>RBR</bc> the <em>clear</em> command
+and waits for the completion of the task. The <bc>RBR</bc> returns is in its <ks>RH</ks> location again.
+</ol>
+
+
+
+However, the <bc>Maitre</bc> is able, at any time, to
+use his/her smart-phone to:
+<ul>
+<li><em>consult</em> the <kc>state of the room</kc>, e.g. to known what are the objects related to each resource;
+for example, the object currently posed on the <em>Table</em>, in the <em>dishwasher</em>, etc;</li>
+<li><em>stop</em> or <em>reactivate</em> an activated task.</li>
+</ul>
+ 
+Finally, the <bc>RBR</bc> must be able to 
+<ul>
+<li><em>avoid </em>the impact with mobile obstacles (e.g. the <bc>Maitre</bc> 
+or other humans / animals present in the room).</li>
+</ul>
+
+The software to put on the <em>fridge</em> should make the device able to:
+<ul>
+<li><em>expose</em> its current content on the <bc>Maitre</bc> smart-phone;</li>
+<li><em>answer</em> to questions about its content (e.g. if it contains food with a given code ).</li>
+</ul>
+
+
+</div>
+<h2>Requirement analysis</h2>
+Dopo aver letto i requisiti proposti dal committente, ed aver chiarito con quest'ultimo eventuali dubbi,
+i requisiti da soddisfare sono i seguenti:<br>
+<ol>
+<li>Il sistema da realizzare è un sistema distribuito, formato da vari componenti: 
+<b>RBR</b>, <b>MAITRE</b>, <b>FRIDGE</b>, <b>PANTRY</b>, <b>DISHWASHER</b>, <b>TABLE</b>. I componenti lavorano eventualmente su 
+nodi distinti.</li>
+<li>RBR riceve ed esegue i comandi provenienti dal MAITRE. I comandi possono essere i seguenti : <b>PREPARE</b>, <b>ADDFOOD</b>, 
+<b>CLEAR</b>, <b>STOP</b>, <b>REACTIVATE</b>.</li>
+<li>Il comando <b>PREPARE</b> richiede che RBR sia in grado di prendere i piatti dalla pantry e portarli sul tavolo,
+prendere i cibi dal frigo e portarli sul tavolo, ritornare nella posizione di partenza ( RH ).</li>
+<li>Il comando <b>ADDFOOD</b> richiede che RBR, una volta ricevuto il comando, prima interroghi il frigo riguardo la disponibilità
+del cibo richiesto, in caso di risposta affermativa, si reca presso il frigo, preleva il cibo, lo porta sul tavolo e successivamente ritorna
+nella posizione RH. In caso di risposta negativa, invia al Maitre un warning.</li>
+<li>Il comando <b>CLEAR</b> richiede che RBR sia in grado di prendere i piatti dal tavolo e portarli alla dishwasher, prendere il cibo
+dal tavolo e portarlo nel frigo ed infine ritorna nella posizione RH.</li>
+<li>Le tre azione PREPARE, ADDFOOD, CLEAR devono essere eseguito in questo preciso ordine. Per quanto riguarda l'azione ADDFOOD ne possono essere eseguite zero o più.</li>
+<li>Il Maitre deve inviare i comandi a RBR tramite il proprio smartphone.</li>
+<li>Il Maitre deve poter consultare in ogni momento lo stato della sala.</li>
+<li>Il Maitre può interrompere in ogni istante l'azione che il butler sta eseguendo, inviando il comando <b>STOP</b>, e successivamente
+riattivarla con il comando <b>REACTIVATE</b></li>
+<li>Il Fridge è un dispostivo smart, e come tale conosce il proprio stato ed è in grado di comunicarlo agli altri componenti del sistema ( <b>expose</b>).</li>
+<li>Il Fridge deve poter essere interrogato sul suo contenuto, fornendo una risposta, positiva o negativa, riguardo la disponibilità di un 
+determinato cibo ( <b>answer</b>).</li>
+<li>Il Fridge deve comunicare con gli altri componenti utilizzando il protocollo <b>CoAP</b>.</li>
+<li>RBR deve essere in grado, mentre si muove nella stanza, di evitare gli ostacoli.</li>
+</ol>
+
+<h2>Problem analysis</h2>
+Dall'analisi dei requisiti, deduciamo che il nostro sistema sistema distribuito è formato da cinque entità: <em>RBR</em>, <em>MAITRE</em>, <em>FRIDGE</em>, <em>PANTRY</em>, <em>DISHWASHER</em>, <em>TABLE</em> che devono interagire. Essendo un sistema distribuito eterogeneo non posso utilizzare la remote method invocation come modalità di interazione tra le entità, in quanto non conosco a priori la tecnologia con cui sono implementati. A questo punto devo trovare una strada diversa per permettere alle entità di interagire, posso seguire due strade:
+<ol>
+    <li>Costruisco un'infrastruttura che mi permetta di colmare le differenze tecnologiche tra le varie entità</li>
+    <li>Verifico se nella nostra softwareHouse è presente qualche libreria che mi permetta di superare questo problema</li>
+</ol>
+La scelta ricade sulla seconda opzione per due motivi principali:
+<ul>
+    <li>A questo livello di dettaglio voglio interessarmi dell'architettura logica del sistema tralasciando tutti gli aspetti legati alle tecnologie da usare</li>
+    <li>Nella nostra softwareHouse è presente il modello dei QAK</li>
+</ul>
+A questo punto cambio modello, le mie entità diventano degli Attori che interagiscono a scambio di messaggi, inviando dispatch e/o event.
+<h3>Modello dell'architettura del sistema </h3>
+<table>
+    <tr>
+    <td style="width: 55%;">
+        <img src="./Zooming0Actors.jpg" width="100%" height="40%" >
+    </td>
+    <td>
+        In questo primo modello del sistema, siamo interessati all'architettura logica, non a come verranno implementati
+        i vari componenti. L'obiettivo di questa figura è quello di mostrare la <b>struttura</b> e l' <b>interazione</b>
+        dei vari componenti. L'interazione, essendo un sistema distribuito, avviene tramite lo scambio di messaggi, di cui identifichiamo due tipi:<br>
+        <ul>
+        <li><b>Dispatch</b> un messaggio destinato ad uno specifico attore.</li>
+        <li><b>Event</b> un messaggio che verrà recepito da tutti gli attori all'ascolto ed elaborato solo da quelli che ne sono interessati. Lato mittente
+        è un messaggio del tipo "fire and forget".</li>
+        </ul>
+    </td>
+    </tr>
+</table>
+
+Un'architettura del sistema più precisa è data dall'utilizzo di un modello scritto in un linguaggio
+comprensibile ad una macchina. Utilizzando il linguaggio dei QActor, in cui ogni attore è visto come un automa a stati
+finiti, è possibile effettuare una rapida prototipazione, in quanto il linguaggio permette di scrivere dei modelli eseguibili (comprensibili ad una macchina).
+
+<pre>
+System system0
+
+//from maitre to butler
+Dispatch prepare : prepare(P)
+Dispatch addFood : addFood(C,Q) //C = food code, Q = quantity
+Dispatch clear : clear(C)
+Dispatch stop : stop(S)
+Dispatch reactivate : reactivate(R)
+
+//from butler to butler
+Dispatch terminatedTask : terminatedTask(TASK)
+
+//from maitre to maitre
+Dispatch add : add(A)
+Dispatch cl : cl(C)
+
+//from butler to maitre
+Dispatch completedTask : completedTask(X)
+Dispatch warning : warning(C,Q,AQ)  //C = food code, Q = quantity, AQ = quantità disponibile nel frigo
+
+//from butler to fridge
+Dispatch foodAvailability : foodAvailability(C,Q) //C = food code, Q = quantity
+Dispatch takeFood : takeFood(C,Q) //C = food code, Q = quantity
+Dispatch putFood : putFood(C,Q)   //C = food code, Q = quantity
+
+//from butler to pantry
+Dispatch takeDishesP : takeDishesP(D,P,B)
+Dispatch putDishesP : putDishesP(D,P,B)
+
+//from butler to dishwasher
+Dispatch takeDishesD : takeDishes(D)
+Dispatch putDishesD : putDishesD(D,P,B)
+
+//from pantry to butler
+Dispatch returnStateP : returnStateP(X)
+
+//from dishwasher to butler
+Dispatch returnStateD : returnStateD(X)
+
+//from fridge to butler
+Dispatch positiveResponse : positiveResponse(C,Q)    //C = food code, Q = quantity
+Dispatch negativeResponse : negativeResponse(C,Q,AQ) //C = food code, Q = quantity, AQ = quantità disponibile nel frigo
+
+//from fridge to maitre
+Dispatch currentFood : currentFood(X)  //in una fase successiva si deciderà come comunicare il contenuto del frigo
+
+Dispatch foodAvailability : foodAvailability(C,Q)
+Dispatch positiveResponse : positiveResponse(P)
+Dispatch negativeResponse : negativeResponse(C,QR,AQ)
+
+Context ctxButler ip[host="localhost" port=8080]
+Context ctxMaitre ip[host="localhost" port=8081]
+Context ctxFridge ip[host="localhost" port=8082]
+
+QActor butler context ctxButler{}
+
+QActor maitre context ctxMaitre{}
+
+QActor fridge context ctxFridge{}
+
+QActor pantry context ctxButler{}
+
+QActor dishwasher context ctxButler{ }
+
+</pre>
+
+Nello zooming0, si definiscono, in modo ancora molto generale, struttura, interazione e comportamento dei 
+vari componenti del sistema. Analizzo separatamente ogni componente andando ad evidenziare per ognuno: 
+<ul>
+<li>L'automa che ne mostra il comportamento</li>
+<li>Il prototipo realizzato sfruttanfo l'infrastruttura dei QActor</li>
+</ul>
+<h4>Butler</h4>
+Il Butler (RBR) è un componente proattivo/reattivo poichè deve sia eseguire i comandi che gli vengono inviati dal Maitre,
+sia reagire agli eventi emessi dal sonar per evitare gli ostacoli.
+Essendo un FSM, per transitare da uno stato ad un altro è necessario un messaggio, spesso
+però ci possono essere delle transizioni spontanee. Nel linguaggio dei QActor, le transizioni sponstanee si
+implementano tramite <b>Goto</b>.<br>
+<i>Problema: come faccio nello stesso stato ad eseguira una epsilon mossa ma essere anche sensibile ai messaggi provenienti 
+da altri attori?</i><br>
+<i>Soluzione</i>: le espsilon mosse le implemento tramite auto-messaggi che il butler invia a se stesso.<br>
+<br>
+<table>
+    <tr>
+    <td style="width: 55%;">
+        <img src="./z0Butler.jpg" width="100%" height="70%" >
+    </td>
+    <td>
+        Modello eseguibile espresso con il linguaggio dei QActor.<br>
+        <pre>
+            QActor butler context ctxButler{
+                State so initial{
+                }Goto waitCmd1
+                
+                State waitCmd1{
+                    
+                }Transition t0 whenMsg prepare -> preparing
+                
+                State preparing{
+                }
+                Transition t0 whenMsg terminatedTask -> waitCmd2
+                            whenMsg stop -> stopApplicationP
+                
+                State waitCmd2{
+                }Transition t0 whenMsg addFood -> adding
+                            whenMsg clear -> cleaning
+                
+                State stopApplicationP{	
+                }Transition t0 whenMsg reactivate -> preparing
+                
+                State adding{
+                }Transition t0 whenMsg terminatedTask -> waitCmd2
+                            whenMsg stop -> stopApplicationA
+                            
+                State stopApplicationA{
+                }Transition t0 whenMsg reactivate -> adding
+                
+                State cleaning{
+                }Transition t0 whenMsg terminatedTask -> waitCmd1
+                            whenMsg stop -> stopApplicationC
+                            
+                State stopApplicationC{
+                }Transition t0 whenMsg reactivate -> cleaning 
+            }
+        </pre>
+    </td>
+    </tr>
+</table>
+
+<h4>Maitre</h4>
+Per una prima prototipazione ho modellato il Maitre come un attore, in questo modo posso testare la correttezza della
+logica del sistema, e preoccuparmi solo in un secondo momento della tecnologia con cui andare
+ad implementare il frontend.
+
+<table>
+    <tr>
+    <td style="width: 55%;">
+        <img src="./z0Maitre.jpg" width="100%" height="40%" >
+    </td>
+    <td>
+        Modello eseguibile espresso con il linguaggio dei QActor.<br>
+        <pre>
+            QActor maitre context ctxMaitre{
+                State s0 initial{
+                }Goto sendingP
+                
+                State sendingP{
+
+                }Goto waitingPAck
+                
+                State waitingPAck{
+                    
+                }Transition t0 whenMsg completedTask -> sendingAC
+                               whenMsg currentFood -> updateFP
+                
+                State sendingAC{
+                    
+                }Transition t0 whenMsg add -> waitingAfAck
+                               whenMsg cl -> waitingClAck
+                
+                State waitingAfAck{
+                   
+                }Transition t0 whenMsg completedTask -> sendingAC
+                               whenMsg currentFood -> updateFA
+                
+                State waitingClAck{
+                    
+                }Transition t0 whenMsg completedTask -> sendingP
+                               whenMsg currentFood -> updateFC
+                            
+                State updateFP{
+                    //aggiorno informazioni sul contenuto del frigo
+                }
+                
+                State updateFC{
+                    //aggiorno informazioni sul contenuto del frigo
+                }
+                
+                State updateFA{
+                    //aggiorno informazioni sul contenuto del frigo
+                }
+            }
+        </pre>
+    </td>
+    </tr>
+</table>
+Nello stato sendingP, il Maitre può solo inviare il comando prepare, poichè da requisiti c'è un preciso ordine 
+nell'esecuzione delle azioni: prepare, addfood, clear.
+Durante l'implementazione dell'automa del maitre sono sorti vari problemi:<br>
+<i>Problema: il maitre deve sapere quando il butler ha terminato un'attività.</i> Questa interazione è di tipo request/response, il linguaggio dei QActor,
+non prevede un'operazione built-in per l'implementazione di questo tipo di interazione.<br>
+<i>Soluzione:</i> prevedo l'aggiunta di ulteriori stati (waitingPAck, waitingAfAck, waitingClAck ) in cui il maitre attende il messaggio dal butler di avvenuto completamento di un'azione.<br>
+Durante l'attesa di questi messaggi, il maitre, da requisito è attivo, poichè in un qualsiasi istante può inviare un messaggio di stop o reactivate.<br>
+Nello stato sendingAC, il Maitre può inviare o il messaggio di AddFood o il messaggio di clear, ma alla ricezione dell'ack avrà un comportamento differente a seconda
+del messaggio inviato, alla luce di ciò, è necessario prevedere 2 stati di wait per l'ack. Questo perchè alla ricezione di un messaggio completedTask(addfood) transiterà nuovamente nello stato 
+SendindAC, mentre una volta ricevuto il messaggio completedTask(clear), per rispettare i requisiti sull'ordine di esecuzione delle azioni, transiterà nello stato sendingP.
+<br><i>Priblema: in quale stato il maitre è sensibile ai messaggi provenienti dal frigo?</i><br>
+<i>Soluzione: </i>in questa fase dell'analisi assumo che il maitre sia sensibile ai messaggi provenienti dal fridge negli stati di waiting.
+
+<h4>Fridge</h4>
+A questo livello dell'analisi, trascuro il requisito riguardo al fatto che il fridge deve comunicare con gli altri attori utilizzando il protocollo CoAP. L'interazione tra 
+il frigo e gli altri attori avviene tramite lo scambio di dispatch.
+<table>
+    <tr>
+    <td style="width: 55%;">
+        <img src="./z0fridge.jpg" width="100%" height="40%" >
+    </td>
+    <td>
+        Modello eseguibile espresso con il linguaggio dei QActor.<br>
+        <pre>
+            QActor fridge context ctxFridge{
+                State s0 initial{
+                    forward maitre -m currentFood : currentFood(lista)
+                }Goto waitCmd
+                
+                State waitCmd{
+                    
+                }Transition t0 whenMsg foodAvailability -> checking
+                            whenMsg takeFood -> updatingTf
+                            whenMsg putFood -> updatingPf
+                            
+                State checking{
+                }Goto waitCmd
+                
+                State updatingTf{
+                   
+                }Goto s0
+                
+                State updatingPf{
+                    
+                }Goto s0
+            }
+        </pre>
+    </td>
+    </tr>
+</table>
+Da requisito il Fridge deve poter essere interrogato sulla disponibilità di un determinato cibo dal Butler ( answer ), inoltre deve esporre il proprio
+contenuto al Maitre (expose).<br>
+Per soddisfare il requisito answer, nell'automa ho previsto lo stato checking, in cui si andrà a verificare la disponiblità di un cibo e verra inviato un dispatch tra positiveResponse
+o negativeResponse.<br>
+Per soddisfare il requisito expose, all'avvio il Fridge comunica tutto il suo contenuto al Maitre, successivamente, ogni volta che verrà prelevato o aggiunto un cibo al 
+Fridge, quest'ultimo invierà un dispatch al Maitre per aggiornarlo.
+<h4>Pantry Table Dishwasher</h4>
+<table>
+    <tr>
+    <td style="width: 55%;">
+        <img src="./z0-pantry-dishwasher.jpg" width="100%" height="40%" >
+    </td>
+    <td>
+        Modello eseguibile espresso con il linguaggio dei QActor.<br>
+        <pre>
+            QActor pantry context ctxButler{
+                State s0 initial{
+                    println("Pantry STARTED")
+                }Goto waitCmd
+                
+                State waitCmd{
+                    
+                }Transition t0 whenMsg takeDishesP -> taking
+                            whenMsg putDishesP -> putting
+                
+                State taking{
+                   
+                }Goto waitCmd
+                
+                State putting{
+                    
+                }Goto waitCmd
+            }
+
+            QActor dishwasher context ctxButler{
+                State s0 initial{
+                    
+                }Goto waitCmd
+                
+                State waitCmd{
+                    
+                }Transition t0 whenMsg takeDishesD -> taking
+                            whenMsg putDishesD -> putting
+                
+                State taking{
+                    
+                }Goto waitCmd
+                
+                State putting{
+                 
+                }Goto waitCmd
+
+                QActor table context ctxButler{
+                    State s0 initial{
+                    }Goto waitCmd
+                    
+                    State waitCmd{
+                        
+                    }Transition t0 whenMsg takeDishesT -> taking
+                                whenMsg putDishesT -> putting
+                                whenMsg takeFoodT -> takeFood
+                                whenMsg putFoodT -> putFood
+                    
+                    State taking{
+                     
+                    }Goto waitCmd
+                    
+                    State putting{
+                     
+                    }Goto waitCmd
+                    
+                    State takeFood{
+                        
+                    }Goto waitCmd
+
+                    State putFood{
+                        
+                    }Goto waitCmd
+                }
+            }
+        </pre>
+    </td>
+    </tr>
+</table>
+Da requisito, Pantry e Dishwasher non sono entità, non smart, che prevedono un'interfaccia per poter accedere al loro contenuto. Nonostante non siano attori, 
+è oppurtuno incapsularle all'interno di due attori. Questo da un lato garantisce una maggior integrazione con il sistema distribuito che stiamo implementando, dall'altro
+consente una più veloce modifica ( nel passaggio da dispositivo non smart a smart) nel caso in cui, in futuro, il committente richieda di soddisfare questo nuovo requisito.
+</div>
+<div style="background-color:rgba(86, 56, 253, 0.9); width:60%;text-align:left;font-size:small;color:white">
+By Alessandro Perrone email: alessandro.perrone8@studio.unibo.it  
+</div> 
+</body>
+</html>
