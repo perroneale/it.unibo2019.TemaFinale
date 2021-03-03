@@ -15,7 +15,7 @@
     "morgan": "~1.9.1",
     "mqtt": "^3.0.0",
     "node-coap-client": "^1.0.2",
-    "pug": "2.0.0-beta11",
+    "pug": "3.0.1",
     "socket.io": "^2.3.0"
   }
 }
